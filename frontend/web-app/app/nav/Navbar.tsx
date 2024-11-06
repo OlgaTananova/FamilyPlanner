@@ -3,6 +3,8 @@ import Link from 'next/link';
 import React, { useState } from 'react'
 import { FiMenu, FiX } from 'react-icons/fi';
 import { MdFamilyRestroom } from "react-icons/md";
+import LoginButton from './LoginButton';
+import { useAuth } from '../hooks/useAuth';
 
 export default function Navbar() {
     const [menuOpen, setMenuOpen] = useState(false);
@@ -10,6 +12,7 @@ export default function Navbar() {
     const toggleMenu = () => {
       setMenuOpen(!menuOpen);
     };
+    const {signIn, signOut} = useAuth();
   return (
     <header className="bg-gradient-to-r from-blue-100 via-green-100 to-purple-100 shadow-md">
     <div className="max-w-[480px] sm:max-w-[768px] lg:max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8">
@@ -25,8 +28,9 @@ export default function Navbar() {
           <button className="px-4 py-1 text-sm font-medium text-white bg-green-500 rounded-md hover:bg-green-400">
             Sign Up
           </button>
-          <button className="px-4 py-1 text-sm font-medium text-white bg-blue-500 rounded-md hover:bg-blue-400">
-            Sign In
+           <LoginButton/>
+           <button onClick={signOut} className="px-4 py-1 text-sm font-medium text-white bg-green-500 rounded-md hover:bg-green-400">
+            Log Out
           </button>
         </div>
 
@@ -47,8 +51,9 @@ export default function Navbar() {
           <Link href="" className="w-full text-left py-2 text-blue-700 font-medium hover:text-green-600">
             Sign Up
           </Link>
-          <button className="w-full text-left py-2 text-blue-700 font-medium hover:text-green-600">
-            Sign In
+          <LoginButton/>
+          <button onClick={signOut} className="w-full text-left py-2 text-blue-700 font-medium hover:text-green-600">
+            Log Out
           </button>
         </div>
       </div>

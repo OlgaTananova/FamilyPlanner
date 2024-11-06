@@ -9,6 +9,9 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@azure/msal-browser": "^3.26.1",
+    "@azure/msal-react": "^2.1.1",
+    "flowbite-react": "^0.10.2",
     "next": "15.0.2",
     "react": "19.0.0-rc-02c0e824-20241028",
     "react-dom": "19.0.0-rc-02c0e824-20241028",
