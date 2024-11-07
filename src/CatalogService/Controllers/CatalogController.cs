@@ -15,101 +15,97 @@ namespace CatalogService.Controllers
     {
         private readonly CatalogDbContext _context;
         private readonly IMapper _mapper;
+        private readonly ICatalogRepository _repo;
 
-        public CatalogController(CatalogDbContext context, IMapper mapper)
+        public CatalogController(CatalogDbContext context, IMapper mapper, ICatalogRepository repo)
         {
             _context = context;
             _mapper = mapper;
+            _repo = repo;
         }
 
         [HttpGet("categories")]
         public async Task<ActionResult<List<CategoryDto>>> GetAllCategories()
         {
 
-            var categories = await _context.Categories
-            .Where(c => !c.IsDeleted)
-            .Include(x => x.Items.Where(i => !i.IsDeleted))
-            .ToListAsync();
-            return _mapper.Map<List<CategoryDto>>(categories);
+            return await _repo.GetAllCategoriesAsync();
         }
 
         [HttpGet("categories/{id}")]
         public async Task<ActionResult<CategoryDto>> GetCategoryById(Guid id)
         {
-            var category = await _context.Categories
-            .Where(c => !c.IsDeleted)
-            .Include(x => x.Items.Where(i => !i.IsDeleted))
-            .FirstOrDefaultAsync(x => x.Id == id);
+            CategoryDto category = await _repo.GetCategoryByIdAsync(id);
 
             if (category == null)
             {
                 return NotFound();
             }
 
-            return _mapper.Map<CategoryDto>(category);
+            return Ok(category);
         }
 
         [HttpGet("items")]
         public async Task<ActionResult<List<ItemDto>>> GetAllItems()
         {
-            var items = await _context.Items
-            .Where(c => !c.IsDeleted)
-            .Include(x => x.Category)
-            .ToListAsync();
-
-            return _mapper.Map<List<ItemDto>>(items);
+            return await _repo.GetAllItemsAsync();
 
         }
 
         [HttpGet("items/{id}")]
         public async Task<ActionResult<ItemDto>> GetItemById(Guid id)
         {
-            var item = await _context.Items
-            .Where(c => !c.IsDeleted)
-            .Include(x => x.Category)
-            .FirstOrDefaultAsync(x => x.Id == id);
+            var item = await _repo.GetItemByIdAsync(id);
 
             if (item == null)
             {
                 return NotFound();
             }
 
-            return _mapper.Map<ItemDto>(item);
+            return Ok(item);
         }
 
         [HttpPost("categories")]
         public async Task<ActionResult<CategoryDto>> CreateCategory(CreateCategoryDto categoryDto)
         {
+            Category existingCategory = await _repo.GetCategoryEntityByName(categoryDto.Name);
+
+            if (existingCategory != null)
+            {
+                return BadRequest("The category with this name already exists.");
+            }
+
             var category = _mapper.Map<Category>(categoryDto);
+
             category.OwnerId = "test";
 
-            if (category.Name.ToLower() == categoryDto.Name.ToLower())
-            {
-                return BadRequest("The category with this name already exist.");
-            }
             // Todo add current user as owner
-            _context.Categories.Add(category);
+            _repo.AddCategory(category);
 
-            var result = await _context.SaveChangesAsync() > 0;
+            CategoryDto newCategory = _mapper.Map<CategoryDto>(category);
+
+            var result = await _repo.SaveChangesAsync();
 
             if (!result) return BadRequest("Could not save changes to the DB");
 
-            return CreatedAtAction(nameof(GetCategoryById), new { category.Id }, _mapper.Map<CategoryDto>(category));
+            return CreatedAtAction(nameof(GetCategoryById), new { category.Id }, newCategory);
         }
 
         [HttpPost("items")]
         public async Task<ActionResult<ItemDto>> CreateItem(CreateItemDto itemDto)
         {
-            var item = _mapper.Map<Item>(itemDto);
-            item.OwnerId = "test";
-            // Todo add current user as owner
-            if (_context.Items.Any(x => x.Name.ToLower() == itemDto.Name.ToLower()))
+            Item existingItem = await _repo.GetItemEntityByNameAsync(itemDto.Name);
+            if (existingItem != null)
             {
                 return BadRequest("The item with this name already exists.");
             }
-            _context.Items.Add(item);
 
-            var result = await _context.SaveChangesAsync() > 0;
+            Item item = _mapper.Map<Item>(itemDto);
+            item.OwnerId = "test";
+            // Todo add current user as owner
+
+            _repo.AddItem(item);
+
+            bool result = await _repo.SaveChangesAsync();
 
             if (!result) return BadRequest("Could not save changes to the DB.");
 
@@ -119,10 +115,7 @@ namespace CatalogService.Controllers
         [HttpPut("categories/{id}")]
         public async Task<ActionResult<CategoryDto>> UpdateCategory(Guid id, UpdateCategoryDto categoryDto)
         {
-            var category = await _context.Categories
-            .Where(x => !x.IsDeleted)
-            .Include(x => x.Items.Where(i => !i.IsDeleted))
-            .FirstOrDefaultAsync(x => x.Id == id);
+            Category category = await _repo.GetCategoryEntityById(id);
 
             if (category == null)
             {
@@ -131,9 +124,9 @@ namespace CatalogService.Controllers
 
             // TODO: check ownerId == userId
 
-            category.Name = categoryDto.Name ?? categoryDto.Name;
+            category.Name = categoryDto.Name ?? category.Name;
 
-            var result = await _context.SaveChangesAsync() > 0;
+            bool result = await _repo.SaveChangesAsync();
 
             if (result) return Ok(_mapper.Map<CategoryDto>(category));
 
@@ -144,15 +137,9 @@ namespace CatalogService.Controllers
         [HttpPut("items/{id}")]
         public async Task<ActionResult<CategoryDto>> UpdateItem(Guid id, UpdateItemDto itemDto)
         {
-            var item = await _context.Items
-            .Where(x => !x.IsDeleted)
-            .Include(x => x.Category)
-            .FirstOrDefaultAsync(x => x.Id == id);
+            Item item = await _repo.GetItemEntityByIdAsync(id);
 
-            var category = await _context.Categories
-            .Where(x => !x.IsDeleted)
-            .Include(x => x.Items.Where(i => !i.IsDeleted))
-            .FirstOrDefaultAsync(x => x.Id == itemDto.CategoryId);
+            Category category = await _repo.GetCategoryEntityById(itemDto.CategoryId);
 
             if (item == null || category == null)
             {
@@ -169,7 +156,7 @@ namespace CatalogService.Controllers
                 category.Items.Add(item);
             }
 
-            var result = await _context.SaveChangesAsync() > 0;
+            bool result = await _repo.SaveChangesAsync();
 
             if (result) return Ok(_mapper.Map<ItemDto>(item));
 
@@ -180,10 +167,7 @@ namespace CatalogService.Controllers
         [HttpDelete("categories/{id}")]
         public async Task<ActionResult> DeleteCategory(Guid id)
         {
-            var category = await _context.Categories
-            .Where(x => !x.IsDeleted)
-            .Include(c => c.Items.Where(i => !i.IsDeleted))
-            .FirstOrDefaultAsync(c => c.Id == id);
+            Category category = await _repo.GetCategoryEntityById(id);
 
             if (category == null)
             {
@@ -199,7 +183,7 @@ namespace CatalogService.Controllers
 
             category.IsDeleted = true;
 
-            var result = await _context.SaveChangesAsync() > 0;
+            bool result = await _repo.SaveChangesAsync();
 
             if (!result) return BadRequest("Could not delete category and save changed to the database.");
 
@@ -209,10 +193,7 @@ namespace CatalogService.Controllers
         [HttpDelete("items/{id}")]
         public async Task<ActionResult> DeleteItem(Guid id)
         {
-            var item = await _context.Items
-            .Where(x => !x.IsDeleted)
-            .Include(c => c.Category)
-            .FirstOrDefaultAsync(c => c.Id == id);
+            Item item = await _repo.GetItemEntityByIdAsync(id);
 
             if (item == null)
             {
@@ -223,7 +204,7 @@ namespace CatalogService.Controllers
 
             item.IsDeleted = true;
 
-            var result = await _context.SaveChangesAsync() > 0;
+            bool result = await _repo.SaveChangesAsync();
 
             if (!result) return BadRequest("Could not delete item and save changed to the database.");
 
