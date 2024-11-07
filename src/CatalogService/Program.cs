@@ -32,6 +32,7 @@ builder.Services.AddDbContext<CatalogDbContext>(opt =>
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddScoped<ICatalogRepository, CatalogRepository>();
 
 
 
