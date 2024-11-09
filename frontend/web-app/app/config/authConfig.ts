@@ -8,7 +8,7 @@ const msalConfig: Configuration = {
     redirectUri: process.env.NEXT_PUBLIC_AZURE_AD_B2C_REDIRECT_URI,
   },
   cache: {
-    cacheLocation: "localStorage", // or "localStorage" for persistent sessions
+    cacheLocation: "sessionStorage", // or "localStorage" for persistent sessions
     storeAuthStateInCookie: false,
   },
   system: {
