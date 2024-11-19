@@ -1,53 +1,47 @@
 'use client'
-import Link from 'next/link';
-import React, { useState } from 'react'
-import { FiMenu, FiX } from 'react-icons/fi';
+import { useState } from "react";
 import { MdFamilyRestroom } from "react-icons/md";
-import LoginButton from './LoginButton';
-import { useAuth } from '../hooks/useAuth';
-import { Button } from 'flowbite-react';
+import { Button } from "flowbite-react";
+import { useAuth } from "../hooks/useAuth";
+import AuthButton from "./AuthButton";
 
-
-export default function Navbar () {
+export default function Navbar() {
   const auth = useAuth();
-  const {isAuthenticated, account, signIn, signOut} = auth;
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const userName = 'A'; // Placeholder, can be dynamic based on user data
+  const { isAuthenticated, account, signIn, signOut } = auth;
+  const userName = account?.idTokenClaims?.given_name?.[0] ?? "N/A";
+
 
   return (
-    <nav className="bg-white shadow-md p-4 flex justify-between items-center w-full">
+    <nav
+      className="bg-gradient-to-r from-purple-100 via-purple-50 to-fuchsia-100 
+                 shadow-md p-4 flex justify-between items-center w-full 
+                 md:px-6 lg:px-12"
+    >
       {/* Logo and Header */}
       <div className="flex items-center space-x-3">
-        <MdFamilyRestroom size={40} color='blue'></MdFamilyRestroom>
-        <h1 className="text-lg font-semibold text-blue-600">Family Planner</h1>
+        <MdFamilyRestroom size={36} className="text-purple-500" />
+        <h1 className="text-lg font-semibold text-purple-600 md:text-xl lg:text-2xl">
+          Family Planner
+        </h1>
       </div>
 
       {/* Right-side Actions */}
       <div className="flex items-center space-x-4">
         {isAuthenticated ? (
           <>
-            <div className="w-8 h-8 flex items-center justify-center rounded-full bg-green-500 text-white text-sm">
+            <div
+              className="w-8 h-8 flex items-center justify-center rounded-full 
+                         bg-purple-500 text-white text-sm md:w-10 md:h-10 md:text-base 
+                         shadow-lg"
+            >
               {userName}
             </div>
-            <Button
-              color="light"
-              onClick={() => signOut()}
-              className="hover:bg-blue-500 hover:text-white"
-            >
-              Logout
-            </Button>
+            <AuthButton isAuthenticated={isAuthenticated} signIn={signIn} signOut={signOut} />
           </>
         ) : (
-          <Button
-            color="blue"
-            onClick={() => signIn()}
-            className="text-white"
-          >
-            Sign In
-          </Button>
-        )}
+          <AuthButton isAuthenticated={isAuthenticated} signIn={signIn} signOut={signOut} />)
+        }
       </div>
     </nav>
   );
-};
-
+}
