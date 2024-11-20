@@ -24,7 +24,8 @@ export default function getIdToken(): string | null {
     let idTokenKey: string | undefined;
     try {
         const parsedTokenKeyObject = JSON.parse(tokenKeyObject);
-        idTokenKey = parsedTokenKeyObject.idToken?.[0];
+        const length = parsedTokenKeyObject.idToken.length > 1? parsedTokenKeyObject.idToken.length : 1;
+        idTokenKey = parsedTokenKeyObject.idToken[length - 1];
     } catch (error) {
         console.error("Failed to parse token key object:", error);
         return null;

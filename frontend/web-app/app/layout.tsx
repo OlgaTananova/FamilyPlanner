@@ -6,6 +6,7 @@ import { PublicClientApplication } from "@azure/msal-browser";
 import msalConfig from "./config/authConfig";
 import dynamic from "next/dynamic";
 import ClientLayout from "./componenets/ClientLayout";
+import ToasterProvider from "./providers/ToasterProvider";
 
 
 export const metadata: Metadata = {
@@ -22,17 +23,17 @@ export default function RootLayout({
   return (
 
     <html lang="en">
-        <body
-          className=""
-        >
+      <body
+        className=""
+      >
+        <ToasterProvider />
           <ClientLayout>
             <Navbar />
-          <main>
-            {children}
-          </main>
+            <main>
+              {children}
+            </main>
           </ClientLayout>
-          
-        </body>
+      </body>
 
     </html>
 

@@ -1,11 +1,14 @@
 import { InteractionRequiredAuthError } from "@azure/msal-browser";
 import { useMsal, useIsAuthenticated, useAccount } from "@azure/msal-react";
 
+const catalogReadScope = process.env.NEXT_PUBLIC_AZURE_AD_B2C_CATALOG_READ_SCOPE ?? "";
+const catalogWriteScope = process.env.NEXT_PUBLIC_AZURE_AD_B2C_CATALOG_WRITE_SCOPE ?? "";
+
 const loginRequest = {
   scopes: ["openid",
     "offline_access",
-    "https://OlgaTananova.onmicrosoft.com/planner-api/catalog.read",
-    "https://OlgaTananova.onmicrosoft.com/planner-api/catalog.write",
+    catalogWriteScope,
+    catalogReadScope,
     "profile",
     "email"
   ],
@@ -21,6 +24,15 @@ export const useAuth = () => {
     //await instance.loginPopup(loginRequest).catch((error) => console.error("Login error:", error));
     await instance.loginRedirect(loginRequest).catch((error) => console.error("Login error:", error));
   };
+
+  const editProfile = async () => {
+    await instance.loginRedirect({
+      authority: `https://${process.env.NEXT_PUBLIC_AZURE_AD_B2C_TENANT_NAME}.b2clogin.com/${process.env.NEXT_PUBLIC_AZURE_AD_B2C_TENANT_NAME}.onmicrosoft.com/${process.env.NEXT_PUBLIC_AZURE_AD_B2C_PROFILE_EDIT_FLOW}`,
+      redirectUri: process.env.NEXT_PUBLIC_AZURE_AD_B2C_EDIT_PROFILE_REDIRECT_URI,
+      scopes: ["openid"],
+      prompt: "login",
+    }).catch((error) => console.error("Edit profile error: ", error));
+  }
 
   const signOut = () => {
     instance.logoutPopup().catch((error) => console.error("Logout error:", error));
@@ -52,5 +64,5 @@ export const useAuth = () => {
   };
 
 
-  return { signIn, signOut, isAuthenticated, account, acquireToken };
+  return { signIn, signOut, isAuthenticated, account, acquireToken, editProfile };
 };
