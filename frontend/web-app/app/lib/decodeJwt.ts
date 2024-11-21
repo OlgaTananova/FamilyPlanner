@@ -1,3 +1,4 @@
+import toast from "react-hot-toast";
 
 export default function decodeJwt(token: string): any {
     try {
@@ -11,6 +12,7 @@ export default function decodeJwt(token: string): any {
         );
         return JSON.parse(jsonPayload);
     } catch (error) {
+        toast.error("Failed to decode JWT:");
         console.error("Failed to decode JWT:", error);
         return null;
     }

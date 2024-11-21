@@ -1,27 +1,26 @@
 'use client'
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { MdFamilyRestroom } from "react-icons/md";
 import { Button } from "flowbite-react";
 import { useAuth } from "../hooks/useAuth";
 import AuthButton from "./AuthButton";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
+import { useSelector } from "react-redux";
+import { RootState } from "../redux/store";
 
 export default function Navbar() {
   const auth = useAuth();
   const { isAuthenticated, account, signIn, signOut } = auth;
   // TODO: replace with a userProfile info from the store;
-  const userName = account?.idTokenClaims?.given_name[0] ?? "N/A";
+  const user = useSelector((state: RootState) => state.user);
+  const [userInitials, setUserInitials] = useState("");
   const router = useRouter();
   const path = usePathname();
 
-  const handldeProfileIconClick = () => {
-    if (path.includes("profile")){
-      router.push("/");
-    } else {
-      router.push("/profile");
-    }
-  }
+  useEffect(() => {
+    setUserInitials(() => user?.givenName ? user.givenName[0] : "NA")
+  }, [user])
 
   return (
     <nav
@@ -41,12 +40,12 @@ export default function Navbar() {
       <div className="flex items-center space-x-4">
         {isAuthenticated ? (
           <>
-            <Link href={"/profile"} onClick={handldeProfileIconClick}
+            <Link href={"/profile"}
               className="w-8 h-8 flex items-center justify-center rounded-full 
                          bg-purple-500 text-white text-sm md:w-10 md:h-10 md:text-base 
                          shadow-lg"
             >
-              {userName}
+              {userInitials}
             </Link>
             <AuthButton isAuthenticated={isAuthenticated} signIn={signIn} signOut={signOut} />
           </>

@@ -12,8 +12,8 @@ interface ClientLayoutProps {
   children: ReactNode;
 }
 
-const ClientLayout = ({ children }: ClientLayoutProps) => {
+const MsalPageProvider = ({ children }: ClientLayoutProps) => {
   return <MsalProvider instance={msalInstance}>{children}</MsalProvider>;
 };
 
-export default ClientLayout;
+export default MsalPageProvider;

@@ -1,12 +1,10 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import Navbar from "./nav/Navbar";
-import { MsalProvider } from "@azure/msal-react";
-import { PublicClientApplication } from "@azure/msal-browser";
-import msalConfig from "./config/authConfig";
-import dynamic from "next/dynamic";
-import ClientLayout from "./componenets/ClientLayout";
+import MsalPageProvider from "./providers/MsalPageProvider";
 import ToasterProvider from "./providers/ToasterProvider";
+import ReduxProvider from "./providers/ReduxProvider";
+
 
 
 export const metadata: Metadata = {
@@ -27,12 +25,17 @@ export default function RootLayout({
         className=""
       >
         <ToasterProvider />
-          <ClientLayout>
-            <Navbar />
+        <MsalPageProvider>
+          <ReduxProvider>
+            <>
+              <Navbar />
             <main>
               {children}
             </main>
-          </ClientLayout>
+            </>
+          </ReduxProvider>
+        </MsalPageProvider>
+
       </body>
 
     </html>

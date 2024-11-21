@@ -1,6 +1,7 @@
 import { InteractionRequiredAuthError } from "@azure/msal-browser";
 import { useMsal, useIsAuthenticated, useAccount } from "@azure/msal-react";
 
+
 const catalogReadScope = process.env.NEXT_PUBLIC_AZURE_AD_B2C_CATALOG_READ_SCOPE ?? "";
 const catalogWriteScope = process.env.NEXT_PUBLIC_AZURE_AD_B2C_CATALOG_WRITE_SCOPE ?? "";
 
@@ -31,7 +32,7 @@ export const useAuth = () => {
       redirectUri: process.env.NEXT_PUBLIC_AZURE_AD_B2C_EDIT_PROFILE_REDIRECT_URI,
       scopes: ["openid"],
       prompt: "login",
-    }).catch((error) => console.error("Edit profile error: ", error));
+    }).catch(()=> console.error("Edit profile redirect error."))
   }
 
   const signOut = () => {
