@@ -3,9 +3,12 @@ import { useState } from "react";
 import { FaUsers, FaListUl, FaShoppingCart, FaMoneyBillWave } from "react-icons/fa";
 import { HiChevronLeft, HiChevronRight } from "react-icons/hi";
 import Link from "next/link";
+import { useSelector } from "react-redux";
+import { RootState } from "../redux/store";
 
 export default function SideBar() {
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const family = useSelector((state:RootState)=> state.user.family)
 
   const toggleSidebar = () => setIsCollapsed(!isCollapsed);
 
@@ -25,7 +28,7 @@ export default function SideBar() {
         {/* Navigation Links */}
         <nav className="space-y-4">
           <SidebarLink
-            href="/family"
+            href={`/family/${family}`}
             icon={<FaUsers size={24} />}
             label="Family"
             isCollapsed={isCollapsed}

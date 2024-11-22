@@ -5,14 +5,14 @@ import { useMsal, useIsAuthenticated, useAccount } from "@azure/msal-react";
 const catalogReadScope = process.env.NEXT_PUBLIC_AZURE_AD_B2C_CATALOG_READ_SCOPE ?? "";
 const catalogWriteScope = process.env.NEXT_PUBLIC_AZURE_AD_B2C_CATALOG_WRITE_SCOPE ?? "";
 
-const loginRequest = {
+export const loginRequest = {
   scopes: ["openid",
     "offline_access",
     catalogWriteScope,
     catalogReadScope,
     "profile",
-    "email"
-  ],
+    "email",
+    ],
 
 };
 

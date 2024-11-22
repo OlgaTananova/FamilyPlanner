@@ -17,6 +17,7 @@ function UserProfile() {
   const user = useSelector((state: RootState) => state.user);
   const dispatch = useDispatch();
   const router = useRouter();
+  document.cookie="familyName=Tanan";
 
   const updateUserProfile = () => {
     const idToken = getIdToken();
