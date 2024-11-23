@@ -1,5 +1,6 @@
 // utils/getGraphToken.ts
 import { ClientSecretCredential } from "@azure/identity";
+import { FamilyUser } from "../family/[familyName]/page";
 
 // Replace these with your Azure AD B2C app details
 const tenantId = process.env.NEXT_PUBLIC_AZURE_AD_B2C_TENANT_ID; // e.g., {your-tenant-name}.onmicrosoft.com
@@ -53,7 +54,7 @@ export async function getFamilyUsers(familyName: string) {
         .map((user: any) => ({
             id: user.id,
             givenName: user.givenName,
-            family: user.extension_f6549fea4fbd4796b153c099dfa72e66_Family,
+            family: user?.extension_f6549fea4fbd4796b153c099dfa72e66_Family || "",
             role: user.extension_f6549fea4fbd4796b153c099dfa72e66_Role,
             isAdmin: user.extension_f6549fea4fbd4796b153c099dfa72e66_IsAdmin,
             email: user.mail || user.otherMails?.[0] || user.identities[0].issuerAssignedId 

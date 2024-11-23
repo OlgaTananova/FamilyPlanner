@@ -10,7 +10,6 @@ import getIdToken from "./lib/getIdToken";
 import decodeJwt from "./lib/decodeJwt";
 import { useDispatch } from "react-redux";
 import { clearUser, setUser } from "./redux/userSlice";
-import SideBar from "./nav/SideBar";
 
 export default function Home() {
 
@@ -18,30 +17,10 @@ export default function Home() {
   const router = useRouter();
   const dispatch = useDispatch();
 
-  useEffect(() => {
-    if (isAuthenticated) {
-      const idToken = getIdToken();
-      if (idToken) {
-        const decodedToken = decodeJwt(idToken);
-        const user = {
-          givenName: decodedToken.given_name || "N/A",
-          family: decodedToken.extension_Family || "N/A",
-          role: decodedToken.extension_Role || "N/A",
-          email: decodedToken.emails ? decodedToken.emails[0] : "N/A",
-        }
-        dispatch(setUser(user));
-      }
-    } else {
-      dispatch(clearUser());
-    }
-
-  }, [isAuthenticated])
-
-  if (isAuthenticated) {
+   if (isAuthenticated) {
     return (
       <div className="flex justify-between items-center h-screen bg-gradient-to-r from-purple-50 via-purple-100 to-fuchsia-50">
-        <SideBar />
-        <div className="p-8 bg-white rounded-lg shadow-lg max-w-md w-full text-center">
+        <div className="p-8 bg-white rounded-lg shadow-lg max-w-md text-center">
           <DashboardPage />
         </div>
       </div>

@@ -4,6 +4,9 @@ import Navbar from "./nav/Navbar";
 import MsalPageProvider from "./providers/MsalPageProvider";
 import ToasterProvider from "./providers/ToasterProvider";
 import ReduxProvider from "./providers/ReduxProvider";
+import { Sidebar } from "flowbite-react/components/Sidebar";
+import { useAuth } from "./hooks/useAuth";
+import SideBar from "./nav/SideBar";
 
 
 
@@ -18,21 +21,22 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  return (
 
+  return (
     <html lang="en">
-      <body
-        className=""
-      >
+      <body>
         <ToasterProvider />
         <MsalPageProvider>
           <ReduxProvider>
-            <>
+            <div className="flex flex-col h-screen ">
               <Navbar />
-            <main>
-              {children}
-            </main>
-            </>
+              <div className="flex flex-1">
+                <SideBar />
+                <main className="flex-1 p-4 bg-gradient-to-r from-purple-50 via-purple-100 to-fuchsia-50">
+                  {children}
+                </main>
+              </div>
+            </div>
           </ReduxProvider>
         </MsalPageProvider>
 

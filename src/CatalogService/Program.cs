@@ -12,6 +12,7 @@ var username = configuration["PostgresUser"];
 var password = configuration["PostgresPassword"];
 var database = configuration["Database"];
 
+
 // Construct the connection string
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
     .Replace("{PostgresUser}", username)
@@ -32,6 +33,15 @@ builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddScoped<ICatalogRepository, CatalogRepository>();
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowSpecificOrigins", policy =>
+    {
+        policy.WithOrigins("http://localhost:3000") // Allow only these origins
+              .AllowAnyHeader()            // Allow any headers
+              .AllowAnyMethod();           // Allow any HTTP methods
+    });
+});
 
 
 
@@ -43,6 +53,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+// Enable CORS
+app.UseCors("AllowSpecificOrigins");
 
 app.UseAuthorization();
 

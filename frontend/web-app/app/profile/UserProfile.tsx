@@ -10,6 +10,7 @@ import toast from "react-hot-toast";
 import { useDispatch, useSelector, useStore } from "react-redux";
 import { RootState } from "../redux/store";
 import { clearUser, setUser } from "../redux/userSlice";
+import Link from "next/link";
 
 function UserProfile() {
   const { isAuthenticated, editProfile } = useAuth();
@@ -17,7 +18,6 @@ function UserProfile() {
   const user = useSelector((state: RootState) => state.user);
   const dispatch = useDispatch();
   const router = useRouter();
-  document.cookie="familyName=Tanan";
 
   const updateUserProfile = () => {
     const idToken = getIdToken();
@@ -74,29 +74,22 @@ function UserProfile() {
     }
   };
 
-
-  // TODO: 
   if (!isAuthenticated && !user) {
     return (
       <div className="text-m h-screen text-black-200 mb-6 text-center pt-4">The user is not authenticated.</div>
     )
   }
 
-  // Close button handler to redirect to the main page
-  const handleClose = () => {
-    router.push("/");
-  };
 
   return (
     <div className="flex justify-center items-start h-screen bg-gradient-to-r from-purple-50 via-purple-100 to-fuchsia-50">
       <div className="mt-6 p-8 bg-white rounded-lg shadow-lg max-w-md w-full relative">
-        <button
-          onClick={handleClose}
+        <Link href={("/")}
           className="absolute top-2 right-2 text-gray-600 hover:text-gray-900"
           aria-label="Close Profile"
         >
           ✖
-        </button>
+        </Link>
         <h1 className="text-2xl font-bold text-purple-700 mb-6 text-center">User Profile</h1>
         <div className="text-gray-700 text-sm sm:text-base">
           <p className="mb-4">

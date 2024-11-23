@@ -9,6 +9,7 @@ public class Item
     public Guid Id { get; set; }
     public string Name { get; set; }
     public string OwnerId { get; set; }
+    public string Family { get; set; }
     public bool IsDeleted { get; set; } = false;
 
     //navigation properties

@@ -12,7 +12,6 @@ import { RootState } from "../redux/store";
 export default function Navbar() {
   const auth = useAuth();
   const { isAuthenticated, account, signIn, signOut } = auth;
-  // TODO: replace with a userProfile info from the store;
   const user = useSelector((state: RootState) => state.user);
   const [userInitials, setUserInitials] = useState("");
   const router = useRouter();
@@ -25,13 +24,13 @@ export default function Navbar() {
   return (
     <nav
       className="bg-gradient-to-r from-purple-100 via-purple-50 to-fuchsia-100 
-                 shadow-md p-4 flex justify-between items-center w-full 
-                 md:px-6 lg:px-12"
+                 shadow-md p-4 flex justify-between items-center 
+                 sticky top-0 z-50 w-full"
     >
       {/* Logo and Header */}
       <div className="flex items-center space-x-3">
         <MdFamilyRestroom size={36} className="text-purple-500" />
-        <h1 className="text-lg font-semibold text-purple-600 md:text-xl lg:text-2xl">
+        <h1 className="text-lg sm:text-sm font-semibold text-purple-600 md:text-xl lg:text-2xl">
           Family Planner
         </h1>
       </div>
