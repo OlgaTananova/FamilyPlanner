@@ -3,6 +3,7 @@ using AutoMapper.Configuration.Annotations;
 using CatalogService.Data;
 using CatalogService.DTOs;
 using CatalogService.Entities;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -11,6 +12,7 @@ namespace CatalogService.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class CatalogController : ControllerBase
     {
         private readonly CatalogDbContext _context;
@@ -27,7 +29,7 @@ namespace CatalogService.Controllers
         [HttpGet("categories")]
         public async Task<ActionResult<List<CategoryDto>>> GetAllCategories()
         {
-
+            
             return await _repo.GetAllCategoriesAsync();
         }
 

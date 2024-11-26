@@ -34,8 +34,7 @@ async function extractUsersFromResponse(response: Response) {
 
 export async function getFamilyUsers(familyName: string) {
     const token = await getGraphToken();
-    //const graphApiUrl = `https://graph.microsoft.com/beta/users?select=id,givenName,extension_f6549fea4fbd4796b153c099dfa72e66_Family,extension_f6549fea4fbd4796b153c099dfa72e66_Role,extension_f6549fea4fbd4796b153c099dfa72e66_IsAdmin,otherEmails,email,identities`;
-    const graphApiUrl = "https://graph.microsoft.com/beta/users"
+        const graphApiUrl = "https://graph.microsoft.com/beta/users"
     const response = await fetch(graphApiUrl, {
         method: 'GET',
         headers: {

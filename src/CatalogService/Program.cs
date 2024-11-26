@@ -1,7 +1,12 @@
 using CatalogService.Data;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Identity.Web;
+using Microsoft.IdentityModel.Logging;
 
 var builder = WebApplication.CreateBuilder(args);
+
+IdentityModelEventSource.ShowPII = true;
 
 // Add User Secrets Manager to the container
 builder.Configuration.AddUserSecrets<Program>();
@@ -42,6 +47,21 @@ builder.Services.AddCors(options =>
               .AllowAnyMethod();           // Allow any HTTP methods
     });
 });
+
+// Configure authentication with Azure AD B2C
+builder.Services.AddAuthentication("Bearer")
+    .AddMicrosoftIdentityWebApi(options =>
+    {
+        builder.Configuration.Bind("AzureAdB2C", options);
+        options.TokenValidationParameters.NameClaimType = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname";
+        options.TokenValidationParameters.RoleClaimType = "extension_Role";
+    },
+    options => builder.Configuration.Bind("AzureAdB2C", options));
+
+// Add authorization
+builder.Services.AddAuthorization();
+builder.Services.AddScoped<IClaimsTransformation, CustomClaimsTransformation>();
+
 
 
 
