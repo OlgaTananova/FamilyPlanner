@@ -13,6 +13,9 @@ import { FaRegEdit } from "react-icons/fa";
 import ItemComponent from "./Item";
 import CategoryCard from "./CategoryCard";
 import DropdownMenu from "./DropdownMenu";
+import { useAuth } from "../hooks/useAuth";
+import Link from "next/link";
+import AddCategoryModal from "./AddCategoryModal";
 
 
 
@@ -20,12 +23,15 @@ export default function Catalog() {
   const categories = useSelector((state: RootState) => state.categories || []);
   const [showOnlyItems, setShowOnlyItems] = useState(false);
   const [itemsWOCategories, setItemWOCategories] = useState<Item[]>([]);
+  const { acquireToken } = useAuth();
   const dispatch = useDispatch();
 
   // Fetch Categories and Items
   useEffect(() => {
     async function fetchData() {
       try {
+        // make sure there is a valid token in the storage
+        await acquireToken();
         // Fetch categories
         const fetchedCategories = await fetchCatalogData();
 
@@ -52,7 +58,13 @@ export default function Catalog() {
 
   // Render catalog
   return (
-    <div className="container mx-auto px-4 py-6">
+    <div className="container mx-auto px-4 py-6 relative">
+      <Link href={("/")}
+        className="absolute top-0 right-0 text-gray-600 hover:text-gray-900"
+        aria-label="Close Profile"
+      >
+        ✖
+      </Link>
       {/* Catalog Header */}
       <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
         <div className="flex items-center space-x-4">
@@ -83,7 +95,6 @@ export default function Catalog() {
               id={category.id}
               name={category.name}
               items={category.items}
-              onEditCategory={() => toast.success(`Editing ${category.name} category!`)}
             />
           ))}
         </div>
@@ -92,9 +103,9 @@ export default function Catalog() {
           {itemsWOCategories.map((item) => (
             <ItemComponent
               key={item.id}
+              id={item.id}
               name={item.name}
-              onAddToCart={() => toast.success(`Added ${item.name} to shopping list!`)}
-              onEdit={() => toast.success(`Editing ${item.name}!`)}
+              categoryId={item.categoryId}
             />
           ))}
         </div>

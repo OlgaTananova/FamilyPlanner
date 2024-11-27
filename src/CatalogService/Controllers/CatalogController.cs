@@ -26,17 +26,39 @@ namespace CatalogService.Controllers
             _repo = repo;
         }
 
+        protected (string, string) GetFamilyNameAndUserId()
+        {
+            string familyName = User.Claims.FirstOrDefault(c => c.Type == "family")?.Value;
+            string userId = User.Claims.FirstOrDefault(c => c.Type == "userId")?.Value;
+            Console.WriteLine($"User details: {familyName} {userId}");
+            return new(familyName, userId);
+        }
+
         [HttpGet("categories")]
         public async Task<ActionResult<List<CategoryDto>>> GetAllCategories()
         {
-            
-            return await _repo.GetAllCategoriesAsync();
+            // Extract family name from user claims
+            (string familyName, string userId) = GetFamilyNameAndUserId();
+
+            if (string.IsNullOrEmpty(familyName) || string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized("Family or user information is missing.");
+            }
+            return await _repo.GetAllCategoriesAsync(familyName);
         }
 
         [HttpGet("categories/{id}")]
         public async Task<ActionResult<CategoryDto>> GetCategoryById(Guid id)
         {
-            CategoryDto category = await _repo.GetCategoryByIdAsync(id);
+            // Extract family name from user claims
+            (string familyName, string userId) = GetFamilyNameAndUserId();
+
+            if (string.IsNullOrEmpty(familyName) || string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized("Family or user information is missing.");
+            }
+
+            CategoryDto category = await _repo.GetCategoryByIdAsync(id, familyName);
 
             if (category == null)
             {
@@ -49,14 +71,28 @@ namespace CatalogService.Controllers
         [HttpGet("items")]
         public async Task<ActionResult<List<ItemDto>>> GetAllItems()
         {
-            return await _repo.GetAllItemsAsync();
+            // Extract family name from user claims
+            (string familyName, string userId) = GetFamilyNameAndUserId();
+
+            if (string.IsNullOrEmpty(familyName) || string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized("Family or user information is missing.");
+            }
+            return await _repo.GetAllItemsAsync(familyName);
 
         }
 
         [HttpGet("items/{id}")]
         public async Task<ActionResult<ItemDto>> GetItemById(Guid id)
         {
-            var item = await _repo.GetItemByIdAsync(id);
+            // Extract family name from user claims
+            (string familyName, string userId) = GetFamilyNameAndUserId();
+
+            if (string.IsNullOrEmpty(familyName) || string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized("Family or user information is missing.");
+            }
+            var item = await _repo.GetItemByIdAsync(id, familyName);
 
             if (item == null)
             {
@@ -69,7 +105,14 @@ namespace CatalogService.Controllers
         [HttpPost("categories")]
         public async Task<ActionResult<CategoryDto>> CreateCategory(CreateCategoryDto categoryDto)
         {
-            Category existingCategory = await _repo.GetCategoryEntityByName(categoryDto.Name);
+            // Extract family name from user claims
+            (string familyName, string userId) = GetFamilyNameAndUserId();
+
+            if (string.IsNullOrEmpty(familyName) || string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized("Family or user information is missing.");
+            }
+            Category existingCategory = await _repo.GetCategoryEntityByName(categoryDto.Name, familyName);
 
             if (existingCategory != null)
             {
@@ -78,7 +121,8 @@ namespace CatalogService.Controllers
 
             var category = _mapper.Map<Category>(categoryDto);
 
-            category.OwnerId = "test";
+            category.OwnerId = userId;
+            category.Family = familyName;
 
             // Todo add current user as owner
             _repo.AddCategory(category);
@@ -95,15 +139,24 @@ namespace CatalogService.Controllers
         [HttpPost("items")]
         public async Task<ActionResult<ItemDto>> CreateItem(CreateItemDto itemDto)
         {
-            Item existingItem = await _repo.GetItemEntityByNameAsync(itemDto.Name);
+            // Extract family name from user claims
+            (string familyName, string userId) = GetFamilyNameAndUserId();
+
+            if (string.IsNullOrEmpty(familyName) || string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized("Family or user information is missing.");
+            }
+
+            Item existingItem = await _repo.GetItemEntityByNameAsync(itemDto.Name, familyName);
+
             if (existingItem != null)
             {
                 return BadRequest("The item with this name already exists.");
             }
 
             Item item = _mapper.Map<Item>(itemDto);
-            item.OwnerId = "test";
-            // Todo add current user as owner
+            item.OwnerId = userId;
+            item.Family = familyName;
 
             _repo.AddItem(item);
 
@@ -117,14 +170,19 @@ namespace CatalogService.Controllers
         [HttpPut("categories/{id}")]
         public async Task<ActionResult<CategoryDto>> UpdateCategory(Guid id, UpdateCategoryDto categoryDto)
         {
-            Category category = await _repo.GetCategoryEntityById(id);
+            // Extract family name from user claims
+            (string familyName, string userId) = GetFamilyNameAndUserId();
+
+            if (string.IsNullOrEmpty(familyName) || string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized("Family or user information is missing.");
+            }
+            Category category = await _repo.GetCategoryEntityById(id, familyName, userId);
 
             if (category == null)
             {
-                return NotFound("The category was not found");
+                return NotFound("The category was not found or you are not allowed to update the category created by another user.");
             }
-
-            // TODO: check ownerId == userId
 
             category.Name = categoryDto.Name ?? category.Name;
 
@@ -139,16 +197,22 @@ namespace CatalogService.Controllers
         [HttpPut("items/{id}")]
         public async Task<ActionResult<CategoryDto>> UpdateItem(Guid id, UpdateItemDto itemDto)
         {
-            Item item = await _repo.GetItemEntityByIdAsync(id);
+            // Extract family name from user claims
+            (string familyName, string userId) = GetFamilyNameAndUserId();
 
-            Category category = await _repo.GetCategoryEntityById(itemDto.CategoryId);
+            if (string.IsNullOrEmpty(familyName) || string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized("Family or user information is missing.");
+            }
+
+            Item item = await _repo.GetItemEntityByIdAsync(id, familyName, userId);
+
+            Category category = await _repo.GetCategoryEntityById(itemDto.CategoryId, familyName, userId);
 
             if (item == null || category == null)
             {
-                return NotFound("The item or category was not found");
+                return NotFound("The item or category was not found or you are not allowed to update the category created by another user.");
             }
-
-            // TODO: check ownerId == userId
 
             item.Name = itemDto.Name ?? item.Name;
             item.CategoryId = itemDto.CategoryId;
@@ -169,19 +233,26 @@ namespace CatalogService.Controllers
         [HttpDelete("categories/{id}")]
         public async Task<ActionResult> DeleteCategory(Guid id)
         {
-            Category category = await _repo.GetCategoryEntityById(id);
+
+            // Extract family name from user claims
+            (string familyName, string userId) = GetFamilyNameAndUserId();
+
+            if (string.IsNullOrEmpty(familyName) || string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized("Family or user information is missing.");
+            }
+
+            Category category = await _repo.GetCategoryEntityById(id, familyName, userId);
 
             if (category == null)
             {
-                return NotFound("Cannot find the category to delete.");
+                return NotFound("Cannot find the category to delete or you are not allowed to deleted the category created by another user.");
             }
             if (category.Items.Any())
             {
 
                 return BadRequest("Cannot delete non empty category.");
             }
-
-            // TODO: check the owner id
 
             category.IsDeleted = true;
 
@@ -195,14 +266,20 @@ namespace CatalogService.Controllers
         [HttpDelete("items/{id}")]
         public async Task<ActionResult> DeleteItem(Guid id)
         {
-            Item item = await _repo.GetItemEntityByIdAsync(id);
+            // Extract family name from user claims
+            (string familyName, string userId) = GetFamilyNameAndUserId();
+
+            if (string.IsNullOrEmpty(familyName) || string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized("Family or user information is missing.");
+            }
+
+            Item item = await _repo.GetItemEntityByIdAsync(id, familyName, userId);
 
             if (item == null)
             {
-                return NotFound("Cannot find the item to delete.");
+                return NotFound("Cannot find the item to delete or you are not allowed to deleted the item created by another user.");
             }
-
-            // TODO: check the owner id
 
             item.IsDeleted = true;
 

@@ -1,5 +1,6 @@
 using CatalogService.Data;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Identity.Web;
 using Microsoft.IdentityModel.Logging;
@@ -53,20 +54,36 @@ builder.Services.AddAuthentication("Bearer")
     .AddMicrosoftIdentityWebApi(options =>
     {
         builder.Configuration.Bind("AzureAdB2C", options);
-        options.TokenValidationParameters.NameClaimType = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname";
-        options.TokenValidationParameters.RoleClaimType = "extension_Role";
     },
     options => builder.Configuration.Bind("AzureAdB2C", options));
 
-// Add authorization
-builder.Services.AddAuthorization();
 builder.Services.AddScoped<IClaimsTransformation, CustomClaimsTransformation>();
+// Add authorization
+builder.Services.AddAuthorization(options =>
+{
+    // IsAdmin Policy
+    options.AddPolicy("IsAdmin", policy =>
+    {
+        policy.RequireAssertion(context =>
+            context.User.HasClaim(c => c.Type == "admin" && c.Value == "true"));
+    });
 
+    // IsAdult Policy
+    options.AddPolicy("IsAdult", policy =>
+    {
+        policy.RequireAssertion(context =>
+            context.User.HasClaim(c => c.Type == "role" &&
+                (c.Value == "Parent" || c.Value == "Other member")));
+    });
+    // Read
+}
+);
 
 
 
 var app = builder.Build();
-
+var policyProvider = app.Services.GetService<IAuthorizationPolicyProvider>();
+Console.WriteLine($"Policies registered: {policyProvider.GetType().Name}");
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
@@ -75,7 +92,7 @@ if (app.Environment.IsDevelopment())
 }
 // Enable CORS
 app.UseCors("AllowSpecificOrigins");
-
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

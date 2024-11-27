@@ -5,15 +5,15 @@ import { FaRegEdit } from "react-icons/fa";
 import { toast } from "react-hot-toast";
 import ItemComponent from "./Item"; // Assume this is the component you created for items
 import { Item } from "../redux/catalogSlice";
+import AddCategoryModal from "./AddCategoryModal";
 
 interface CategoryCardProps {
     id: string;
     name: string;
     items: Item[];
-    onEditCategory: () => void;
 }
 
-export default function CategoryCard({ id, name, items, onEditCategory }: CategoryCardProps) {
+export default function CategoryCard({ id, name, items }: CategoryCardProps) {
     const [visibleItemsCount, setVisibleItemsCount] = useState(6);
 
     const handleShowMore = () => {
@@ -22,6 +22,10 @@ export default function CategoryCard({ id, name, items, onEditCategory }: Catego
 
     const handleShowLess = () => {
         setVisibleItemsCount(6);
+    };
+
+    const handleEditCategory =() =>{
+
     };
 
     return (
@@ -34,7 +38,7 @@ export default function CategoryCard({ id, name, items, onEditCategory }: Catego
                 <div className="flex items-center space-x-2">
                     <h2 className="text-xl font-semibold text-purple-600">{name}</h2>
                     <button
-                        onClick={onEditCategory}
+                        onClick={handleEditCategory}
                         className="p-1 rounded-full text-purple-600 hover:bg-purple-100"
                         aria-label="Edit category"
                     >

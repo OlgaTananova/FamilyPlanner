@@ -66,7 +66,7 @@ export default async function FamilyPage({ params }: Props) {
                 Admin
               </span>
             )}
-            <p className="text-sm text-gray-500 mt-2">{user.email}</p>
+            <p className="text-sm text-gray-500 mt-2 w-full truncate">{user.email}</p>
           </div>
         ))}
       </div>

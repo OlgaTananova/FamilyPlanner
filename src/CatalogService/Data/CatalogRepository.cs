@@ -27,73 +27,74 @@ public class CatalogRepository : ICatalogRepository
         _context.Items.Add(item);
     }
 
-    public async Task<List<CategoryDto>> GetAllCategoriesAsync()
+    public async Task<List<CategoryDto>> GetAllCategoriesAsync(string familyName)
     {
         return await _context.Categories.AsQueryable()
-            .Where(c => !c.IsDeleted)
+            .Where(c => c.Family == familyName && !c.IsDeleted)
             .Include(x => x.Items.Where(i => !i.IsDeleted))
             .ProjectTo<CategoryDto>(_mapper.ConfigurationProvider)
             .ToListAsync();
 
     }
 
-    public async Task<List<ItemDto>> GetAllItemsAsync()
+    public async Task<List<ItemDto>> GetAllItemsAsync(string familyName)
     {
         return await _context.Items.AsQueryable()
-           .Where(c => !c.IsDeleted)
+            .Where(c => c.Family == familyName && !c.IsDeleted)
            .Include(x => x.Category)
            .ProjectTo<ItemDto>(_mapper.ConfigurationProvider)
            .ToListAsync();
     }
 
-    public async Task<CategoryDto> GetCategoryByIdAsync(Guid id)
+    public async Task<CategoryDto> GetCategoryByIdAsync(Guid id, string familyName)
     {
         return await _context.Categories.AsQueryable()
-            .Where(c => !c.IsDeleted)
+            .Where(c => c.Family == familyName && !c.IsDeleted)
             .Include(x => x.Items.Where(i => !i.IsDeleted))
             .ProjectTo<CategoryDto>(_mapper.ConfigurationProvider)
             .FirstOrDefaultAsync(x => x.Id == id);
 
     }
 
-    public async Task<Category> GetCategoryEntityById(Guid id)
+    public async Task<Category> GetCategoryEntityById(Guid id, string familyName, string userId)
     {
         return await _context.Categories.AsQueryable()
-            .Where(x => !x.IsDeleted)
+            .Where(c => c.Family == familyName && !c.IsDeleted && c.OwnerId == userId)
             .Include(x => x.Items.Where(i => !i.IsDeleted))
             .FirstOrDefaultAsync(x => x.Id == id);
     }
 
-    public async Task<Category> GetCategoryEntityByName(string name)
+    public async Task<Category> GetCategoryEntityByName(string name, string familyName)
     {
         string normalizedString = name.ToLower().Trim();
 
         return await _context.Categories.AsQueryable()
-        .FirstOrDefaultAsync(x => x.Name.ToLower() == normalizedString);
+        .FirstOrDefaultAsync(x => x.Name.ToLower() == normalizedString
+        && x.Family == familyName && !x.IsDeleted);
     }
 
-    public async Task<ItemDto> GetItemByIdAsync(Guid id)
+    public async Task<ItemDto> GetItemByIdAsync(Guid id, string familyName)
     {
         return await _context.Items.AsQueryable()
-           .Where(c => !c.IsDeleted)
+           .Where(c => !c.IsDeleted && c.Family == familyName)
            .Include(x => x.Category)
            .ProjectTo<ItemDto>(_mapper.ConfigurationProvider)
            .FirstOrDefaultAsync(x => x.Id == id);
     }
 
-    public async Task<Item> GetItemEntityByIdAsync(Guid id)
+    public async Task<Item> GetItemEntityByIdAsync(Guid id, string familyName, string userId)
     {
         return await _context.Items.AsQueryable()
-                .Where(c => !c.IsDeleted)
+                .Where(c => !c.IsDeleted && c.Family == familyName && c.OwnerId == userId)
                 .Include(x => x.Category)
                 .FirstOrDefaultAsync(x => x.Id == id);
     }
 
-    public async Task<Item> GetItemEntityByNameAsync(string name)
+    public async Task<Item> GetItemEntityByNameAsync(string name, string familyName)
     {
         string normalizedString = name.ToLower().Trim();
         return await _context.Items.AsQueryable()
-                .Where(c => !c.IsDeleted)
+                .Where(c => !c.IsDeleted && c.Family == familyName)
                 .Include(x => x.Category)
                 .FirstOrDefaultAsync(x => x.Name.ToLower().Trim() == normalizedString);
     }

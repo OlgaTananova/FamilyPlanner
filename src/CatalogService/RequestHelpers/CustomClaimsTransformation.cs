@@ -12,7 +12,13 @@ public class CustomClaimsTransformation : IClaimsTransformation
         var objectId = principal.FindFirst("http://schemas.microsoft.com/identity/claims/objectidentifier")?.Value;
         if (objectId != null)
         {
-            identity.AddClaim(new Claim("userid", objectId));
+            identity.AddClaim(new Claim("userId", objectId));
+        }
+        // Map 'givenname' to 'name'
+        var givenName = principal.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname")?.Value;
+        if (givenName != null)
+        {
+            identity.AddClaim(new Claim("givenName", givenName));
         }
 
         // Map 'emails' to 'email'
@@ -28,12 +34,24 @@ public class CustomClaimsTransformation : IClaimsTransformation
         {
             identity.AddClaim(new Claim("family", family));
         }
+        // map extension_Role to roles
+        var role = principal.FindFirst("extension_Role")?.Value;
+        if (family != null)
+        {
+            identity.AddClaim(new Claim("role", role));
+        }
 
         // Map 'extension_IsAdmin' to 'admin'
         var isAdmin = principal.FindFirst("extension_IsAdmin")?.Value;
         if (isAdmin != null)
         {
             identity.AddClaim(new Claim("admin", isAdmin));
+        }
+        // Map scp to scopes
+        var scopes = principal.FindFirst("http://schemas.microsoft.com/identity/claims/scope")?.Value;
+        if (scopes != null)
+        {
+            identity.AddClaim(new Claim("scopes", scopes));
         }
 
         return Task.FromResult(principal);
