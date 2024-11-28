@@ -8,11 +8,11 @@ import AddNewItemModal from './AddItemModal';
 interface DropdownMenuProps {
     handleShowOnlyItems: () => void;
     showOnlyItems: boolean;
+    setIsAddCategoryModalOpen: (action: boolean) => void;
+    setIsAddItemModalOpen: (action: boolean) => void;
 }
 
-export default function DropdownMenu({ handleShowOnlyItems, showOnlyItems }: DropdownMenuProps) {
-    const [isAddCategoryModalOpen, setIsAddCategoryModalOpen] = useState(false);
-    const [isAddItemModalOpen, setIsAddItemModalOpen] = useState(false);
+export default function DropdownMenu({ handleShowOnlyItems, showOnlyItems, setIsAddCategoryModalOpen, setIsAddItemModalOpen }: DropdownMenuProps) {
 
     return (
         <>
@@ -31,8 +31,6 @@ export default function DropdownMenu({ handleShowOnlyItems, showOnlyItems }: Dro
                 </Dropdown.Item>
 
             </Dropdown>
-            <AddCategoryModal isOpen={isAddCategoryModalOpen} onClose={() => setIsAddCategoryModalOpen(false)} />
-            <AddNewItemModal isOpen={isAddItemModalOpen} onClose={() => setIsAddItemModalOpen(false)} />
         </>
     )
 }

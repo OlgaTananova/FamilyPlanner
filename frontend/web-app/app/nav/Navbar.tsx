@@ -28,12 +28,12 @@ export default function Navbar() {
                  sticky top-0 z-50 w-full"
     >
       {/* Logo and Header */}
-      <div className="flex items-center space-x-3">
+      <Link href={"/"} className="flex items-center space-x-3">
         <MdFamilyRestroom size={36} className="text-purple-500" />
         <h1 className="text-lg sm:text-sm font-semibold text-purple-600 md:text-xl lg:text-2xl">
           Family Planner
         </h1>
-      </div>
+      </Link>
 
       {/* Right-side Actions */}
       <div className="flex items-center space-x-4">

@@ -17,13 +17,9 @@ export default function Home() {
   const router = useRouter();
   const dispatch = useDispatch();
 
-   if (isAuthenticated) {
+  if (isAuthenticated) {
     return (
-      <div className="flex justify-between items-center h-screen bg-gradient-to-r from-purple-50 via-purple-100 to-fuchsia-50">
-        <div className="p-8 bg-white rounded-lg shadow-lg max-w-md text-center">
-          <DashboardPage />
-        </div>
-      </div>
+      <DashboardPage />
     );
   }
 

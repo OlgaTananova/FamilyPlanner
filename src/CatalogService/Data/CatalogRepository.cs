@@ -56,10 +56,10 @@ public class CatalogRepository : ICatalogRepository
 
     }
 
-    public async Task<Category> GetCategoryEntityById(Guid id, string familyName, string userId)
+    public async Task<Category> GetCategoryEntityById(Guid id, string familyName)
     {
         return await _context.Categories.AsQueryable()
-            .Where(c => c.Family == familyName && !c.IsDeleted && c.OwnerId == userId)
+            .Where(c => c.Family == familyName && !c.IsDeleted)
             .Include(x => x.Items.Where(i => !i.IsDeleted))
             .FirstOrDefaultAsync(x => x.Id == id);
     }
@@ -82,10 +82,10 @@ public class CatalogRepository : ICatalogRepository
            .FirstOrDefaultAsync(x => x.Id == id);
     }
 
-    public async Task<Item> GetItemEntityByIdAsync(Guid id, string familyName, string userId)
+    public async Task<Item> GetItemEntityByIdAsync(Guid id, string familyName)
     {
         return await _context.Items.AsQueryable()
-                .Where(c => !c.IsDeleted && c.Family == familyName && c.OwnerId == userId)
+                .Where(c => !c.IsDeleted && c.Family == familyName)
                 .Include(x => x.Category)
                 .FirstOrDefaultAsync(x => x.Id == id);
     }

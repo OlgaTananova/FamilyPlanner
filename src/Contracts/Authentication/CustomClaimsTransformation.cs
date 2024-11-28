@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Authentication;
 using System.Security.Claims;
-using System.Threading.Tasks;
 
 public class CustomClaimsTransformation : IClaimsTransformation
 {

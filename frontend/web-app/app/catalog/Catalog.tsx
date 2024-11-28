@@ -16,6 +16,9 @@ import DropdownMenu from "./DropdownMenu";
 import { useAuth } from "../hooks/useAuth";
 import Link from "next/link";
 import AddCategoryModal from "./AddCategoryModal";
+import AddNewItemModal from "./AddItemModal";
+import EditItemModal from "./EditItemModal";
+import EditCategoryModal from "./EditCategoryModal";
 
 
 
@@ -23,27 +26,28 @@ export default function Catalog() {
   const categories = useSelector((state: RootState) => state.categories || []);
   const [showOnlyItems, setShowOnlyItems] = useState(false);
   const [itemsWOCategories, setItemWOCategories] = useState<Item[]>([]);
+  const [isAddCategoryModalOpen, setIsAddCategoryModalOpen] = useState(false);
+  const [isAddItemModalOpen, setIsAddItemModalOpen] = useState(false);
+  const [isEditItemModalOpen, setIsEditItemModalOpen] = useState(false);
+  const [isEditCategoryModalOpen, setIsEditCategoryModalOpen] = useState(false);
+  const [editedItem, setEditedItem] = useState<{id: string, name: string, categoryId: string}>({id: "", name: "", categoryId: ""});
+  const [editedCategory, setEditedCategory] = useState<{id: string, name: string, items: Item[]}>({id: "", name: "", items: []});
   const { acquireToken } = useAuth();
   const dispatch = useDispatch();
 
   // Fetch Categories and Items
   useEffect(() => {
     async function fetchData() {
-      try {
-        // make sure there is a valid token in the storage
-        await acquireToken();
-        // Fetch categories
-        const fetchedCategories = await fetchCatalogData();
 
-        if (fetchedCategories) {
-          dispatch(setCategories(fetchedCategories?.categories));
-          const allItems = fetchedCategories?.categories.flatMap((category) => category.items).sort((a, b) => a.name.localeCompare(b.name));
-          setItemWOCategories(allItems);
-        }
+      // make sure there is a valid token in the storage
+      await acquireToken();
+      // Fetch categories
+      const fetchedCategories = await fetchCatalogData();
 
-      } catch (error: any) {
-        console.error("Error fetching catalog data:", error);
-        toast.error(error.message || "Failed to fetch catalog data.")
+      if (fetchedCategories) {
+        dispatch(setCategories(fetchedCategories));
+        const allItems = fetchedCategories.flatMap((category) => category.items).sort((a, b) => a.name.localeCompare(b.name));
+        setItemWOCategories(allItems);
       }
     }
     fetchData();
@@ -71,7 +75,10 @@ export default function Catalog() {
           {/* Heading */}
           <h1 className="text-2xl font-bold text-purple-700">Catalog</h1>
           {/* Dropdown Button */}
-          <DropdownMenu showOnlyItems={showOnlyItems} handleShowOnlyItems={handleShowOnlyItems} />
+          <DropdownMenu showOnlyItems={showOnlyItems}
+            handleShowOnlyItems={handleShowOnlyItems}
+            setIsAddCategoryModalOpen={setIsAddCategoryModalOpen}
+            setIsAddItemModalOpen={setIsAddItemModalOpen} />
         </div>
 
         {/* Search Bar */}
@@ -85,7 +92,15 @@ export default function Catalog() {
           />
         </div>
       </div>
-
+      {/*Modals*/}
+      <AddCategoryModal isOpen={isAddCategoryModalOpen} onClose={() => setIsAddCategoryModalOpen(false)} />
+      <AddNewItemModal isOpen={isAddItemModalOpen} onClose={() => setIsAddItemModalOpen(false)} />
+      <EditItemModal isOpen={isEditItemModalOpen} onClose={() => setIsEditItemModalOpen(false)} item={editedItem} />
+      <EditCategoryModal isOpen={isEditCategoryModalOpen} onClose={()=> setIsEditCategoryModalOpen(false)} category={{
+        id: editedCategory.id,
+        name: editedCategory.name,
+        items: editedCategory.items
+      }} />
       {/* Render Content */}
       {!showOnlyItems ? (
         <div className="mt-4">
@@ -95,6 +110,10 @@ export default function Catalog() {
               id={category.id}
               name={category.name}
               items={category.items}
+              setEditedCategory={setEditedCategory}
+              setEditedItem={setEditedItem}
+              setIsEditItemModalOpen={setIsEditItemModalOpen}
+              setIsEditCategoryModalOpen={setIsEditCategoryModalOpen}
             />
           ))}
         </div>
@@ -106,6 +125,8 @@ export default function Catalog() {
               id={item.id}
               name={item.name}
               categoryId={item.categoryId}
+              setEditedItem={setEditedItem}
+              setIsEditItemModalOpen={setIsEditItemModalOpen}
             />
           ))}
         </div>

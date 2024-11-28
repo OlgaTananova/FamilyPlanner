@@ -14,7 +14,7 @@ interface AddNewItemModalProps {
 }
 
 export default function AddNewItemModal({ isOpen, onClose }: AddNewItemModalProps) {
-    const categories = useSelector((state: RootState) => state.categories.categories || []);
+    const categories = useSelector((state: RootState) => state.categories || []);
     const dispatch = useDispatch();
     const { acquireToken } = useAuth();
 
@@ -51,17 +51,12 @@ export default function AddNewItemModal({ isOpen, onClose }: AddNewItemModalProp
         try {
             await acquireToken();
             const newItem = await createItem(itemName, selectedCategory);
-            console.log(newItem);
             if (newItem) {
                 dispatch(addItem(newItem));
-                toast.success(`Item "${itemName}" added successfully!`);
                 setItemName("");
                 setSelectedCategory(null);
                 handleClose();
             }
-        } catch (error) {
-            console.error("Error creating item:", error);
-            toast.error("Failed to add item. Please try again.");
         } finally {
             setIsSaving(false);
         }
@@ -103,7 +98,7 @@ export default function AddNewItemModal({ isOpen, onClose }: AddNewItemModalProp
                             <option value="" disabled>
                                 Choose a category
                             </option>
-                            {categories.map((category) => (
+                            {categories.categories.map((category) => (
                                 <option key={category.id} value={category.id}>
                                     {category.name}
                                 </option>

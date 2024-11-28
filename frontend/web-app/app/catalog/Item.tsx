@@ -7,11 +7,18 @@ interface ItemProps {
     name: string;
     id: string;
     categoryId: string;
+    setEditedItem: (item: { id: string; name: string; categoryId: string }) => void;
+    setIsEditItemModalOpen: (action: boolean) => void;
 }
 
-export default function ItemComponent({ name, id, categoryId }: ItemProps) {
+export default function ItemComponent({ name, id, categoryId, setEditedItem, setIsEditItemModalOpen}: ItemProps) {
 
-    const [isEditItemModalOpen, setIsEditItemModalOpen] = useState(false);
+    //const [isEditItemModalOpen, setIsEditItemModalOpen] = useState(false);
+
+    const handleEditItemClick = ()=> {
+        setEditedItem({id, name, categoryId});
+        setIsEditItemModalOpen(true);
+    }
 
     return (<div className="flex items-center bg-purple-50 border border-purple-300 rounded-lg p-2 shadow-sm">
         {/* Item Name */}
@@ -28,17 +35,17 @@ export default function ItemComponent({ name, id, categoryId }: ItemProps) {
 
         {/* Edit Item Button */}
         <button
-            onClick={() => setIsEditItemModalOpen(true)}
+            onClick={handleEditItemClick}
             className="p-1 rounded-full text-indigo-800 hover:bg-purple-100 ml-2"
             aria-label="Edit Item"
         >
             <FaRegEdit size={16} />
         </button>
-        <EditItemModal isOpen={isEditItemModalOpen} onClose={() => setIsEditItemModalOpen(false)} item={{
+        {/* <EditItemModal isOpen={isEditItemModalOpen} onClose={() => setIsEditItemModalOpen(false)} item={{
             id: id,
             name: name,
             categoryId: categoryId
-        }} />
+        }} /> */}
     </div>
     );
 }

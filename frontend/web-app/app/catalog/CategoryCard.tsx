@@ -11,9 +11,13 @@ interface CategoryCardProps {
     id: string;
     name: string;
     items: Item[];
+    setEditedCategory: (category: { id: string; name: string, items: Item[] }) => void;
+    setEditedItem: ( item: {id: string; name: string; categoryId: string }) => void;
+    setIsEditItemModalOpen: (action: boolean) => void;
+    setIsEditCategoryModalOpen: (action: boolean) => void;
 }
 
-export default function CategoryCard({ id, name, items }: CategoryCardProps) {
+export default function CategoryCard({ id, name, items, setEditedCategory, setEditedItem, setIsEditItemModalOpen, setIsEditCategoryModalOpen }: CategoryCardProps) {
     const [visibleItemsCount, setVisibleItemsCount] = useState(6);
 
     const handleShowMore = () => {
@@ -24,8 +28,9 @@ export default function CategoryCard({ id, name, items }: CategoryCardProps) {
         setVisibleItemsCount(6);
     };
 
-    const handleEditCategory =() =>{
-
+    const handleEditCategory = () => {
+        setEditedCategory({ id: id, name: name, items});
+        setIsEditCategoryModalOpen(true);
     };
 
     return (
@@ -53,8 +58,10 @@ export default function CategoryCard({ id, name, items }: CategoryCardProps) {
                     <ItemComponent
                         key={item.id}
                         name={item.name}
-                        onAddToCart={() => toast.success(`Added ${item.name} to shopping list!`)}
-                        onEdit={() => toast.success(`Editing ${item.name}!`)}
+                        id={item.id}
+                        categoryId={item.categoryId}
+                        setEditedItem={setEditedItem}
+                        setIsEditItemModalOpen={setIsEditItemModalOpen}
                     />
                 ))}
             </div>

@@ -47,7 +47,7 @@ export default function AddCategoryModal({ isOpen, onClose }: AddCategoryModalPr
         setCategoryName("");
         setError(null);
         onClose();
-      };
+    };
 
     const handleSave = async () => {
         if (!validateName(categoryName)) {
@@ -60,9 +60,7 @@ export default function AddCategoryModal({ isOpen, onClose }: AddCategoryModalPr
             await acquireToken();
             const newCategory = await createCategory(categoryName);
             if (newCategory) {
-                console.log(newCategory);
                 dispatch(addCategory(newCategory));
-                toast.success(`Category "${newCategory.name}" created successfully!`);
             }
             setCategoryName("");
             onClose();
@@ -71,9 +69,6 @@ export default function AddCategoryModal({ isOpen, onClose }: AddCategoryModalPr
             setCategoryName("");
             setError(null);
             onClose();
-        } catch (error) {
-            console.error("Error saving category:", error);
-            toast.error("Failed to save the category. Please try again.");
         } finally {
             setIsSaving(false);
         }
