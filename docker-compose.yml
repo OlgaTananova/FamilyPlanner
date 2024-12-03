@@ -1,11 +1,27 @@
+version: "3.8"
 services:
-  postgres:
+  postgres-catalog:
     image: postgres
     environment:
-      - POSTGRES_PASSWORD=postgrespw
+      - POSTGRES_USER=${POSTGRES_CATALOG_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_CATALOG_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_CATALOG_DATABASE}
     ports:
-      - 5432:5432  
+      - 5432:5432
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - pgdata-catalog:/var/lib/postgresql/data
+
+  postgres-shopping:
+    image: postgres
+    environment:
+      - POSTGRES_USER=${POSTGRES_SHOPPING_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_SHOPPING_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_SHOPPING_DATABASE}
+    ports:
+      - 5433:5432
+    volumes:
+      - pgdata-shopping:/var/lib/postgresql/data
+
 volumes:
-  pgdata:      
+  pgdata-catalog:
+  pgdata-shopping:
