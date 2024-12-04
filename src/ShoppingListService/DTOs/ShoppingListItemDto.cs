@@ -10,12 +10,10 @@ public class ShoppingListItemDto
     public string CategoryName { get; set; }
     public Guid ShoppingListId { get; set; }
     public Guid CategoryId { get; set; }
-    [Required]
     public string Unit { get; set; }
     public decimal Quantity { get; set; }
     public decimal PricePerUnit { get; set; } = 0.00M;
     public decimal Price { get; set; } = 0.00M;
-    [Required]
     public string Status { get; set; }
     public bool IsOrphaned { get; set; }
 

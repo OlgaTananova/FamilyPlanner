@@ -1,5 +1,8 @@
+using Contracts.Catalog;
 using DotNetEnv;
+using MassTransit;
 using Microsoft.EntityFrameworkCore;
+using ShoppingListService.Consumers;
 using ShoppingListService.Data;
 using ShoppingListService.Helpers;
 
@@ -13,10 +16,12 @@ var username = Environment.GetEnvironmentVariable("POSTGRES_USER");
 var password = Environment.GetEnvironmentVariable("POSTGRES_PASSWORD");
 var database = Environment.GetEnvironmentVariable("POSTGRES_DATABASE");
 var adIstance = Environment.GetEnvironmentVariable("AZURE_AD_B2C_INSTANCE");
-var clientId= Environment.GetEnvironmentVariable("AZURE_AD_B2C_CLIENT_ID");
-var domain= Environment.GetEnvironmentVariable("AZURE_AD_B2C_DOMAIN");
+var clientId = Environment.GetEnvironmentVariable("AZURE_AD_B2C_CLIENT_ID");
+var domain = Environment.GetEnvironmentVariable("AZURE_AD_B2C_DOMAIN");
 var policy = Environment.GetEnvironmentVariable("AZURE_AD_B2C_SIGN_UP_SIGN_IN_POLICY_ID");
 var issuer = Environment.GetEnvironmentVariable("AZURE_AD_B2C_ISSUER");
+var rabbitmqUser = Environment.GetEnvironmentVariable("RABBIT_MQ_USER");
+var rabbitmqPassword = Environment.GetEnvironmentVariable("RABBIT_MQ_PASSWORD");
 
 
 // Add configuration sources
@@ -39,8 +44,28 @@ builder.Services.AddDbContext<ShoppingListContext>(opt =>
 {
     opt.UseNpgsql(connectionString);
 });
+builder.Services.AddMassTransit(x =>
+{
+    x.AddConsumersFromNamespaceContaining<CatalogItemCreatedConsumer>();
+    x.SetEndpointNameFormatter(new KebabCaseEndpointNameFormatter("shoppinglist", false));
+    x.UsingRabbitMq((context, cfg) =>
+    {
+        cfg.UseMessageRetry(r =>
+        {
+            r.Handle<RabbitMqConnectionException>();
+            r.Interval(5, TimeSpan.FromSeconds(10));
+        });
+        cfg.Host(builder.Configuration["RabbitMq:Host"], "/", h =>
+        {
+            h.Username(rabbitmqUser);
+            h.Password(rabbitmqPassword);
+        });
 
-// Add Automapper
+        cfg.ConfigureEndpoints(context);
+    });
+});
+
+builder.Services.AddAutoMapper(typeof(MappingProfile));
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -59,6 +84,14 @@ app.UseAuthorization();
 
 app.MapControllers();
 
+try
+{
+    DbInitializer.InitDb(app);
+}
+catch (Exception e)
+{
+    Console.WriteLine($"There is an error at db initialization. Message: {e.Message}");
+}
 app.Run();
 
 

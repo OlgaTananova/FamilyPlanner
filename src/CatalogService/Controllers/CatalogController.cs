@@ -3,6 +3,8 @@ using AutoMapper.Configuration.Annotations;
 using CatalogService.Data;
 using CatalogService.DTOs;
 using CatalogService.Entities;
+using Contracts.Catalog;
+using MassTransit;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -20,12 +22,18 @@ namespace CatalogService.Controllers
         private readonly ICatalogRepository _repo;
         private readonly string _familyName;
         private readonly string _userId;
+        private readonly IPublishEndpoint _publishEndpoint;
 
-        public CatalogController(CatalogDbContext context, IMapper mapper, ICatalogRepository repo, IHttpContextAccessor httpContextAccessor)
+        public CatalogController(CatalogDbContext context,
+        IMapper mapper, ICatalogRepository repo,
+        IHttpContextAccessor httpContextAccessor,
+        IPublishEndpoint publishEndpoint
+        )
         {
             _context = context;
             _mapper = mapper;
             _repo = repo;
+            _publishEndpoint = publishEndpoint;
             // Centralized family and user ID extraction
             _familyName = httpContextAccessor.HttpContext?.User.Claims.FirstOrDefault(c => c.Type == "family")?.Value;
             _userId = httpContextAccessor.HttpContext?.User.Claims.FirstOrDefault(c => c.Type == "userId")?.Value;
@@ -115,13 +123,26 @@ namespace CatalogService.Controllers
                 return BadRequest("The item with this name already exists.");
             }
 
+            Category category = await _repo.GetCategoryEntityById(itemDto.CategoryId, _familyName);
+
+             if (category == null)
+            {
+                return NotFound("Cannot find the category of the newly created item.");
+            }
+
             Item item = _mapper.Map<Item>(itemDto);
             item.OwnerId = _userId;
             item.Family = _familyName;
+            item.Category = category;
 
             _repo.AddItem(item);
 
             bool result = await _repo.SaveChangesAsync();
+
+            // Send a created item to the rabbitmq
+            var newItem = _mapper.Map<ItemDto>(item);
+
+            await _publishEndpoint.Publish(_mapper.Map<CatalogItemCreated>(newItem));
 
             if (!result) return BadRequest("Could not save changes to the DB.");
 

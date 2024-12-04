@@ -10,4 +10,5 @@ public class ItemDto
     public string Family { get; set; }
     public bool IsDeleted { get; set; }
     public Guid CategoryId { get; set; }
+    public string CategoryName { get; set; }
 }

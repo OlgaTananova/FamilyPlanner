@@ -1,4 +1,5 @@
 using CatalogService.Data;
+using MassTransit;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
@@ -17,6 +18,8 @@ var configuration = builder.Configuration;
 var username = configuration["PostgresUser"];
 var password = configuration["PostgresPassword"];
 var database = configuration["Database"];
+var rabbitmqUser = configuration["RABBIT_MQ_USER"];
+var rabbitmqPassword = configuration["RABBIT_MQ_PASSWORD"];
 
 
 // Construct the connection string
@@ -46,6 +49,27 @@ builder.Services.AddCors(options =>
         policy.WithOrigins("http://localhost:3000") // Allow only these origins
               .AllowAnyHeader()            // Allow any headers
               .AllowAnyMethod();           // Allow any HTTP methods
+    });
+});
+
+builder.Services.AddMassTransit(x =>
+{
+    // Set the endpoint name formatter to use kebab case
+    x.SetEndpointNameFormatter(new KebabCaseEndpointNameFormatter("catalog", false));
+    x.UsingRabbitMq((context, cfg) =>
+    {
+        cfg.UseMessageRetry(r =>
+        {
+            r.Handle<RabbitMqConnectionException>();
+            r.Interval(5, TimeSpan.FromSeconds(10));
+        });
+        cfg.Host(builder.Configuration["RabbitMq:Host"], "/", h =>
+        {
+            h.Username(rabbitmqUser);
+            h.Password(rabbitmqPassword);
+        });
+
+        cfg.ConfigureEndpoints(context);
     });
 });
 

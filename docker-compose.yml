@@ -21,6 +21,15 @@ services:
       - 5433:5432
     volumes:
       - pgdata-shopping:/var/lib/postgresql/data
+  rabbitmq:
+      image: rabbitmq:3-management-alpine
+      ports: 
+      - 5672:5672
+      - 15672:15672
+      environment:
+        - RABBITMQ_DEFAULT_USER=${RABBIT_MQ_USER}
+        - RABBITMQ_DEFAULT_PASS=${RABBIT_MQ_PASSWORD}
+
 
 volumes:
   pgdata-catalog:

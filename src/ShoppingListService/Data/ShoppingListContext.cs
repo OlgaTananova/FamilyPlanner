@@ -11,8 +11,22 @@ public class ShoppingListContext : DbContext
     {
 
     }
-    DbSet<CatalogItem> CatalogItems { get; set; }
-    DbSet<ShoppingList> ShoppingLists { get; set; }
-    DbSet<ShoppingListItem> ShoppingListItems { get; set; }
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<ShoppingList>()
+            .HasIndex(sl => new { sl.OwnerId, sl.Family });
+
+        modelBuilder.Entity<ShoppingListItem>()
+            .HasIndex(sli => new { sli.ShoppingListId, sli.CatalogItemId });
+
+        modelBuilder.Entity<ShoppingListItem>()
+            .HasOne(sli => sli.CatalogItem)
+            .WithMany() // if there is no reverse navigation property in CatalogItem
+            .HasForeignKey(sli => sli.CatalogItemId);
+    }
+    public DbSet<CatalogItem> CatalogItems { get; set; }
+    public DbSet<ShoppingList> ShoppingLists { get; set; }
+    public DbSet<ShoppingListItem> ShoppingListItems { get; set; }
 
 }
