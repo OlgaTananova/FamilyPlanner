@@ -28,12 +28,12 @@ namespace ShoppingListService.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("CategoryId")
-                        .HasColumnType("uuid");
-
                     b.Property<string>("CategoryName")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<Guid>("CategorySKU")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("Family")
                         .IsRequired()
@@ -49,6 +49,9 @@ namespace ShoppingListService.Migrations
                     b.Property<string>("OwnerId")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<Guid>("SKU")
+                        .HasColumnType("uuid");
 
                     b.HasKey("Id");
 
@@ -108,6 +111,7 @@ namespace ShoppingListService.Migrations
                         .HasColumnType("boolean");
 
                     b.Property<string>("Name")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("OwnerId")

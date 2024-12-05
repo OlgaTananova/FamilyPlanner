@@ -30,7 +30,6 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 
 // Add services to the container.
 
-
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddDbContext<CatalogDbContext>(opt =>
@@ -56,6 +55,13 @@ builder.Services.AddMassTransit(x =>
 {
     // Set the endpoint name formatter to use kebab case
     x.SetEndpointNameFormatter(new KebabCaseEndpointNameFormatter("catalog", false));
+
+    // Outbox for messages if the rabbitmq is not avaliable
+    x.AddEntityFrameworkOutbox<CatalogDbContext>(o => {
+        o.QueryDelay = TimeSpan.FromSeconds(10);
+        o.UsePostgres();
+        o.UseBusOutbox();
+    });
     x.UsingRabbitMq((context, cfg) =>
     {
         cfg.UseMessageRetry(r =>
@@ -68,7 +74,7 @@ builder.Services.AddMassTransit(x =>
             h.Username(rabbitmqUser);
             h.Password(rabbitmqPassword);
         });
-
+      
         cfg.ConfigureEndpoints(context);
     });
 });

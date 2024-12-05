@@ -47,6 +47,10 @@ builder.Services.AddDbContext<ShoppingListContext>(opt =>
 builder.Services.AddMassTransit(x =>
 {
     x.AddConsumersFromNamespaceContaining<CatalogItemCreatedConsumer>();
+    x.AddConsumersFromNamespaceContaining<CatalogItemUpdatedConsumer>();
+    x.AddConsumersFromNamespaceContaining<CatalogCategoryUpdatedConsumer>();
+    x.AddConsumersFromNamespaceContaining<CatalogItemDeletedConsumer>();
+    
     x.SetEndpointNameFormatter(new KebabCaseEndpointNameFormatter("shoppinglist", false));
     x.UsingRabbitMq((context, cfg) =>
     {
@@ -60,6 +64,13 @@ builder.Services.AddMassTransit(x =>
             h.Username(rabbitmqUser);
             h.Password(rabbitmqPassword);
         });
+
+        //    cfg.ReceiveEndpoint("//", e =>
+        // {
+        //     // if the db is down the massage bus will retry to deliver the message 5 times with an interval of 5 sec
+        //     e.UseMessageRetry(r => r.Interval(5, 5));
+        //     e.ConfigureConsumer<CatalogItemCreatedConsumer>(context);
+        // });
 
         cfg.ConfigureEndpoints(context);
     });

@@ -125,7 +125,7 @@ namespace CatalogService.Controllers
 
             Category category = await _repo.GetCategoryEntityById(itemDto.CategoryId, _familyName);
 
-             if (category == null)
+            if (category == null)
             {
                 return NotFound("Cannot find the category of the newly created item.");
             }
@@ -136,13 +136,13 @@ namespace CatalogService.Controllers
             item.Category = category;
 
             _repo.AddItem(item);
-
-            bool result = await _repo.SaveChangesAsync();
-
             // Send a created item to the rabbitmq
             var newItem = _mapper.Map<ItemDto>(item);
 
             await _publishEndpoint.Publish(_mapper.Map<CatalogItemCreated>(newItem));
+
+
+            bool result = await _repo.SaveChangesAsync();
 
             if (!result) return BadRequest("Could not save changes to the DB.");
 
@@ -161,9 +161,12 @@ namespace CatalogService.Controllers
 
             category.Name = categoryDto.Name ?? category.Name;
 
+            CategoryDto updatedCategory = _mapper.Map<CategoryDto>(category);
+            await _publishEndpoint.Publish(_mapper.Map<CatalogCategoryUpdated>(updatedCategory));
+
             bool result = await _repo.SaveChangesAsync();
 
-            if (result) return Ok(_mapper.Map<CategoryDto>(category));
+            if (result) return Ok(updatedCategory);
 
             return BadRequest("Problem saving changes");
 
@@ -182,17 +185,14 @@ namespace CatalogService.Controllers
                 return NotFound("The item or category was not found.");
             }
 
-            item.Name = itemDto.Name ?? item.Name;
-            item.CategoryId = itemDto.CategoryId;
+            await _repo.UpdateItemAsync(item, itemDto);
 
-            if (!category.Items.Contains(item))
-            {
-                category.Items.Add(item);
-            }
+            ItemDto updatedItem = _mapper.Map<ItemDto>(item);
+            await _publishEndpoint.Publish(_mapper.Map<CatalogItemUpdated>(updatedItem));
 
             bool result = await _repo.SaveChangesAsync();
 
-            if (result) return Ok(_mapper.Map<ItemDto>(item));
+            if (result) return Ok(updatedItem);
 
             return BadRequest("Problem saving changes");
 
@@ -236,6 +236,10 @@ namespace CatalogService.Controllers
             }
 
             item.IsDeleted = true;
+
+            ItemDto deletedItem = _mapper.Map<ItemDto>(item);
+
+            await _publishEndpoint.Publish(_mapper.Map<CatalogItemDeleted>(deletedItem));
 
             bool result = await _repo.SaveChangesAsync();
 

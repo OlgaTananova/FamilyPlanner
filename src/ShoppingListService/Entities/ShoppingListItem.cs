@@ -23,10 +23,15 @@ public enum Status
 public class ShoppingListItem
 {
     public Guid Id { get; set; }
+    [Required]
     public string Name { get; set; }
+    [Required]
     public Guid ShoppingListId { get; set; }
+
+    [Required]
     public Guid CatalogItemId { get; set; } // navigation property
     public CatalogItem CatalogItem { get; set; } // navigation property
+
     public Units Unit { get; set; } = Entities.Units.pcs;
     public decimal Quantity { get; set; } = 1.00M;
     public decimal PricePerUnit { get; set; } = 0.00M;

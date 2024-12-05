@@ -143,3 +143,4 @@ C:\Users\Olga\OneDrive\Documents\.NET\FamilyPlanner\src\ShoppingListService\bin\
 C:\Users\Olga\OneDrive\Documents\.NET\FamilyPlanner\src\ShoppingListService\bin\Debug\net8.0\MassTransit.Abstractions.dll
 C:\Users\Olga\OneDrive\Documents\.NET\FamilyPlanner\src\ShoppingListService\bin\Debug\net8.0\MassTransit.RabbitMqTransport.dll
 C:\Users\Olga\OneDrive\Documents\.NET\FamilyPlanner\src\ShoppingListService\bin\Debug\net8.0\RabbitMQ.Client.dll
+C:\Users\Olga\OneDrive\Documents\.NET\FamilyPlanner\src\ShoppingListService\bin\Debug\net8.0\FluentValidation.dll

@@ -5,6 +5,7 @@ namespace CatalogService.DTOs;
 public class CategoryDto
 {
     public Guid Id { get; set; }
+    public Guid SKU { get; set; }
     public string Name { get; set; }
     public string OwnerId { get; set; }
     public string Family { get; set; }

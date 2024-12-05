@@ -99,6 +99,20 @@ public class CatalogRepository : ICatalogRepository
                 .FirstOrDefaultAsync(x => x.Name.ToLower().Trim() == normalizedString);
     }
 
+    public async Task UpdateItemAsync(Item item, UpdateItemDto itemDto)
+    {
+        if (item.CategoryId != itemDto.CategoryId)
+        {
+            // Update CategoryId and reload the Category navigation property
+            item.CategoryId = itemDto.CategoryId;
+            item.Category = await _context.Categories.FindAsync(itemDto.CategoryId);
+        }
+
+        // Update other properties
+        item.Name = itemDto.Name ?? item.Name;
+        _context.Items.Update(item);
+    }
+
     public async Task<bool> SaveChangesAsync()
     {
         return await _context.SaveChangesAsync() > 0;

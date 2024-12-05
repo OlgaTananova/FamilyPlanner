@@ -14,6 +14,7 @@ public interface ICatalogRepository
     Task<Item> GetItemEntityByIdAsync(Guid id, string familyName);
     Task<Item> GetItemEntityByNameAsync(string name, string familyName);
     Task<Category> GetCategoryEntityByName(string name, string familyName);
+    Task UpdateItemAsync(Item item, UpdateItemDto itemDto);
     void AddCategory(Category category);
     void AddItem(Item item);
 
