@@ -10,6 +10,7 @@ public class CatalogItem
     public Guid SKU { get; set; }
     [Required]
     public string Name { get; set; }
+    public int Count { get; set; }  = 0;
 
     [Required]
     public Guid CategorySKU { get; set; }

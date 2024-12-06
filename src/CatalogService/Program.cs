@@ -57,7 +57,8 @@ builder.Services.AddMassTransit(x =>
     x.SetEndpointNameFormatter(new KebabCaseEndpointNameFormatter("catalog", false));
 
     // Outbox for messages if the rabbitmq is not avaliable
-    x.AddEntityFrameworkOutbox<CatalogDbContext>(o => {
+    x.AddEntityFrameworkOutbox<CatalogDbContext>(o =>
+    {
         o.QueryDelay = TimeSpan.FromSeconds(10);
         o.UsePostgres();
         o.UseBusOutbox();
@@ -74,7 +75,7 @@ builder.Services.AddMassTransit(x =>
             h.Username(rabbitmqUser);
             h.Password(rabbitmqPassword);
         });
-      
+
         cfg.ConfigureEndpoints(context);
     });
 });
@@ -112,8 +113,7 @@ builder.Services.AddAuthorization(options =>
 
 
 var app = builder.Build();
-var policyProvider = app.Services.GetService<IAuthorizationPolicyProvider>();
-Console.WriteLine($"Policies registered: {policyProvider.GetType().Name}");
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {

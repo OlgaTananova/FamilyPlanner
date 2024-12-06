@@ -35,6 +35,9 @@ namespace ShoppingListService.Migrations
                     b.Property<Guid>("CategorySKU")
                         .HasColumnType("uuid");
 
+                    b.Property<int>("Count")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Family")
                         .IsRequired()
                         .HasColumnType("text");

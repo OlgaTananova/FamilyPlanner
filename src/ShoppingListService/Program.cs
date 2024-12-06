@@ -1,7 +1,9 @@
 using Contracts.Catalog;
 using DotNetEnv;
 using MassTransit;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Identity.Web;
 using ShoppingListService.Consumers;
 using ShoppingListService.Data;
 using ShoppingListService.Helpers;
@@ -10,16 +12,6 @@ var builder = WebApplication.CreateBuilder(args);
 
 Env.Load();
 
-
-// Add configuration sources
-var username = Environment.GetEnvironmentVariable("POSTGRES_USER");
-var password = Environment.GetEnvironmentVariable("POSTGRES_PASSWORD");
-var database = Environment.GetEnvironmentVariable("POSTGRES_DATABASE");
-var adIstance = Environment.GetEnvironmentVariable("AZURE_AD_B2C_INSTANCE");
-var clientId = Environment.GetEnvironmentVariable("AZURE_AD_B2C_CLIENT_ID");
-var domain = Environment.GetEnvironmentVariable("AZURE_AD_B2C_DOMAIN");
-var policy = Environment.GetEnvironmentVariable("AZURE_AD_B2C_SIGN_UP_SIGN_IN_POLICY_ID");
-var issuer = Environment.GetEnvironmentVariable("AZURE_AD_B2C_ISSUER");
 var rabbitmqUser = Environment.GetEnvironmentVariable("RABBIT_MQ_USER");
 var rabbitmqPassword = Environment.GetEnvironmentVariable("RABBIT_MQ_PASSWORD");
 
@@ -50,7 +42,7 @@ builder.Services.AddMassTransit(x =>
     x.AddConsumersFromNamespaceContaining<CatalogItemUpdatedConsumer>();
     x.AddConsumersFromNamespaceContaining<CatalogCategoryUpdatedConsumer>();
     x.AddConsumersFromNamespaceContaining<CatalogItemDeletedConsumer>();
-    
+
     x.SetEndpointNameFormatter(new KebabCaseEndpointNameFormatter("shoppinglist", false));
     x.UsingRabbitMq((context, cfg) =>
     {
@@ -76,9 +68,49 @@ builder.Services.AddMassTransit(x =>
     });
 });
 
-builder.Services.AddAutoMapper(typeof(MappingProfile));
+builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowSpecificOrigins", policy =>
+    {
+        policy.WithOrigins("http://localhost:3000") // Allow only these origins
+              .AllowAnyHeader()            // Allow any headers
+              .AllowAnyMethod();           // Allow any HTTP methods
+    });
+});
+
+// Configure authentication with Azure AD B2C
+
+builder.Services.AddAuthentication("Bearer")
+    .AddMicrosoftIdentityWebApi(options =>
+    {
+        builder.Configuration.Bind("AzureAdB2C", options);
+    }, options => builder.Configuration.Bind("AzureAdB2C", options));
+
+builder.Services.AddScoped<IClaimsTransformation, CustomClaimsTransformation>();
+builder.Services.AddScoped<IShoppingListService, ShoppingListService.Data.ShoppingListService>();
+
+// Add authorization
+builder.Services.AddAuthorization(options =>
+{
+    // IsAdmin Policy
+    options.AddPolicy("IsAdmin", policy =>
+    {
+        policy.RequireAssertion(context =>
+            context.User.HasClaim(c => c.Type == "admin" && c.Value == "true"));
+    });
+
+    // IsAdult Policy
+    options.AddPolicy("IsAdult", policy =>
+    {
+        policy.RequireAssertion(context =>
+            context.User.HasClaim(c => c.Type == "role" &&
+                (c.Value == "Parent" || c.Value == "Other member")));
+    });
+}
+);
 
 var app = builder.Build();
 
@@ -88,9 +120,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
-app.UseHttpsRedirection();
-
+app.UseCors("AllowSpecificOrigins");
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
