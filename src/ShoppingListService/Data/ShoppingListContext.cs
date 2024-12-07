@@ -20,10 +20,6 @@ public class ShoppingListContext : DbContext
         modelBuilder.Entity<ShoppingListItem>()
             .HasIndex(sli => new { sli.ShoppingListId, sli.CatalogItemId });
 
-        modelBuilder.Entity<ShoppingListItem>()
-            .HasOne(sli => sli.CatalogItem)
-            .WithMany() // if there is no reverse navigation property in CatalogItem
-            .HasForeignKey(sli => sli.CatalogItemId);
     }
     public DbSet<CatalogItem> CatalogItems { get; set; }
     public DbSet<ShoppingList> ShoppingLists { get; set; }

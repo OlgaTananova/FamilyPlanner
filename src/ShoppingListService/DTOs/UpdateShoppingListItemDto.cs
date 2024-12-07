@@ -6,8 +6,6 @@ namespace ShoppingListService.DTOs;
 
 public class UpdateShoppingListItemDto
 {
-    [Required]
-    public Guid Id { get; set; }
     public Units Unit { get; set; }
     public decimal Quantity { get; set; }
     public decimal PricePerUnit { get; set; }

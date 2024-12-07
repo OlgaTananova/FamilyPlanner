@@ -7,7 +7,7 @@ public class ShoppingListItemDto
 {
     public Guid Id { get; set; }
     public string Name { get; set; }
-    public Guid CatalogItemSKU { get; set; }
+    public Guid SKU { get; set; }
     public string CategoryName { get; set; }
     public Guid CategorySKU { get; set; }
     public Guid ShoppingListId { get; set; }

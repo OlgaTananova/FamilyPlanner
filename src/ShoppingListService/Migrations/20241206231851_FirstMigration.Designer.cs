@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using ShoppingListService.Data;
@@ -11,9 +12,11 @@ using ShoppingListService.Data;
 namespace ShoppingListService.Migrations
 {
     [DbContext(typeof(ShoppingListContext))]
-    partial class ShoppingListContextModelSnapshot : ModelSnapshot
+    [Migration("20241206231851_FirstMigration")]
+    partial class FirstMigration
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -106,6 +109,13 @@ namespace ShoppingListService.Migrations
                     b.Property<Guid>("CatalogItemId")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("CategoryName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("CategorySKU")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("Family")
                         .IsRequired()
                         .HasColumnType("text");
@@ -130,6 +140,9 @@ namespace ShoppingListService.Migrations
                     b.Property<decimal>("Quantity")
                         .HasColumnType("numeric");
 
+                    b.Property<Guid>("SKU")
+                        .HasColumnType("uuid");
+
                     b.Property<Guid>("ShoppingListId")
                         .HasColumnType("uuid");
 
@@ -141,8 +154,6 @@ namespace ShoppingListService.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CatalogItemId");
-
                     b.HasIndex("ShoppingListId", "CatalogItemId");
 
                     b.ToTable("ShoppingListItems");
@@ -150,19 +161,11 @@ namespace ShoppingListService.Migrations
 
             modelBuilder.Entity("ShoppingListService.Entities.ShoppingListItem", b =>
                 {
-                    b.HasOne("ShoppingListService.Entities.CatalogItem", "CatalogItem")
-                        .WithMany()
-                        .HasForeignKey("CatalogItemId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("ShoppingListService.Entities.ShoppingList", null)
                         .WithMany("Items")
                         .HasForeignKey("ShoppingListId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("CatalogItem");
                 });
 
             modelBuilder.Entity("ShoppingListService.Entities.ShoppingList", b =>

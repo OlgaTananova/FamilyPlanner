@@ -10,8 +10,8 @@ public class ShoppingList
 {
     public Guid Id { get; set;}
     public string Heading { get; set; } = "Shopping list";
-    public DateTime CreatedAt { get; set; } = DateTime.Now;
-    public List<ShoppingListItem> Items { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public List<ShoppingListItem> Items { get; set; } = new List<ShoppingListItem>();
     public decimal SalesTax { get; set; } = 0.00M;
     public bool IsArchived { get; set; } = false;
     public bool IsDeleted { get; set; } = false;

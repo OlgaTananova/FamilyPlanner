@@ -13,24 +13,23 @@ public class MappingProfile : Profile
     {
         // ShoppingListItem -> ShoppingListItemDto
         CreateMap<ShoppingListItem, ShoppingListItemDto>()
-            .ForMember(dest => dest.CatalogItemSKU, opt => opt.MapFrom(s => s.CatalogItem.SKU))
             .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString()))
-            .ForMember(dest => dest.Unit, opt => opt.MapFrom(src => src.Unit.ToString()))
-            .ForMember(dest => dest.CategoryName, opt => opt.MapFrom(src => src.CatalogItem.CategoryName))
-            .ForMember(dest => dest.CategorySKU, opt => opt.MapFrom(src => src.CatalogItem.CategorySKU));
+            .ForMember(dest => dest.Unit, opt => opt.MapFrom(src => src.Unit.ToString()));
 
         // ShoppingList -> ShoppingListDto
-        CreateMap<ShoppingList, ShoppingListDto>();
+        CreateMap<ShoppingList, ShoppingListDto>()
+            .ForMember(dest => dest.Items, opt => opt.MapFrom(src => src.Items)); // Map nested items
+
 
         // ShoppingListItemDto -> ShoppingListItem
         CreateMap<ShoppingListItemDto, ShoppingListItem>()
             .ForMember(dest => dest.Status, opt => opt.MapFrom(src => Enum.Parse<Status>(src.Status)))
-            .ForMember(dest => dest.Unit, opt => opt.MapFrom(src => Enum.Parse<Units>(src.Unit)))
-            .ForMember(dest => dest.CatalogItem, opt => opt.Ignore());
+            .ForMember(dest => dest.Unit, opt => opt.MapFrom(src => Enum.Parse<Units>(src.Unit)));
+
 
         // ShoppingListDto -> ShoppingList
         CreateMap<ShoppingListDto, ShoppingList>();
-       
+
 
         //  CatalogItemCreated -> CatalogItem
         CreateMap<CatalogItemCreated, CatalogItem>();
@@ -38,5 +37,10 @@ public class MappingProfile : Profile
 
         // CatalogItem --> CatalogItem
         CreateMap<CatalogItem, CatalogItemDto>();
+
+        CreateMap<CatalogItem, ShoppingListItem>()
+            .ForMember(dest => dest.CatalogItemId, opt => opt.MapFrom(c => c.Id));
+
+
     }
 }

@@ -12,8 +12,8 @@ using ShoppingListService.Data;
 namespace ShoppingListService.Migrations
 {
     [DbContext(typeof(ShoppingListContext))]
-    [Migration("20241204223018_AddedSKU")]
-    partial class AddedSKU
+    [Migration("20241207000743_UpdatedShoppingListItem")]
+    partial class UpdatedShoppingListItem
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -37,6 +37,9 @@ namespace ShoppingListService.Migrations
 
                     b.Property<Guid>("CategorySKU")
                         .HasColumnType("uuid");
+
+                    b.Property<int>("Count")
+                        .HasColumnType("integer");
 
                     b.Property<string>("Family")
                         .IsRequired()
@@ -106,6 +109,13 @@ namespace ShoppingListService.Migrations
                     b.Property<Guid>("CatalogItemId")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("CategoryName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("CategorySKU")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("Family")
                         .IsRequired()
                         .HasColumnType("text");
@@ -129,6 +139,9 @@ namespace ShoppingListService.Migrations
 
                     b.Property<decimal>("Quantity")
                         .HasColumnType("numeric");
+
+                    b.Property<Guid>("SKU")
+                        .HasColumnType("uuid");
 
                     b.Property<Guid>("ShoppingListId")
                         .HasColumnType("uuid");

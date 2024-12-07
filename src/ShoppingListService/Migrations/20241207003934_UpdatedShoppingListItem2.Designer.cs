@@ -12,8 +12,8 @@ using ShoppingListService.Data;
 namespace ShoppingListService.Migrations
 {
     [DbContext(typeof(ShoppingListContext))]
-    [Migration("20241203212729_InitialMigration")]
-    partial class InitialMigration
+    [Migration("20241207003934_UpdatedShoppingListItem2")]
+    partial class UpdatedShoppingListItem2
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -31,11 +31,15 @@ namespace ShoppingListService.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("CategoryId")
+                    b.Property<string>("CategoryName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("CategorySKU")
                         .HasColumnType("uuid");
 
-                    b.Property<string>("CategoryName")
-                        .HasColumnType("text");
+                    b.Property<int>("Count")
+                        .HasColumnType("integer");
 
                     b.Property<string>("Family")
                         .IsRequired()
@@ -45,11 +49,15 @@ namespace ShoppingListService.Migrations
                         .HasColumnType("boolean");
 
                     b.Property<string>("Name")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("OwnerId")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<Guid>("SKU")
+                        .HasColumnType("uuid");
 
                     b.HasKey("Id");
 
@@ -101,6 +109,13 @@ namespace ShoppingListService.Migrations
                     b.Property<Guid>("CatalogItemId")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("CategoryName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("CategorySKU")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("Family")
                         .IsRequired()
                         .HasColumnType("text");
@@ -109,6 +124,7 @@ namespace ShoppingListService.Migrations
                         .HasColumnType("boolean");
 
                     b.Property<string>("Name")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("OwnerId")
@@ -123,6 +139,9 @@ namespace ShoppingListService.Migrations
 
                     b.Property<decimal>("Quantity")
                         .HasColumnType("numeric");
+
+                    b.Property<Guid>("SKU")
+                        .HasColumnType("uuid");
 
                     b.Property<Guid>("ShoppingListId")
                         .HasColumnType("uuid");
@@ -150,13 +169,15 @@ namespace ShoppingListService.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("ShoppingListService.Entities.ShoppingList", null)
+                    b.HasOne("ShoppingListService.Entities.ShoppingList", "ShoppingList")
                         .WithMany("Items")
                         .HasForeignKey("ShoppingListId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("CatalogItem");
+
+                    b.Navigation("ShoppingList");
                 });
 
             modelBuilder.Entity("ShoppingListService.Entities.ShoppingList", b =>

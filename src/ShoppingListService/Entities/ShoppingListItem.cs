@@ -26,11 +26,21 @@ public class ShoppingListItem
     [Required]
     public string Name { get; set; }
     [Required]
-    public Guid ShoppingListId { get; set; }
+    public Guid ShoppingListId { get; set; } // foreign key
 
     [Required]
-    public Guid CatalogItemId { get; set; } // navigation property
+    public Guid CatalogItemId { get; set; } // foreign key
+    
+    [Required]
+    public Guid SKU { get; set; }
+    [Required]
+    public Guid CategorySKU { get; set; }
+    [Required]
+    public string CategoryName { get; set; }
+
     public CatalogItem CatalogItem { get; set; } // navigation property
+
+    public ShoppingList ShoppingList { get; set; }
 
     public Units Unit { get; set; } = Entities.Units.pcs;
     public decimal Quantity { get; set; } = 1.00M;

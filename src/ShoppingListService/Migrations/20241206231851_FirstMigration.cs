@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace ShoppingListService.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialMigration : Migration
+    public partial class FirstMigration : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -16,9 +16,11 @@ namespace ShoppingListService.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    Name = table.Column<string>(type: "text", nullable: true),
-                    CategoryId = table.Column<Guid>(type: "uuid", nullable: false),
-                    CategoryName = table.Column<string>(type: "text", nullable: true),
+                    SKU = table.Column<Guid>(type: "uuid", nullable: false),
+                    Name = table.Column<string>(type: "text", nullable: false),
+                    Count = table.Column<int>(type: "integer", nullable: false),
+                    CategorySKU = table.Column<Guid>(type: "uuid", nullable: false),
+                    CategoryName = table.Column<string>(type: "text", nullable: false),
                     IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
                     Family = table.Column<string>(type: "text", nullable: false),
                     OwnerId = table.Column<string>(type: "text", nullable: false)
@@ -51,9 +53,12 @@ namespace ShoppingListService.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    Name = table.Column<string>(type: "text", nullable: true),
+                    Name = table.Column<string>(type: "text", nullable: false),
                     ShoppingListId = table.Column<Guid>(type: "uuid", nullable: false),
                     CatalogItemId = table.Column<Guid>(type: "uuid", nullable: false),
+                    SKU = table.Column<Guid>(type: "uuid", nullable: false),
+                    CategorySKU = table.Column<Guid>(type: "uuid", nullable: false),
+                    CategoryName = table.Column<string>(type: "text", nullable: false),
                     Unit = table.Column<int>(type: "integer", nullable: false),
                     Quantity = table.Column<decimal>(type: "numeric", nullable: false),
                     PricePerUnit = table.Column<decimal>(type: "numeric", nullable: false),
@@ -67,23 +72,12 @@ namespace ShoppingListService.Migrations
                 {
                     table.PrimaryKey("PK_ShoppingListItems", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_ShoppingListItems_CatalogItems_CatalogItemId",
-                        column: x => x.CatalogItemId,
-                        principalTable: "CatalogItems",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
                         name: "FK_ShoppingListItems_ShoppingLists_ShoppingListId",
                         column: x => x.ShoppingListId,
                         principalTable: "ShoppingLists",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
-
-            migrationBuilder.CreateIndex(
-                name: "IX_ShoppingListItems_CatalogItemId",
-                table: "ShoppingListItems",
-                column: "CatalogItemId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_ShoppingListItems_ShoppingListId_CatalogItemId",
@@ -100,10 +94,10 @@ namespace ShoppingListService.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "ShoppingListItems");
+                name: "CatalogItems");
 
             migrationBuilder.DropTable(
-                name: "CatalogItems");
+                name: "ShoppingListItems");
 
             migrationBuilder.DropTable(
                 name: "ShoppingLists");
