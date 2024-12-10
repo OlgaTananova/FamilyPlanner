@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using ShoppingListService.Data;
 using ShoppingListService.DTOs;
 using ShoppingListService.Entities;
+using ShoppingListService.Helpers;
 
 namespace ShoppingListService.Controllers
 {
@@ -37,9 +38,16 @@ namespace ShoppingListService.Controllers
         public async Task<ActionResult<List<CatalogItemDto>>> GetCatalogItems()
         {
             var result = await _shoppingListService.GetCatalogItemsAsync(_familyName);
-            return Ok(result);
+
+            if (result.Count > 0)
+            {
+                List<CatalogItemDto> items = _mapper.Map<List<CatalogItemDto>>(result);
+                return Ok(items);
+            }
+            return Ok(new List<CatalogItemDto>());
 
         }
+
         // Create a new shopping list
         [HttpPost]
         public async Task<ActionResult<ShoppingListDto>> CreateShoppingList()
@@ -53,6 +61,23 @@ namespace ShoppingListService.Controllers
             bool result = await _shoppingListService.SaveChangesAsync();
             if (!result) return BadRequest("Could not save changes to the DB");
             return CreatedAtAction(nameof(GetShoppingList), new { shoppingList.Id }, shoppingList);
+        }
+
+        [HttpGet]
+        public async Task<ActionResult<List<ShoppingListDto>>> GetShoppingLists()
+        {
+            var result = await _shoppingListService.GetShoppingListsAsync(_familyName);
+
+            List<ShoppingListDto> shoppingLists;
+
+            if (result.Count > 0)
+            {
+                shoppingLists = _mapper.Map<List<ShoppingListDto>>(result);
+                return Ok(shoppingLists);
+            }
+
+            return Ok(new List<ShoppingListDto>());
+
         }
 
         // Get shopping list by Id
@@ -72,6 +97,15 @@ namespace ShoppingListService.Controllers
         [HttpPut("{id}")]
         public async Task<ActionResult<ShoppingListDto>> UpdateShoppingList(Guid id, UpdateShoppingListDto shoppingListDto)
         {
+            // Validate the incoming DTO
+            var validator = new UpdateShoppingListDtoValidator();
+            var validationResult = validator.Validate(shoppingListDto);
+
+            if (!validationResult.IsValid)
+            {
+                return BadRequest(validationResult.Errors.Select(e => e.ErrorMessage));
+            }
+
             ShoppingList shoppingList = await _shoppingListService.GetShoppingListById(id, _familyName);
 
             if (shoppingList == null)
@@ -96,6 +130,7 @@ namespace ShoppingListService.Controllers
         public async Task<ActionResult<ShoppingListDto>> CreateShoppingListItem(Guid id, CreateShoppingListItemDto item)
         {
             ShoppingList shoppingList = await _shoppingListService.GetShoppingListById(id, _familyName);
+
             if (shoppingList == null)
             {
                 return NotFound($"Cannot find the shopping list with id {id} to add a new item");
@@ -132,6 +167,16 @@ namespace ShoppingListService.Controllers
         [HttpPut("{id}/items/{itemId}")]
         public async Task<ActionResult<ShoppingListDto>> UpdateShoppingListItem(Guid id, Guid itemId, UpdateShoppingListItemDto updateShoppingListItemDto)
         {
+
+            // Validate the DTO using FluentValidation
+            var validator = new UpdateShoppingListItemDtoValidator();
+            var validationResult = validator.Validate(updateShoppingListItemDto);
+
+            if (!validationResult.IsValid)
+            {
+                return BadRequest(validationResult.Errors.Select(e => e.ErrorMessage));
+            }
+
             ShoppingListItem shoppingListItem = await _shoppingListService.GetShoppingListItemById(itemId, id, _familyName);
             if (shoppingListItem == null)
             {
@@ -159,17 +204,74 @@ namespace ShoppingListService.Controllers
 
         // Delete shopping list
         [HttpDelete("{id}")]
-        public async Task DeleteShoppingList(Guid id)
+        public async Task<IActionResult> DeleteShoppingList(Guid id)
         {
-            await Task.CompletedTask;
+            ShoppingList shoppingList = await _shoppingListService.GetShoppingListById(id, _familyName);
+
+            if (shoppingList == null)
+            {
+                return NotFound($"Cannot find the shopping list with id {id} to add a new item");
+            }
+
+            _shoppingListService.DeleteShoppingList(shoppingList);
+            bool result = await _shoppingListService.SaveChangesAsync();
+            if (!result)
+            {
+                return BadRequest("Could not save changes to the DB");
+            }
+
+            return NoContent();
         }
 
         // Delete shopping list item 
         [HttpDelete("{id}/items/{itemId}")]
-        public async Task DeleteShoppingListItem(Guid id, Guid itemId)
+        public async Task<ActionResult> DeleteShoppingListItem(Guid id, Guid itemId)
         {
-            await Task.CompletedTask;
+            ShoppingListItem shoppingListItem = await _shoppingListService.GetShoppingListItemById(itemId, id, _familyName);
+            if (shoppingListItem == null)
+            {
+                return NotFound($"Cannot find the item with id {itemId} within the shopping list with id {id}.");
+            }
+            _shoppingListService.DeleteShoppingListItem(shoppingListItem);
+
+            bool result = await _shoppingListService.SaveChangesAsync();
+
+            if (!result)
+            {
+                return BadRequest("Could not save changes to the DB");
+            }
+
+            return NoContent();
+
         }
 
+        // Get frequently bought catalog items
+        [HttpGet("fr-bought-items")]
+        public async Task<ActionResult<List<CatalogItemDto>>> GetFrequentlyBoughtItems()
+        {
+            var items = await _shoppingListService.GetFrequentlyBoughtItemsAsync(_familyName);
+
+            if (items.Count > 0)
+            {
+                List<CatalogItemDto> result = _mapper.Map<List<CatalogItemDto>>(items);
+                return Ok(result);
+            }
+            return Ok(new List<CatalogItemDto>());
+        }
+
+        [HttpGet("autocomplete-catalog-items")]
+        public async Task<ActionResult<List<CatalogItemDto>>> AutocompleteCatalogItems([FromQuery] string query)
+        {
+            if (string.IsNullOrWhiteSpace(query))
+            {
+                return BadRequest("Query parameter cannot be empty.");
+            }
+
+            var catalogItems = await _shoppingListService.AutocompleteCatalogItemsAsync(query);
+
+            var catalogItemDtos = _mapper.Map<List<CatalogItemDto>>(catalogItems);
+
+            return Ok(catalogItemDtos);
+        }
     }
 }

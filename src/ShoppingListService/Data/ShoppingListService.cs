@@ -2,6 +2,7 @@ using System;
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using ShoppingListService.DTOs;
 using ShoppingListService.Entities;
 
@@ -11,17 +12,18 @@ public class ShoppingListService : IShoppingListService
 {
     private readonly ShoppingListContext _dbcontext;
     private readonly IMapper _mapper;
+    private readonly IMemoryCache _cache;
 
-    public ShoppingListService(ShoppingListContext context, IMapper mapper)
+    public ShoppingListService(ShoppingListContext context, IMapper mapper, IMemoryCache cache)
     {
         _dbcontext = context;
         _mapper = mapper;
+        _cache = cache;
     }
-    public async Task<List<CatalogItemDto>> GetCatalogItemsAsync(string family)
+    public async Task<List<CatalogItem>> GetCatalogItemsAsync(string family)
     {
         return await _dbcontext.CatalogItems.AsQueryable()
         .Where(x => x.Family == family && !x.IsDeleted)
-        .ProjectTo<CatalogItemDto>(_mapper.ConfigurationProvider)
         .ToListAsync();
     }
     public void AddShoppingList(ShoppingList list)
@@ -57,18 +59,36 @@ public class ShoppingListService : IShoppingListService
     public async Task UpdateShoppingList(ShoppingList list, UpdateShoppingListDto dto)
     {
 
-        list.SalesTax = dto.SalesTax;
-        list.Heading = dto.Heading;
-        list.IsArchived = dto.IsArchived;
-        if (list.IsArchived)
+        // Update properties if they are not null
+        if (!string.IsNullOrEmpty(dto.Heading))
         {
-            var shoppingItems = await _dbcontext.ShoppingListItems.Include(i => i.CatalogItem).Where(x => x.ShoppingListId == list.Id).ToListAsync();
-            shoppingItems.ForEach(i =>
-            {
-                i.CatalogItem.Count++;
-                i.Status = Status.Finished;
-            });
+            list.Heading = dto.Heading;
         }
+
+        if (dto.SalesTax.HasValue)
+        {
+            list.SalesTax = dto.SalesTax.Value;
+        }
+
+        if (dto.IsArchived.HasValue)
+        {
+            list.IsArchived = dto.IsArchived.Value;
+
+            if (list.IsArchived)
+            {
+                var shoppingItems = await _dbcontext.ShoppingListItems
+                    .Include(i => i.CatalogItem)
+                    .Where(x => x.ShoppingListId == list.Id)
+                    .ToListAsync();
+
+                shoppingItems.ForEach(i =>
+                {
+                    i.CatalogItem.Count += (int)i.Quantity;
+                    i.Status = Status.Finished;
+                });
+            }
+        }
+
         _dbcontext.ShoppingLists.Update(list);
 
     }
@@ -81,19 +101,126 @@ public class ShoppingListService : IShoppingListService
         .FirstOrDefaultAsync(c => c.Id == id && c.Family == family && c.ShoppingListId == shoppingListId);
     }
 
-// TODO: add validation and logic
+    // TODO: add validation and logic
     public void UpdateShoppingListItem(ShoppingListItem item, UpdateShoppingListItemDto dto)
     {
-        item.Unit = dto.Unit;
-        item.PricePerUnit = dto.PricePerUnit;
-        item.Price = dto.Price;
-        item.Quantity = dto.Quantity;
-        item.Status = dto.Status;
+        // Parse and update Unit
+        if (!string.IsNullOrEmpty(dto.Unit) && Enum.TryParse(typeof(Units), dto.Unit, true, out var parsedUnit))
+        {
+            item.Unit = (Units)parsedUnit;
+        }
+
+        // Parse and update Status
+        if (!string.IsNullOrEmpty(dto.Status) && Enum.TryParse(typeof(Status), dto.Status, true, out var parsedStatus))
+        {
+            item.Status = (Status)parsedStatus;
+        }
+
+        // Update other properties if they are not null
+        if (dto.Quantity.HasValue) item.Quantity = dto.Quantity.Value;
+        if (dto.PricePerUnit.HasValue) item.PricePerUnit = dto.PricePerUnit.Value;
+        if (dto.Price.HasValue) item.Price = dto.Price.Value;
+
+        // Recalculate price if necessary
+        if (dto.PricePerUnit.HasValue || dto.Quantity.HasValue)
+        {
+            item.Price = item.PricePerUnit * item.Quantity;
+        }
+        else if (dto.Price.HasValue && item.Quantity >= 0)
+        {
+            item.PricePerUnit = item.Price / item.Quantity;
+        }
 
         if (item.Status == Status.Finished)
         {
-            item.CatalogItem.Count++;
+            item.CatalogItem.Count += (int)item.Quantity;
         }
         _dbcontext.ShoppingListItems.Update(item);
     }
+
+    public void DeleteShoppingListItem(ShoppingListItem item)
+    {
+        _dbcontext.ShoppingListItems.Remove(item);
+
+        if (item.Status == Status.Finished)
+        {
+            item.CatalogItem.Count -= (int)item.Quantity;
+        }
+    }
+
+    public void DeleteShoppingList(ShoppingList list)
+    {
+        list.IsDeleted = true;
+        list.Items.ForEach(x =>
+        {
+            x.IsOrphaned = true;
+        });
+        _dbcontext.ShoppingLists.Update(list);
+    }
+
+    public Task<List<ShoppingList>> GetShoppingListsAsync(string family)
+    {
+        return _dbcontext.ShoppingLists.Include(x => x.Items)
+        .Where(x => !x.IsDeleted && x.Family == family)
+        .ToListAsync();
+    }
+
+    public async Task<List<CatalogItem>> GetFrequentlyBoughtItemsAsync(string family)
+    {
+        // Define a cache key
+        const string cacheKey = "FrequentlyBoughtItems";
+
+        // Try to get the data from cache
+        if (!_cache.TryGetValue(cacheKey, out List<CatalogItem> frequentlyBoughtItems))
+        {
+            // Data not in cache, fetch from the database
+            frequentlyBoughtItems = await _dbcontext.CatalogItems
+                .Where(x => x.Family == family && !x.IsDeleted)
+                .OrderByDescending(c => c.Count) // Order by Count descending
+                .Take(10)                        // Get the top 10 items
+                .ToListAsync();
+
+            // Set cache options
+            var cacheEntryOptions = new MemoryCacheEntryOptions()
+                .SetSlidingExpiration(TimeSpan.FromHours(1)) // Cache expires after 5 minutes of inactivity
+                .SetAbsoluteExpiration(TimeSpan.FromHours(5)); // Cache expires absolutely after 1 hour
+
+            // Save data in cache
+            _cache.Set(cacheKey, frequentlyBoughtItems, cacheEntryOptions);
+        }
+
+        return frequentlyBoughtItems;
+    }
+
+    // public async Task<List<CatalogItem>> FullTextSearchCatalogItemsWithRankAsync(string query)
+    // {
+    //     var formattedQuery = query.Replace(" ", " | "); // Convert query into tsquery format
+
+    //     var sql = @"
+    //     SELECT *, ts_rank(""SearchVector"", plainto_tsquery('english', {0})) AS rank
+    //     FROM ""CatalogItems""
+    //     WHERE ""SearchVector"" @@ plainto_tsquery('english', {0})
+    //     ORDER BY rank DESC
+    //     LIMIT 10";
+
+    //     return await _dbcontext.CatalogItems
+    //         .FromSqlInterpolated(sql, formattedQuery)
+    //         .ToListAsync();
+    // }
+
+    // TODO: 
+    public async Task<List<CatalogItem>> AutocompleteCatalogItemsAsync(string query)
+    {
+        var formattedQuery = query.Replace(" ", " | ");
+
+        return await _dbcontext.CatalogItems
+            .Where(item => EF.Functions.ToTsVector("english", item.Name + " " + item.CategoryName)
+                            .Matches(EF.Functions.PlainToTsQuery("english", formattedQuery)))
+            .OrderBy(item => item.Name.StartsWith(query) ? 0 : 1) // Prioritize exact matches
+            .Take(10) // Limit results for autocomplete
+            .ToListAsync();
+    }
+
+
+
 }

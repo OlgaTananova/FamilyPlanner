@@ -39,7 +39,8 @@ public class MappingProfile : Profile
         CreateMap<CatalogItem, CatalogItemDto>();
 
         CreateMap<CatalogItem, ShoppingListItem>()
-            .ForMember(dest => dest.CatalogItemId, opt => opt.MapFrom(c => c.Id));
+            .ForMember(dest => dest.CatalogItemId, opt => opt.MapFrom(c => c.Id))
+             .ForMember(dest => dest.Id, opt => opt.Ignore());
 
 
     }
