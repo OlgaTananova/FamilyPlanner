@@ -51,7 +51,7 @@ export default function SideBar() {
             isCollapsed={isCollapsed}
           />
           <SidebarLink
-            href="/shopping-list"
+            href="/shoppinglist"
             icon={<FaShoppingCart size={24} />}
             label="Shopping List"
             isCollapsed={isCollapsed}

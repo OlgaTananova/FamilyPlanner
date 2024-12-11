@@ -182,8 +182,8 @@ public class ShoppingListService : IShoppingListService
 
             // Set cache options
             var cacheEntryOptions = new MemoryCacheEntryOptions()
-                .SetSlidingExpiration(TimeSpan.FromHours(1)) // Cache expires after 5 minutes of inactivity
-                .SetAbsoluteExpiration(TimeSpan.FromHours(5)); // Cache expires absolutely after 1 hour
+                .SetSlidingExpiration(TimeSpan.FromMinutes(10)) // Cache expires after 5 minutes of inactivity
+                .SetAbsoluteExpiration(TimeSpan.FromHours(1)); // Cache expires absolutely after 1 hour
 
             // Save data in cache
             _cache.Set(cacheKey, frequentlyBoughtItems, cacheEntryOptions);
@@ -192,35 +192,41 @@ public class ShoppingListService : IShoppingListService
         return frequentlyBoughtItems;
     }
 
-    // public async Task<List<CatalogItem>> FullTextSearchCatalogItemsWithRankAsync(string query)
-    // {
-    //     var formattedQuery = query.Replace(" ", " | "); // Convert query into tsquery format
 
-    //     var sql = @"
-    //     SELECT *, ts_rank(""SearchVector"", plainto_tsquery('english', {0})) AS rank
-    //     FROM ""CatalogItems""
-    //     WHERE ""SearchVector"" @@ plainto_tsquery('english', {0})
-    //     ORDER BY rank DESC
-    //     LIMIT 10";
-
-    //     return await _dbcontext.CatalogItems
-    //         .FromSqlInterpolated(sql, formattedQuery)
-    //         .ToListAsync();
-    // }
-
-    // TODO: 
-    public async Task<List<CatalogItem>> AutocompleteCatalogItemsAsync(string query)
+    public async Task<List<CatalogItem>> AutocompleteCatalogItemsAsync(string query, string family)
     {
-        var formattedQuery = query.Replace(" ", " | ");
 
-        return await _dbcontext.CatalogItems
-            .Where(item => EF.Functions.ToTsVector("english", item.Name + " " + item.CategoryName)
-                            .Matches(EF.Functions.PlainToTsQuery("english", formattedQuery)))
-            .OrderBy(item => item.Name.StartsWith(query) ? 0 : 1) // Prioritize exact matches
-            .Take(10) // Limit results for autocomplete
+        // Get query result from the cache
+        const string cacheKeyPrefix = "Autocomplete_";
+        string cacheKey = $"{cacheKeyPrefix}{query.ToLower()}";
+
+        if (_cache.TryGetValue(cacheKey, out List<CatalogItem> cachedItems))
+        {
+            Console.WriteLine("Return the data from the cache");
+            return cachedItems;
+        }
+
+        // query the database if the cache is empty
+        var formattedQuery = query.Replace(" ", " | "); // Convert query into tsquery format
+
+        var dbQuerySearchResult = await _dbcontext.CatalogItems
+            .FromSqlInterpolated(
+            $@"SELECT * 
+                FROM ""CatalogItems""
+                WHERE ""SearchVector"" @@ plainto_tsquery('english', {formattedQuery})
+                OR ""Name"" % {query} OR ""CategoryName"" % {query}
+                AND ""Family"" = {family}
+                ORDER BY GREATEST(similarity(""Name"", {query}), similarity(""CategoryName"", {query})) DESC
+                LIMIT 10")
             .ToListAsync();
+
+        var cacheEntryOptions = new MemoryCacheEntryOptions()
+            .SetSlidingExpiration(TimeSpan.FromMinutes(5))
+            .SetAbsoluteExpiration(TimeSpan.FromHours(1));
+
+        _cache.Set(cacheKey, dbQuerySearchResult, cacheEntryOptions);
+
+        return dbQuerySearchResult;
     }
-
-
 
 }

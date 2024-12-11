@@ -246,7 +246,7 @@ namespace ShoppingListService.Controllers
         }
 
         // Get frequently bought catalog items
-        [HttpGet("fr-bought-items")]
+        [HttpGet("catalogitems/freq-bought")]
         public async Task<ActionResult<List<CatalogItemDto>>> GetFrequentlyBoughtItems()
         {
             var items = await _shoppingListService.GetFrequentlyBoughtItemsAsync(_familyName);
@@ -259,19 +259,20 @@ namespace ShoppingListService.Controllers
             return Ok(new List<CatalogItemDto>());
         }
 
-        [HttpGet("autocomplete-catalog-items")]
-        public async Task<ActionResult<List<CatalogItemDto>>> AutocompleteCatalogItems([FromQuery] string query)
+        [HttpGet("catalogitems/search")]
+        public async Task<ActionResult<List<CatalogItemDto>>> SearchCatalogItems([FromQuery] string query)
         {
             if (string.IsNullOrWhiteSpace(query))
             {
                 return BadRequest("Query parameter cannot be empty.");
             }
 
-            var catalogItems = await _shoppingListService.AutocompleteCatalogItemsAsync(query);
+            var catalogItems = await _shoppingListService.AutocompleteCatalogItemsAsync(query, _familyName);
 
             var catalogItemDtos = _mapper.Map<List<CatalogItemDto>>(catalogItems);
 
             return Ok(catalogItemDtos);
         }
+
     }
 }

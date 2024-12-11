@@ -23,6 +23,14 @@ public class ShoppingListContext : DbContext
         modelBuilder.Entity<ShoppingListItem>()
             .HasIndex(sli => new { sli.ShoppingListId, sli.CatalogItemId });
 
+        modelBuilder.Entity<CatalogItem>()
+        .HasGeneratedTsVectorColumn(
+            p => p.SearchVector,
+            "english",  // Text search config
+            p => new { p.Name, p.CategoryName })  // Included properties
+        .HasIndex(p => p.SearchVector)
+        .HasMethod("GIN"); // Index method on the search vector (GIN or GIST)
+
     }
 
 
