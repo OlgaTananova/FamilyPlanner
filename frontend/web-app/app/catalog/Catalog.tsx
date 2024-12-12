@@ -24,14 +24,14 @@ import EditCategoryModal from "./EditCategoryModal";
 
 export default function Catalog() {
   const categories = useSelector((state: RootState) => state.categories || []);
+  const itemsWOCategories = useSelector((state: RootState) => state.categories.itemsWOCategories);
   const [showOnlyItems, setShowOnlyItems] = useState(false);
-  const [itemsWOCategories, setItemWOCategories] = useState<Item[]>([]);
   const [isAddCategoryModalOpen, setIsAddCategoryModalOpen] = useState(false);
   const [isAddItemModalOpen, setIsAddItemModalOpen] = useState(false);
   const [isEditItemModalOpen, setIsEditItemModalOpen] = useState(false);
   const [isEditCategoryModalOpen, setIsEditCategoryModalOpen] = useState(false);
-  const [editedItem, setEditedItem] = useState<{id: string, name: string, categoryId: string}>({id: "", name: "", categoryId: ""});
-  const [editedCategory, setEditedCategory] = useState<{id: string, name: string, items: Item[]}>({id: "", name: "", items: []});
+  const [editedItem, setEditedItem] = useState<{ id: string, name: string, categoryId: string }>({ id: "", name: "", categoryId: "" });
+  const [editedCategory, setEditedCategory] = useState<{ id: string, name: string, items: Item[] }>({ id: "", name: "", items: [] });
   const { acquireToken } = useAuth();
   const dispatch = useDispatch();
 
@@ -46,8 +46,6 @@ export default function Catalog() {
 
       if (fetchedCategories) {
         dispatch(setCategories(fetchedCategories));
-        const allItems = fetchedCategories.flatMap((category) => category.items).sort((a, b) => a.name.localeCompare(b.name));
-        setItemWOCategories(allItems);
       }
     }
     fetchData();
@@ -96,7 +94,7 @@ export default function Catalog() {
       <AddCategoryModal isOpen={isAddCategoryModalOpen} onClose={() => setIsAddCategoryModalOpen(false)} />
       <AddNewItemModal isOpen={isAddItemModalOpen} onClose={() => setIsAddItemModalOpen(false)} />
       <EditItemModal isOpen={isEditItemModalOpen} onClose={() => setIsEditItemModalOpen(false)} item={editedItem} />
-      <EditCategoryModal isOpen={isEditCategoryModalOpen} onClose={()=> setIsEditCategoryModalOpen(false)} category={{
+      <EditCategoryModal isOpen={isEditCategoryModalOpen} onClose={() => setIsEditCategoryModalOpen(false)} category={{
         id: editedCategory.id,
         name: editedCategory.name,
         items: editedCategory.items

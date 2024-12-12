@@ -2,11 +2,13 @@ import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 export interface Item {
     id: string;
+    sku: string;
     name: string;
     ownerId: string;
     family: string;
     isDeleted: boolean;
     categoryId: string;
+    categorySKU: string;
 }
 
 export interface Category {
@@ -15,16 +17,19 @@ export interface Category {
     ownerId: string;
     family: string;
     isDeleted: boolean;
+    sku: string;
     items: Item[];
 }
 
 
 interface CatalogState {
     categories: Category[];
+    itemsWOCategories: Item[];
 }
 
 const initialState: CatalogState = {
     categories: [],
+    itemsWOCategories: []
 };
 
 
@@ -34,12 +39,18 @@ export const catalogSlice = createSlice({
     reducers: {
         setCategories(state, action: PayloadAction<Category[]>) {
             state.categories = action.payload;
+            const allItems = state.categories.flatMap((category) => category.items).sort((a, b) => a.name.localeCompare(b.name));
+            state.itemsWOCategories = allItems;
         },
         clearCategories(state) {
-            state = initialState;
+            state.categories = initialState.categories;
+            state.itemsWOCategories = initialState.itemsWOCategories;
         },
         addCategory(state, action: PayloadAction<Category>) {
             state.categories.push(action.payload);
+            state.itemsWOCategories = state.categories
+                .flatMap((category) => category.items)
+                .sort((a, b) => a.name.localeCompare(b.name));
         },
         addItem(state, action: PayloadAction<Item>) {
             const { categoryId } = action.payload;
@@ -47,6 +58,9 @@ export const catalogSlice = createSlice({
             if (category) {
                 category.items.push(action.payload);
             }
+            state.itemsWOCategories = state.categories
+                .flatMap((category) => category.items)
+                .sort((a, b) => a.name.localeCompare(b.name));
         },
         updateItemInStore(state, action: PayloadAction<{ item: Item; currentCategory: string }>) {
             const { id, name, categoryId } = action.payload.item;
@@ -72,20 +86,32 @@ export const catalogSlice = createSlice({
                     category.items.push(action.payload.item); // Add new item if not found
                 }
             }
+            state.itemsWOCategories = state.categories
+                .flatMap((category) => category.items)
+                .sort((a, b) => a.name.localeCompare(b.name));
         },
         removeItemFromStore(state, action: PayloadAction<string>) {
             state.categories.forEach((category) => {
                 category.items = category.items.filter((item) => item.id !== action.payload);
             });
+            state.itemsWOCategories = state.categories
+                .flatMap((category) => category.items)
+                .sort((a, b) => a.name.localeCompare(b.name));
         },
         updateCategoryInStore(state, action: PayloadAction<Category>) {
             const category = state.categories.find((cat) => cat.id === action.payload.id);
             if (category) {
                 category.name = action.payload.name;
             }
+            state.itemsWOCategories = state.categories
+                .flatMap((category) => category.items)
+                .sort((a, b) => a.name.localeCompare(b.name));
         },
         removeCategoryFromStore(state, action: PayloadAction<string>) {
             state.categories = state.categories.filter((cat) => cat.id !== action.payload);
+            state.itemsWOCategories = state.categories
+                .flatMap((category) => category.items)
+                .sort((a, b) => a.name.localeCompare(b.name));
         },
 
     }

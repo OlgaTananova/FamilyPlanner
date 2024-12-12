@@ -6,8 +6,10 @@ import { useAuth } from "../hooks/useAuth";
 import AuthButton from "./AuthButton";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../redux/store";
+import { clearCategories } from "../redux/catalogSlice";
+import { clearUser } from "../redux/userSlice";
 
 export default function Navbar() {
   const auth = useAuth();
@@ -16,6 +18,14 @@ export default function Navbar() {
   const [userInitials, setUserInitials] = useState("");
   const router = useRouter();
   const path = usePathname();
+  const dispatch = useDispatch();
+
+  const handleSignOut = () => {
+    signOut();
+    dispatch(clearCategories());
+    dispatch(clearUser());
+
+  }
 
   useEffect(() => {
     setUserInitials(() => user?.givenName ? user.givenName[0] : "NA")
@@ -46,10 +56,10 @@ export default function Navbar() {
             >
               {userInitials}
             </Link>
-            <AuthButton isAuthenticated={isAuthenticated} signIn={signIn} signOut={signOut} />
+            <AuthButton isAuthenticated={isAuthenticated} signIn={signIn} signOut={handleSignOut} />
           </>
         ) : (
-          <AuthButton isAuthenticated={isAuthenticated} signIn={signIn} signOut={signOut} />)
+          <AuthButton isAuthenticated={isAuthenticated} signIn={signIn} signOut={handleSignOut} />)
         }
       </div>
     </nav>

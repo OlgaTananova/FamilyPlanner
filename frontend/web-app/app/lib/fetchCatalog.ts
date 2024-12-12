@@ -1,7 +1,5 @@
 import toast from "react-hot-toast";
 import { Category, Item } from "../redux/catalogSlice";
-import { getAccessToken } from "./getAccessToken";
-import { AppDispatch } from "../redux/store";
 import fetchApi from "./fetchAPI";
 const catalogServiceUrl = process.env.NEXT_PUBLIC_CATALOG_SERVICE_URL;
 

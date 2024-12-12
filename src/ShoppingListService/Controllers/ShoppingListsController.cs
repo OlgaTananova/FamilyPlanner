@@ -48,7 +48,7 @@ namespace ShoppingListService.Controllers
 
         }
 
-        // Create a new shopping list
+        // TODO: change the method if there is a incoming dto object with heading and items' skus
         [HttpPost]
         public async Task<ActionResult<ShoppingListDto>> CreateShoppingList()
         {

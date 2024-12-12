@@ -7,6 +7,7 @@ import ReduxProvider from "./providers/ReduxProvider";
 import { Sidebar } from "flowbite-react/components/Sidebar";
 import { useAuth } from "./hooks/useAuth";
 import SideBar from "./nav/SideBar";
+import AppInitializer from "./providers/AppInitializer";
 
 
 
@@ -26,9 +27,10 @@ export default function RootLayout({
     <html lang="en">
       <body>
         <ToasterProvider />
-        <MsalPageProvider>
-          <ReduxProvider>
-            <div className="flex flex-col h-screen ">
+        <ReduxProvider>
+          <MsalPageProvider>
+            <AppInitializer>
+              <div className="flex flex-col h-screen ">
               <Navbar />
               <div className="flex flex-1">
                 <SideBar />
@@ -37,8 +39,11 @@ export default function RootLayout({
                 </main>
               </div>
             </div>
-          </ReduxProvider>
-        </MsalPageProvider>
+            </AppInitializer>
+            
+          </MsalPageProvider>
+        </ReduxProvider>
+
 
       </body>
 

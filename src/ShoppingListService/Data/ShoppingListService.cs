@@ -162,6 +162,7 @@ public class ShoppingListService : IShoppingListService
     {
         return _dbcontext.ShoppingLists.Include(x => x.Items)
         .Where(x => !x.IsDeleted && x.Family == family)
+        .OrderByDescending(x => x.CreatedAt)
         .ToListAsync();
     }
 

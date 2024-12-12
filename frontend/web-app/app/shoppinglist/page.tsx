@@ -1,14 +1,42 @@
 'use client'
 import { Button } from 'flowbite-react';
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import ShoppingListButton from './ShoppingListButton';
 import CurrentShoppingList from './CurrentShoppingList';
-import { mockShoppingLists } from '@/mockingData';
 import MobileViewToggles from './MobileViewToggles';
+import ShoppingLists from './ShoppingLists';
+import { setCurrentShoppingList, setShoppingLists, ShoppingList } from '../redux/shoppingListSlice';
+import { useDispatch, useSelector } from 'react-redux';
+import { useAuth } from '../hooks/useAuth';
+import { RootState } from '../redux/store';
+import { fetchShoppingListData } from '../lib/fetchShoppingLists';
 
 export default function ShoppingListPage() {
+    const shoppingLists = useSelector((state: RootState) => state.shoppinglists.lists);
+    const currentShoppingList = useSelector((state: RootState) => state.shoppinglists.currentShoppingList);
     const [activeSection, setActiveSection] = useState<"lists" | "current" | "frequent">("lists");
-    const [selectedList, setSelectedList] = useState(mockShoppingLists[0]);
+    const dispatch = useDispatch();
+    const { acquireToken } = useAuth();
+
+    // Fetch ShoppingLists
+    useEffect(() => {
+        async function fetchData() {
+
+            // make sure there is a valid token in the storage
+            await acquireToken();
+            // Fetch categories
+            const fetchedShoppingLists = await fetchShoppingListData();
+            console.log(fetchedShoppingLists);
+
+            if (fetchedShoppingLists) {
+                dispatch(setShoppingLists(fetchedShoppingLists));
+                dispatch(setCurrentShoppingList(fetchedShoppingLists[0]));
+            }
+        }
+        fetchData();
+
+    }, []);
+
 
     return (
         <div className="container mx-auto px-4 py-6">
@@ -16,34 +44,15 @@ export default function ShoppingListPage() {
             <h1 className="text-2xl font-bold text-purple-700 mb-6">Shopping Lists</h1>
 
             {/* Mobile View Toggles (Placed Below Heading) */}
-            <MobileViewToggles onSetActiveSection={setActiveSection} activeSection={activeSection}/>
+            <MobileViewToggles onSetActiveSection={setActiveSection} activeSection={activeSection} />
             {/* Responsive Sections */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {/* First Column: Lists */}
-                <div className={`p-4 bg-purple-50 border border-purple-300 rounded-lg shadow-md ${activeSection === "lists" ? "block" : "hidden"} md:block`}>
-                    <ul className="space-y-2">
-                        {mockShoppingLists.map((list) => (
-                            <li>
-                                <ShoppingListButton
-                                    key={list.id}
-                                    heading={list.heading}
-                                    itemCount={list.items.length}
-                                    isArchived={list.isArchived}
-                                    onClick={() => setSelectedList(list)}
-                                />
-                            </li>
-
-                        ))}
-                    </ul>
-                </div>
+                <ShoppingLists activeSection={activeSection} onSelectActiveSection={setActiveSection} />
 
                 {/* Second Column: Current Shopping List */}
                 <div className={`p-4 bg-white border border-gray-300 rounded-lg shadow-md ${activeSection === "current" ? "block" : "hidden"} md:block`}>
-                    {selectedList ? (
-                        <CurrentShoppingList shoppingList={selectedList} />
-                    ) : (
-                        <p className="text-gray-600">Select a shopping list to view details.</p>
-                    )}
+                    <CurrentShoppingList />
                 </div>
 
                 {/* Third Column: Frequently Bought Items */}

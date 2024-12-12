@@ -6,15 +6,15 @@ interface ShoppingListButtonProps {
   heading: string;
   itemCount: number;
   isArchived: boolean,
-  onClick: () => void;
+  onClick: () => void
 }
 
 export default function ShoppingListButton({ heading, itemCount, isArchived, onClick }: ShoppingListButtonProps) {
   return (
     <button
       color="light"
-      className="w-full flex justify-between items-center px-4 py-3 bg-gray-50 hover:bg-purple-100 rounded-lg border border-gray-300 shadow-sm transition duration-200"
       onClick={onClick}
+      className="w-full flex justify-between items-center px-4 py-3 bg-gray-50 hover:bg-purple-100 rounded-lg border border-gray-300 shadow-sm transition duration-200"
     >
       {/* Shopping Cart Icon */}
       <HiShoppingCart className="text-purple-600 w-6 h-6 flex-shrink-0" />
