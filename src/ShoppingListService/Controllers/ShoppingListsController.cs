@@ -48,19 +48,47 @@ namespace ShoppingListService.Controllers
 
         }
 
-        // TODO: change the method if there is a incoming dto object with heading and items' skus
         [HttpPost]
-        public async Task<ActionResult<ShoppingListDto>> CreateShoppingList()
+        public async Task<ActionResult<ShoppingListDto>> CreateShoppingList(CreateShoppingListDto shoppingListDto)
         {
-            ShoppingList shoppingList = new ShoppingList()
+            // Create a new shopping list with default properties
+            var shoppingList = new ShoppingList
             {
                 OwnerId = _userId,
                 Family = _familyName,
             };
+
+            if (shoppingListDto != null)
+            {
+                var validator = new CreateShoppingListDtoValidator();
+                var validationResult = validator.Validate(shoppingListDto);
+                if (!validationResult.IsValid)
+                {
+                    BadRequest(validationResult.Errors.Select(e => e.ErrorMessage));
+                }
+                // Find catalog items by SKUs
+                if (shoppingListDto.SKUs != null && shoppingListDto.SKUs.Count > 0)
+                {
+                    var catalogItems = await _shoppingListService.GetCatalogItemsBySKUsAsync(shoppingListDto.SKUs, _familyName);
+
+                    if (catalogItems == null || catalogItems.Count == 0)
+                    {
+                        return BadRequest("No catalog items found for the provided SKUs.");
+                    }
+
+                    var shoppingListItems = _mapper.Map<List<ShoppingListItem>>(catalogItems);
+                    shoppingList.Items.AddRange(shoppingListItems);
+                }
+            }
+
             _shoppingListService.AddShoppingList(shoppingList);
             bool result = await _shoppingListService.SaveChangesAsync();
             if (!result) return BadRequest("Could not save changes to the DB");
-            return CreatedAtAction(nameof(GetShoppingList), new { shoppingList.Id }, shoppingList);
+            
+            return CreatedAtAction(nameof(GetShoppingList), new
+            {
+                shoppingList.Id
+            }, _mapper.Map<ShoppingListDto>(shoppingList));
         }
 
         [HttpGet]

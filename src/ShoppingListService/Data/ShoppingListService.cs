@@ -230,4 +230,10 @@ public class ShoppingListService : IShoppingListService
         return dbQuerySearchResult;
     }
 
+    public async Task<List<CatalogItem>> GetCatalogItemsBySKUsAsync(List<Guid> skus, string familyName)
+    {
+        return await _dbcontext.CatalogItems
+            .Where(c => skus.Contains(c.SKU) && c.Family == familyName && !c.IsDeleted)
+            .ToListAsync();
+    }
 }

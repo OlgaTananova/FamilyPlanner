@@ -12,6 +12,7 @@ public interface IShoppingListService
     Task<List<ShoppingList>> GetShoppingListsAsync(string family);
     Task<List<CatalogItem>> GetFrequentlyBoughtItemsAsync(string family);
     Task<List<CatalogItem>> AutocompleteCatalogItemsAsync(string query, string family);
+    Task<List<CatalogItem>> GetCatalogItemsBySKUsAsync(List<Guid> skus, string familyName);
     void AddShoppingList(ShoppingList list);
     void AddShoppingListItem(ShoppingListItem item);
     Task UpdateShoppingList(ShoppingList list, UpdateShoppingListDto dto);

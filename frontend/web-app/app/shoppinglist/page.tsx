@@ -15,28 +15,7 @@ export default function ShoppingListPage() {
     const shoppingLists = useSelector((state: RootState) => state.shoppinglists.lists);
     const currentShoppingList = useSelector((state: RootState) => state.shoppinglists.currentShoppingList);
     const [activeSection, setActiveSection] = useState<"lists" | "current" | "frequent">("lists");
-    const dispatch = useDispatch();
-    const { acquireToken } = useAuth();
-
-    // Fetch ShoppingLists
-    useEffect(() => {
-        async function fetchData() {
-
-            // make sure there is a valid token in the storage
-            await acquireToken();
-            // Fetch categories
-            const fetchedShoppingLists = await fetchShoppingListData();
-            console.log(fetchedShoppingLists);
-
-            if (fetchedShoppingLists) {
-                dispatch(setShoppingLists(fetchedShoppingLists));
-                dispatch(setCurrentShoppingList(fetchedShoppingLists[0]));
-            }
-        }
-        fetchData();
-
-    }, []);
-
+   
 
     return (
         <div className="container mx-auto px-4 py-6">

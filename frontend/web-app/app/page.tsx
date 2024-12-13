@@ -1,21 +1,14 @@
 'use client'
-import Image from "next/image";
 import { useAuth } from "./hooks/useAuth";
-import { useEffect, useState } from "react";
-import ProfilePage from "./profile/page";
 import { useRouter } from "next/navigation";
-import { Button } from "flowbite-react";
 import DashboardPage from "./dashboard/page";
-import getIdToken from "./lib/getIdToken";
-import decodeJwt from "./lib/decodeJwt";
-import { useDispatch } from "react-redux";
-import { clearUser, setUser } from "./redux/userSlice";
+
 
 export default function Home() {
 
   const { isAuthenticated } = useAuth();
   const router = useRouter();
-  const dispatch = useDispatch();
+
 
   if (isAuthenticated) {
     return (

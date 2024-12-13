@@ -46,8 +46,8 @@ export default async function fetchApi<T>(
         return (await response.json()) as T;
     } catch (error: any) {
         const errorMessage = error?.message || "An unexpected error occurred.";
-        toast.error(errorMessage);
-        console.error("Fetch API Error:", error);
+        toast.error("There is an error while getting the data from the server.");
+        console.error("Fetch API Error:", errorMessage);
         return null;
     }
 }

@@ -39,9 +39,22 @@ public class CatalogItemUpdatedConsumer : IConsumer<CatalogItemUpdated>
             var catalogItem = await _context.CatalogItems.FirstOrDefaultAsync(x => x.SKU == context.Message.SKU
                     && x.Family == context.Message.Family && x.OwnerId == context.Message.OwnerId);
 
-            if (catalogItem != null)
+            var shoppingListItems = await _context.ShoppingListItems.Where(x => x.SKU == context.Message.SKU
+            && x.Family == context.Message.Family && x.OwnerId == context.Message.OwnerId).ToListAsync();
+
+            if (catalogItem != null && shoppingListItems.Count > 0)
             {
                 _mapper.Map(context.Message, catalogItem);
+
+                foreach (var shopping in shoppingListItems)
+                {
+                    shopping.Name = context.Message.Name;
+                    shopping.CatalogItem = catalogItem;
+                    shopping.CategorySKU = context.Message.CategorySKU;
+                    shopping.CategoryName = context.Message.CategoryName;
+                    _context.ShoppingListItems.Update(shopping);
+                }
+                _context.CatalogItems.Update(catalogItem);
 
                 await _context.SaveChangesAsync();
             }

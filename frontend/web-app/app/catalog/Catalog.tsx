@@ -23,7 +23,7 @@ import EditCategoryModal from "./EditCategoryModal";
 
 
 export default function Catalog() {
-  const categories = useSelector((state: RootState) => state.categories || []);
+  const categories = useSelector((state: RootState) => state.categories.categories);
   const itemsWOCategories = useSelector((state: RootState) => state.categories.itemsWOCategories);
   const [showOnlyItems, setShowOnlyItems] = useState(false);
   const [isAddCategoryModalOpen, setIsAddCategoryModalOpen] = useState(false);
@@ -35,27 +35,31 @@ export default function Catalog() {
   const { acquireToken } = useAuth();
   const dispatch = useDispatch();
 
-  // Fetch Categories and Items
-  useEffect(() => {
-    async function fetchData() {
-
-      // make sure there is a valid token in the storage
-      await acquireToken();
-      // Fetch categories
-      const fetchedCategories = await fetchCatalogData();
-
-      if (fetchedCategories) {
-        dispatch(setCategories(fetchedCategories));
-      }
-    }
-    fetchData();
-
-  }, []);
 
   const handleShowOnlyItems = () => {
 
     setShowOnlyItems(!showOnlyItems);
   };
+
+  if (categories.length == 0) {
+    return (
+      <div className="container mx-auto px-4 py-6 relative">
+        <Link href={("/")}
+          className="absolute top-0 right-0 text-gray-600 hover:text-gray-900"
+          aria-label="Close Profile"
+        >
+          ✖
+        </Link>
+        <div className="flex flex-col">
+          {/* Heading */}
+          <h1 className="text-2xl font-bold text-purple-700">Catalog</h1>
+          <p className="text-xl mt-3">No catalog data is avaliable.</p>
+
+        </div>
+      </div>
+
+    )
+  }
 
 
   // Render catalog
@@ -81,13 +85,18 @@ export default function Catalog() {
 
         {/* Search Bar */}
         <div className="mt-4 sm:mt-0">
-          <TextInput
-            id="search"
-            type="text"
-            placeholder="Search categories and items..."
-            icon={HiSearch}
-            className="w-full sm:w-80 focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-          />
+          <div className="relative w-full sm:w-80">
+            <input
+              id="search"
+              type="text"
+              placeholder="Search categories and items..."
+              className="w-full px-4 py-2 text-sm text-gray-900 bg-white border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 focus:outline-none"
+            />
+
+            <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none text-gray-400">
+              <HiSearch />
+            </div>
+          </div>
         </div>
       </div>
       {/*Modals*/}
@@ -102,7 +111,7 @@ export default function Catalog() {
       {/* Render Content */}
       {!showOnlyItems ? (
         <div className="mt-4">
-          {categories.categories.map((category) => (
+          {categories.map((category) => (
             <CategoryCard
               key={category.id}
               id={category.id}
