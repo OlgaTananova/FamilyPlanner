@@ -27,5 +27,7 @@ public class CatalogItem
     [Required]
     public string OwnerId { get; set; }
 
+    
+
     public NpgsqlTsVector SearchVector { get; set; }
 }

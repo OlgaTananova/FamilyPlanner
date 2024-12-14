@@ -8,7 +8,9 @@ import { Sidebar } from "flowbite-react/components/Sidebar";
 import { useAuth } from "./hooks/useAuth";
 import SideBar from "./nav/SideBar";
 import AppInitializer from "./providers/AppInitializer";
+import { SignalRProvider } from "./providers/SignalRProvider";
 
+const hubUrl = process.env.NEXT_PUBLIC_SIGNALR_HUB_URL;
 
 
 export const metadata: Metadata = {
@@ -26,24 +28,25 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
+
         <ToasterProvider />
         <ReduxProvider>
           <MsalPageProvider>
             <AppInitializer>
-              <div className="flex flex-col h-screen ">
-              <Navbar />
-              <div className="flex flex-1">
-                <SideBar />
-                <main className="flex-1 p-4 bg-gradient-to-r from-purple-50 via-purple-100 to-fuchsia-50">
-                  {children}
-                </main>
-              </div>
-            </div>
+              <SignalRProvider hubUrl={hubUrl!}>
+                <div className="flex flex-col h-screen ">
+                  <Navbar />
+                  <div className="flex flex-1">
+                    <SideBar />
+                    <main className="flex-1 p-4 bg-gradient-to-r from-purple-50 via-purple-100 to-fuchsia-50">
+                      {children}
+                    </main>
+                  </div>
+                </div>
+              </SignalRProvider>
             </AppInitializer>
-            
           </MsalPageProvider>
         </ReduxProvider>
-
 
       </body>
 

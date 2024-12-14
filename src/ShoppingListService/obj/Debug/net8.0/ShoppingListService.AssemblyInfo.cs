@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("ShoppingListService")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+4a9bc26c457518afd982f431674a2e634b615e87")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+646e4421655a4b8b78c3e8c1d7b2436d80061d90")]
 [assembly: System.Reflection.AssemblyProductAttribute("ShoppingListService")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ShoppingListService")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

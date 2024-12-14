@@ -55,6 +55,39 @@ const shoppingListSlice = createSlice({
         clearCurrentShoppingList(state) {
             state.currentShoppingList = null;
         },
+        updateCatalogItem(
+            state,
+            action: PayloadAction<{
+                sku: string;
+                name: string;
+                categoryName: string;
+                categorySKU: string;
+            }>
+        ) {
+            const { sku, name, categoryName, categorySKU } = action.payload;
+
+            // Update the items in all shopping lists
+            state.lists.forEach((list) => {
+                list.items.forEach((item) => {
+                    if (item.sku === sku) {
+                        item.name = name;
+                        item.categoryName = categoryName;
+                        item.categorySKU = categorySKU;
+                    }
+                });
+            });
+
+            // Update the items in the current shopping list
+            if (state.currentShoppingList) {
+                state.currentShoppingList.items.forEach((item) => {
+                    if (item.sku === sku) {
+                        item.name = name;
+                        item.categoryName = categoryName;
+                        item.categorySKU = categorySKU;
+                    }
+                });
+            }
+        },
     },
 });
 
@@ -63,6 +96,7 @@ export const {
     clearShoppingLists,
     setCurrentShoppingList,
     clearCurrentShoppingList,
+    updateCatalogItem
 } = shoppingListSlice.actions;
 
 export default shoppingListSlice.reducer;

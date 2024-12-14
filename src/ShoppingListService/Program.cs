@@ -57,12 +57,30 @@ builder.Services.AddMassTransit(x =>
             h.Password(rabbitmqPassword);
         });
 
-        //    cfg.ReceiveEndpoint("//", e =>
-        // {
-        //     // if the db is down the massage bus will retry to deliver the message 5 times with an interval of 5 sec
-        //     e.UseMessageRetry(r => r.Interval(5, 5));
-        //     e.ConfigureConsumer<CatalogItemCreatedConsumer>(context);
-        // });
+        cfg.ReceiveEndpoint("shoppinglist-catalog-item-created", e =>
+        {
+            // if the db is down the massage bus will retry to deliver the message 5 times with an interval of 5 sec
+            e.UseMessageRetry(r => r.Interval(5, 5));
+            e.ConfigureConsumer<CatalogItemCreatedConsumer>(context);
+        });
+        cfg.ReceiveEndpoint("shoppinglist-catalog-category-updated", e =>
+        {
+            // if the db is down the massage bus will retry to deliver the message 5 times with an interval of 5 sec
+            e.UseMessageRetry(r => r.Interval(5, 5));
+            e.ConfigureConsumer<CatalogCategoryUpdatedConsumer>(context);
+        });
+        cfg.ReceiveEndpoint("shoppinglist-catalog-item-updated", e =>
+        {
+            // if the db is down the massage bus will retry to deliver the message 5 times with an interval of 5 sec
+            e.UseMessageRetry(r => r.Interval(5, 5));
+            e.ConfigureConsumer<CatalogItemUpdatedConsumer>(context);
+        });
+        cfg.ReceiveEndpoint("shoppinglist-catalog-item-deleted", e =>
+        {
+            // if the db is down the massage bus will retry to deliver the message 5 times with an interval of 5 sec
+            e.UseMessageRetry(r => r.Interval(5, 5));
+            e.ConfigureConsumer<CatalogItemDeletedConsumer>(context);
+    });
 
         cfg.ConfigureEndpoints(context);
     });
@@ -77,7 +95,8 @@ builder.Services.AddCors(options =>
     {
         policy.WithOrigins("http://localhost:3000") // Allow only these origins
               .AllowAnyHeader()            // Allow any headers
-              .AllowAnyMethod();           // Allow any HTTP methods
+              .AllowAnyMethod()           // Allow any HTTP methods
+              .AllowCredentials();
     });
 });
 
