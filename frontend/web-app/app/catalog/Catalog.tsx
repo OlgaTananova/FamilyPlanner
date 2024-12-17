@@ -31,7 +31,7 @@ export default function Catalog() {
   const [isAddItemModalOpen, setIsAddItemModalOpen] = useState(false);
   const [isEditItemModalOpen, setIsEditItemModalOpen] = useState(false);
   const [isEditCategoryModalOpen, setIsEditCategoryModalOpen] = useState(false);
-  const [editedItem, setEditedItem] = useState<{ id: string, name: string, categoryId: string }>({ id: "", name: "", categoryId: "" });
+  const [editedItem, setEditedItem] = useState<{ id: string, name: string, categoryId: string, sku: string }>({ id: "", name: "", categoryId: "", sku: ""});
   const [editedCategory, setEditedCategory] = useState<{ id: string, name: string, items: Item[] }>({ id: "", name: "", items: [] });
   const { acquireToken } = useAuth();
   const dispatch = useDispatch();
@@ -132,6 +132,7 @@ export default function Catalog() {
               <ItemComponent
                 key={item.id}
                 id={item.id}
+                sku={item.sku}
                 name={item.name}
                 categoryId={item.categoryId}
                 setEditedItem={setEditedItem}
@@ -141,7 +142,6 @@ export default function Catalog() {
           </div>
         )}
       </div >
-      <CatalogNotificationHandler />
     </>
   );
 }

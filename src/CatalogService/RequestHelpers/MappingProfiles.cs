@@ -49,10 +49,23 @@ public class MappingProfiles : Profile
             .ForMember(dest => dest.Category, opt => opt.Ignore()); // Category is linked through CategoryId
 
         CreateMap<ItemDto, CatalogItemCreated>();
-        CreateMap<ItemDto, CatalogItemUpdated>();
+
+        CreateMap<Item, UpdatedItem>()
+            .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id))
+            .ForMember(dest => dest.CategoryId, opt => opt.MapFrom(src => src.CategoryId));
+
+        CreateMap<ItemDto, CatalogItemDeleted>();
+
+        CreateMap<CategoryDto, CatalogCategoryCreated>()
+            .ForMember(dest => dest.CategorySKU, opt => opt.MapFrom(src => src.SKU));
+
+        CreateMap<Category, CatalogCategoryDeleted>()
+        .ForMember(dest => dest.CategorySKU, opt => opt.MapFrom(src => src.SKU));
+
         CreateMap<CategoryDto, CatalogCategoryUpdated>()
             .ForMember(dest => dest.CategorySKU, opt => opt.MapFrom(src => src.SKU));
-        CreateMap<ItemDto, CatalogItemDeleted>();    
+
+
 
     }
 

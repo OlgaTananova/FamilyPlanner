@@ -21,6 +21,7 @@ export const useInitializeUser = () => {
                     family: decodedToken.extension_Family || "",
                     role: decodedToken.extension_Role || "",
                     email: decodedToken.emails ? decodedToken.emails[0] : "",
+                    id: decodedToken.oid ? decodedToken.oid : ""
                 };
                 dispatch(setUser(user));
             } else {

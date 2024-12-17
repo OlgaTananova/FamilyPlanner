@@ -9,6 +9,7 @@ export interface Item {
     isDeleted: boolean;
     categoryId: string;
     categorySKU: string;
+    categoryName: string;
 }
 
 export interface Category {
@@ -53,8 +54,8 @@ export const catalogSlice = createSlice({
                 .sort((a, b) => a.name.localeCompare(b.name));
         },
         addItem(state, action: PayloadAction<Item>) {
-            const { categoryId } = action.payload;
-            const category = state.categories.find((cat) => cat.id === categoryId);
+            const { categorySKU } = action.payload;
+            const category = state.categories.find((cat) => cat.sku === categorySKU);
             if (category) {
                 category.items.push(action.payload);
             }
@@ -62,28 +63,28 @@ export const catalogSlice = createSlice({
                 .flatMap((category) => category.items)
                 .sort((a, b) => a.name.localeCompare(b.name));
         },
-        updateItemInStore(state, action: PayloadAction<{ item: Item; currentCategory: string }>) {
-            const { id, name, categoryId } = action.payload.item;
-            const { currentCategory } = action.payload;
+        updateItemInStore(state, action: PayloadAction<{ updatedItem: Item; previousCategoryId: string }>) {
+            const { id, name, categoryId } = action.payload.updatedItem;
+            const { previousCategoryId } = action.payload;
 
             // Remove the item from the current category if the category has changed
-            if (categoryId !== currentCategory) {
+            if (categoryId !== previousCategoryId) {
                 state.categories = state.categories.map((cat) =>
-                    cat.id === currentCategory
+                    cat.id === previousCategoryId
                         ? { ...cat, items: cat.items.filter((item) => item.id !== id) }
                         : cat
                 );
             }
 
             // Add or update the item in the new category
-            const category = state.categories.find((cat) => cat.id === categoryId);
+            const category = state.categories.find((cat) => cat.sku === categoryId);
             if (category) {
                 const existingItem = category.items.find((item) => item.id === id);
 
                 if (existingItem) {
                     existingItem.name = name; // Update existing item
                 } else {
-                    category.items.push(action.payload.item); // Add new item if not found
+                    category.items.push(action.payload.updatedItem); // Add new item if not found
                 }
             }
             state.itemsWOCategories = state.categories
@@ -92,7 +93,7 @@ export const catalogSlice = createSlice({
         },
         removeItemFromStore(state, action: PayloadAction<string>) {
             state.categories.forEach((category) => {
-                category.items = category.items.filter((item) => item.id !== action.payload);
+                category.items = category.items.filter((item) => item.sku !== action.payload);
             });
             state.itemsWOCategories = state.categories
                 .flatMap((category) => category.items)

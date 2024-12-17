@@ -1,33 +1,35 @@
 using System;
 using System.Collections.Concurrent;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Logging;
 
 namespace NotificationService.Hubs;
 
 public class NotificationHub : Hub
 
 {
-    private static readonly ConcurrentDictionary<string, HashSet<string>> GroupConnections =
-      new ConcurrentDictionary<string, HashSet<string>>();
+    private readonly ILogger<NotificationHub> _logger;
+
+    public NotificationHub(ILogger<NotificationHub> logger)
+    {
+        _logger = logger;
+    }
+
     public override async Task OnConnectedAsync()
     {
         var user = Context.User; // Access the ClaimsPrincipal from the token
-        
+
         if (user?.Identity?.IsAuthenticated ?? false)
         {
-            var familyName = user.Claims.First().Value;
-            Console.WriteLine($"user claims coutn {familyName}");
+            var familyName = user?.FindFirst("family")?.Value;
+            Console.WriteLine($"The family is  {familyName}");
 
-            // if (!string.IsNullOrEmpty(familyName))
-            // {
-            //     var connections = GroupConnections.GetOrAdd(familyName, _ => new HashSet<string>());
-            //     lock (connections)
-            //     {
-            //         connections.Add(Context.ConnectionId);
-            //     }
-            //     // Add the user to a SignalR group based on their family name
-            //     await Groups.AddToGroupAsync(Context.ConnectionId, familyName);
-            // }
+            if (!string.IsNullOrEmpty(familyName))
+            {
+                await Groups.AddToGroupAsync(Context.ConnectionId, familyName);
+            }
+            _logger.LogInformation($"Client connected: {Context.ConnectionId}");
+            await base.OnConnectedAsync();
         }
         else
         {
@@ -40,23 +42,10 @@ public class NotificationHub : Hub
     {
         var familyName = Context.User?.FindFirst("family")?.Value;
 
-        if (!string.IsNullOrEmpty(familyName) && GroupConnections.TryGetValue(familyName, out var connections))
+        if (!string.IsNullOrEmpty(familyName))
         {
-            lock (connections)
-            {
-                connections.Remove(Context.ConnectionId);
-                if (connections.Count == 0)
-                {
-                    GroupConnections.TryRemove(familyName, out _);
-                }
-            }
 
             await Groups.RemoveFromGroupAsync(Context.ConnectionId, familyName);
         }
-    }
-
-    public bool DoesGroupExist(string groupName)
-    {
-        return GroupConnections.ContainsKey(groupName);
     }
 }

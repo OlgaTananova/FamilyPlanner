@@ -7,16 +7,17 @@ interface ItemProps {
     name: string;
     id: string;
     categoryId: string;
-    setEditedItem: (item: { id: string; name: string; categoryId: string }) => void;
+    sku: string;
+    setEditedItem: (item: { id: string; name: string; categoryId: string, sku: string }) => void;
     setIsEditItemModalOpen: (action: boolean) => void;
 }
 
-export default function ItemComponent({ name, id, categoryId, setEditedItem, setIsEditItemModalOpen}: ItemProps) {
+export default function ItemComponent({ name, id, categoryId, sku, setEditedItem, setIsEditItemModalOpen}: ItemProps) {
 
     //const [isEditItemModalOpen, setIsEditItemModalOpen] = useState(false);
 
     const handleEditItemClick = ()=> {
-        setEditedItem({id, name, categoryId});
+        setEditedItem({id, name, categoryId, sku});
         setIsEditItemModalOpen(true);
     }
 

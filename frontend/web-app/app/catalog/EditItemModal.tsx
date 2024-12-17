@@ -6,12 +6,14 @@ import { RootState } from "../redux/store";
 import { deleteItem, updateItem } from "../lib/fetchCatalog";
 import { removeItemFromStore, updateItemInStore } from "../redux/catalogSlice";
 import ConfirmationModal from "./ConfirmationModal";
+import { updateCatalogItem } from "../redux/shoppingListSlice";
 
 interface EditItemModalProps {
     isOpen: boolean;
     onClose: () => void;
     item: {
         id: string;
+        sku: string;
         name: string;
         categoryId: string;
     };
@@ -26,7 +28,7 @@ export default function EditItemModal({ isOpen, onClose, item }: EditItemModalPr
     const [isSaving, setIsSaving] = useState(false);
     const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
     const [currentCategory, setCurrentCategory] = useState(item.categoryId);
-    
+
     const validateName = (name: string) => name.trim().length >= 3;
 
     useEffect(() => {
@@ -43,12 +45,14 @@ export default function EditItemModal({ isOpen, onClose, item }: EditItemModalPr
             return;
         }
 
-        setIsSaving(true); 
+        setIsSaving(true);
 
         try {
             const updatedItem = await updateItem(item.id, itemName, selectedCategory);
+
             if (updatedItem) {
-                dispatch(updateItemInStore({ item: updatedItem, currentCategory }));
+                dispatch(updateItemInStore(updatedItem));
+                dispatch(updateCatalogItem(updatedItem.updatedItem))
                 toast.success(`Item "${itemName}" updated successfully!`);
             }
             onClose();
@@ -59,10 +63,10 @@ export default function EditItemModal({ isOpen, onClose, item }: EditItemModalPr
     };
 
     const handleDelete = async () => {
-    
+
         const result = await deleteItem(item.id);
         if (result) {
-            dispatch(removeItemFromStore(item.id));
+            dispatch(removeItemFromStore(item.sku));
             toast.success("Item deleted successfully!");
             setIsConfirmModalOpen(false);
         }

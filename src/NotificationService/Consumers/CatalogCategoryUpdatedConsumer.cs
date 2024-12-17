@@ -19,6 +19,6 @@ public class CatalogCategoryUpdatedConsumer : IConsumer<CatalogCategoryUpdated>
     {
         Console.WriteLine("--> catalog category updated message received");
 
-        await _hubContext.Clients.Group(context.Message.Family).SendAsync("CatalogCategoryUpdatedMessage", context.Message);
+        await _hubContext.Clients.Group(context.Message.Family).SendAsync("CatalogCategoryUpdated", context.Message);
     }
 }

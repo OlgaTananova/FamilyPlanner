@@ -5,6 +5,7 @@ export interface UserState {
   family: string | null;
   role: string | null;
   email: string | null;
+  id: string | null;
 }
 
 const initialState: UserState = {
@@ -12,6 +13,7 @@ const initialState: UserState = {
   family: null,
   role: null,
   email: null,
+  id: null
 };
 
 const userSlice = createSlice({
@@ -23,12 +25,14 @@ const userSlice = createSlice({
       state.family = action.payload.family;
       state.role = action.payload.role;
       state.email = action.payload.email;
+      state.id = action.payload.id
     },
     clearUser: (state) => {
       state.givenName = null;
       state.family = null;
       state.role = null;
       state.email = null;
+      state.id = null;
     },
   },
 });

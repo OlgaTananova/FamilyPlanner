@@ -47,8 +47,8 @@ export async function createItem(name: string, categoryId: string): Promise<Item
 
 
 // Update an item
-export async function updateItem(id: string, name: string, categoryId: string): Promise<Item | null> {
-    const updatedItem = await fetchApi<Item>(catalogServiceUrl!, `/api/Catalog/items/${id}`, {
+export async function updateItem(id: string, name: string, categoryId: string): Promise<{ updatedItem: Item, previousCategoryId: string } | null> {
+    const updatedItem = await fetchApi<{ updatedItem: Item, previousCategoryId: string }>(catalogServiceUrl!, `/api/Catalog/items/${id}`, {
         method: "PUT",
         headers: {
             "Content-Type": "application/json",

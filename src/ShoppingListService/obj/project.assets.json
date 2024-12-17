@@ -144,10 +144,10 @@
           }
         }
       },
-      "MassTransit/8.3.2": {
+      "MassTransit/8.3.4": {
         "type": "package",
         "dependencies": {
-          "MassTransit.Abstractions": "8.3.2",
+          "MassTransit.Abstractions": "8.3.4",
           "Microsoft.Extensions.DependencyInjection.Abstractions": "8.0.0",
           "Microsoft.Extensions.Diagnostics.HealthChecks": "8.0.0",
           "Microsoft.Extensions.Hosting.Abstractions": "8.0.0",
@@ -165,7 +165,7 @@
           }
         }
       },
-      "MassTransit.Abstractions/8.3.2": {
+      "MassTransit.Abstractions/8.3.4": {
         "type": "package",
         "compile": {
           "lib/net8.0/MassTransit.Abstractions.dll": {
@@ -174,6 +174,23 @@
         },
         "runtime": {
           "lib/net8.0/MassTransit.Abstractions.dll": {
+            "related": ".xml"
+          }
+        }
+      },
+      "MassTransit.EntityFrameworkCore/8.3.4": {
+        "type": "package",
+        "dependencies": {
+          "MassTransit": "8.3.4",
+          "Microsoft.EntityFrameworkCore.Relational": "8.0.0"
+        },
+        "compile": {
+          "lib/net8.0/MassTransit.EntityFrameworkCoreIntegration.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/net8.0/MassTransit.EntityFrameworkCoreIntegration.dll": {
             "related": ".xml"
           }
         }
@@ -3908,10 +3925,10 @@
         "logo.png"
       ]
     },
-    "MassTransit/8.3.2": {
-      "sha512": "URd5UwdH8hi4gvhycTpMhQBeLXkRHGl1/h1JCW5HJVEC+kr5wDwCvUNBzaHfUxYx2xwCGUPTo5ESfMYBHeQt3Q==",
+    "MassTransit/8.3.4": {
+      "sha512": "mj/1OG4wAkw7M/bSBPMOGSJUHDh6daqaXaGnIEvivyZvBxFeoTV95/CTeid6LWLydKmE6mexW/8dcallrqy+cg==",
       "type": "package",
-      "path": "masstransit/8.3.2",
+      "path": "masstransit/8.3.4",
       "files": [
         ".nupkg.metadata",
         ".signature.p7s",
@@ -3924,15 +3941,15 @@
         "lib/net9.0/MassTransit.xml",
         "lib/netstandard2.0/MassTransit.dll",
         "lib/netstandard2.0/MassTransit.xml",
-        "masstransit.8.3.2.nupkg.sha512",
+        "masstransit.8.3.4.nupkg.sha512",
         "masstransit.nuspec",
         "mt-logo-small.png"
       ]
     },
-    "MassTransit.Abstractions/8.3.2": {
-      "sha512": "26Ip8xJiu21DABFCFQkU5Lf6uoFkBzKW2PlHclxY/ATUbiZ6F89mf8QlCbdutngv5yoxWJPjFvnDaoSW3orpnA==",
+    "MassTransit.Abstractions/8.3.4": {
+      "sha512": "0a7nxUzJIP6v2pQYQQ8RhQR+XFtFCxUR9dJJK7ewLONuxj26issAoJicppCJdXHGaBdxAMCvWvKulHjGpuJoeA==",
       "type": "package",
-      "path": "masstransit.abstractions/8.3.2",
+      "path": "masstransit.abstractions/8.3.4",
       "files": [
         ".nupkg.metadata",
         ".signature.p7s",
@@ -3945,8 +3962,25 @@
         "lib/net9.0/MassTransit.Abstractions.xml",
         "lib/netstandard2.0/MassTransit.Abstractions.dll",
         "lib/netstandard2.0/MassTransit.Abstractions.xml",
-        "masstransit.abstractions.8.3.2.nupkg.sha512",
+        "masstransit.abstractions.8.3.4.nupkg.sha512",
         "masstransit.abstractions.nuspec",
+        "mt-logo-small.png"
+      ]
+    },
+    "MassTransit.EntityFrameworkCore/8.3.4": {
+      "sha512": "KpwpJxpXSKspnuVu1uQs9Nhse1VqX7UvVRUyt6AWQgeLS11RZ508dEzNv/yzzrGoSvBvtem+aala1CVjNFSgvg==",
+      "type": "package",
+      "path": "masstransit.entityframeworkcore/8.3.4",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "NuGet.README.md",
+        "lib/net8.0/MassTransit.EntityFrameworkCoreIntegration.dll",
+        "lib/net8.0/MassTransit.EntityFrameworkCoreIntegration.xml",
+        "lib/net9.0/MassTransit.EntityFrameworkCoreIntegration.dll",
+        "lib/net9.0/MassTransit.EntityFrameworkCoreIntegration.xml",
+        "masstransit.entityframeworkcore.8.3.4.nupkg.sha512",
+        "masstransit.entityframeworkcore.nuspec",
         "mt-logo-small.png"
       ]
     },
@@ -10944,6 +10978,7 @@
       "Contracts >= 1.0.0",
       "DotNetEnv >= 3.1.1",
       "FluentValidation >= 11.11.0",
+      "MassTransit.EntityFrameworkCore >= 8.3.4",
       "MassTransit.RabbitMQ >= 8.3.2",
       "Microsoft.AspNetCore.SignalR >= 1.1.0",
       "Microsoft.EntityFrameworkCore >= 9.0.0",
@@ -11018,6 +11053,10 @@
           "FluentValidation": {
             "target": "Package",
             "version": "[11.11.0, )"
+          },
+          "MassTransit.EntityFrameworkCore": {
+            "target": "Package",
+            "version": "[8.3.4, )"
           },
           "MassTransit.RabbitMQ": {
             "target": "Package",

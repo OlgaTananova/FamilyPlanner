@@ -106,6 +106,8 @@ namespace CatalogService.Controllers
 
             CategoryDto newCategory = _mapper.Map<CategoryDto>(category);
 
+            await _publishEndpoint.Publish(_mapper.Map<CatalogCategoryCreated>(newCategory));
+
             var result = await _repo.SaveChangesAsync();
 
             if (!result) return BadRequest("Could not save changes to the DB");
@@ -152,100 +154,147 @@ namespace CatalogService.Controllers
         [HttpPut("categories/{id}")]
         public async Task<ActionResult<CategoryDto>> UpdateCategory(Guid id, UpdateCategoryDto categoryDto)
         {
-            Category category = await _repo.GetCategoryEntityById(id, _familyName);
-
-            if (category == null)
+            using var transaction = await _repo.BeginTransactionAsync();
+            try
             {
-                return NotFound("The category was not found or you are not allowed to update the category created by another user.");
+                Category category = await _repo.GetCategoryEntityById(id, _familyName);
+
+                if (category == null)
+                {
+                    return NotFound("The category was not found or you are not allowed to update the category created by another user.");
+                }
+
+                category.Name = categoryDto.Name ?? category.Name;
+
+                CategoryDto updatedCategory = _mapper.Map<CategoryDto>(category);
+
+                await _publishEndpoint.Publish(_mapper.Map<CatalogCategoryUpdated>(updatedCategory));
+
+                bool result = await _repo.SaveChangesAsync();
+
+                if (!result) return BadRequest("Problem saving changes");
+
+                await transaction.CommitAsync();
+                return Ok(updatedCategory);
+
             }
-
-            category.Name = categoryDto.Name ?? category.Name;
-
-            CategoryDto updatedCategory = _mapper.Map<CategoryDto>(category);
-            await _publishEndpoint.Publish(_mapper.Map<CatalogCategoryUpdated>(updatedCategory));
-
-            bool result = await _repo.SaveChangesAsync();
-
-            if (result) return Ok(updatedCategory);
-
-            return BadRequest("Problem saving changes");
+            catch (Exception ex)
+            {
+                // Rollback the transaction on any exception
+                await transaction.RollbackAsync();
+                return BadRequest("Problem with commiting transaction. Possibly another user tried to change the data.");
+            }
 
         }
 
         [HttpPut("items/{id}")]
-        public async Task<ActionResult<CategoryDto>> UpdateItem(Guid id, UpdateItemDto itemDto)
+        public async Task<ActionResult<CatalogItemUpdated>> UpdateItem(Guid id, UpdateItemDto itemDto)
         {
+            using var transaction = await _repo.BeginTransactionAsync();
 
-            Item item = await _repo.GetItemEntityByIdAsync(id, _familyName);
-
-            Category category = await _repo.GetCategoryEntityById(itemDto.CategoryId, _familyName);
-
-            if (item == null || category == null)
+            try
             {
-                return NotFound("The item or category was not found.");
+                Item item = await _repo.GetItemEntityByIdAsync(id, _familyName);
+
+                Category category = await _repo.GetCategoryEntityById(itemDto.CategoryId, _familyName);
+
+                if (item == null || category == null)
+                {
+                    return NotFound("The item or category was not found.");
+                }
+
+                Guid previousCategoryId = item.CategoryId != itemDto.CategoryId ? item.CategoryId : itemDto.CategoryId;
+
+                await _repo.UpdateItemAsync(item, itemDto);
+
+
+                CatalogItemUpdated catalogItemUpdated = new CatalogItemUpdated
+                {
+                    UpdatedItem = _mapper.Map<UpdatedItem>(item),
+                    PreviousCategoryId = previousCategoryId
+                };
+                await _publishEndpoint.Publish(catalogItemUpdated);
+
+                bool result = await _repo.SaveChangesAsync();
+                if (!result) return BadRequest("Problem saving changes");
+                await transaction.CommitAsync();
+                return Ok(catalogItemUpdated);
             }
-
-            await _repo.UpdateItemAsync(item, itemDto);
-
-            ItemDto updatedItem = _mapper.Map<ItemDto>(item);
-            await _publishEndpoint.Publish(_mapper.Map<CatalogItemUpdated>(updatedItem));
-
-            bool result = await _repo.SaveChangesAsync();
-
-            if (result) return Ok(updatedItem);
-
-            return BadRequest("Problem saving changes");
-
+            catch (Exception ex)
+            {
+                // Rollback the transaction on any exception
+                await transaction.RollbackAsync();
+                return BadRequest("Problem with commiting transaction. Possibly another user tried to change the data.");
+            }
         }
 
         [HttpDelete("categories/{id}")]
         public async Task<ActionResult> DeleteCategory(Guid id)
         {
 
-
-            Category category = await _repo.GetCategoryEntityById(id, _familyName);
-
-            if (category == null)
+            using var transaction = await _repo.BeginTransactionAsync();
+            try
             {
-                return NotFound("Cannot find the category to delete.");
+                Category category = await _repo.GetCategoryEntityById(id, _familyName);
+
+                if (category == null)
+                {
+                    return NotFound("Cannot find the category to delete.");
+                }
+                if (category.Items.Any())
+                {
+
+                    return BadRequest("Cannot delete non empty category.");
+                }
+
+                category.IsDeleted = true;
+
+                await _publishEndpoint.Publish(_mapper.Map<CatalogCategoryDeleted>(category));
+
+                bool result = await _repo.SaveChangesAsync();
+                if (!result) return BadRequest("Could not delete category and save changed to the database.");
+                await transaction.CommitAsync();
+                return NoContent();
             }
-            if (category.Items.Any())
+            catch (Exception ex)
             {
-
-                return BadRequest("Cannot delete non empty category.");
+                // Rollback the transaction on any exception
+                await transaction.RollbackAsync();
+                return BadRequest("Problem with commiting transaction. Possibly another user tried to delete the data.");
             }
 
-            category.IsDeleted = true;
-
-            bool result = await _repo.SaveChangesAsync();
-
-            if (!result) return BadRequest("Could not delete category and save changed to the database.");
-
-            return NoContent();
         }
 
         [HttpDelete("items/{id}")]
         public async Task<ActionResult> DeleteItem(Guid id)
         {
-
-            Item item = await _repo.GetItemEntityByIdAsync(id, _familyName);
-
-            if (item == null)
+            using var transaction = await _repo.BeginTransactionAsync();
+            try
             {
-                return NotFound("Cannot find the item to delete or you are not allowed to deleted the item created by another user.");
+                Item item = await _repo.GetItemEntityByIdAsync(id, _familyName);
+
+                if (item == null)
+                {
+                    return NotFound("Cannot find the item to delete or you are not allowed to deleted the item created by another user.");
+                }
+
+                item.IsDeleted = true;
+
+                ItemDto deletedItem = _mapper.Map<ItemDto>(item);
+
+                await _publishEndpoint.Publish(_mapper.Map<CatalogItemDeleted>(deletedItem));
+
+                bool result = await _repo.SaveChangesAsync();
+                if (!result) return BadRequest("Could not delete item and save changed to the database.");
+                await transaction.CommitAsync();
+                return NoContent();
             }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                return BadRequest("Problem with commiting transaction. Possibly another user tried to change the data.");
 
-            item.IsDeleted = true;
-
-            ItemDto deletedItem = _mapper.Map<ItemDto>(item);
-
-            await _publishEndpoint.Publish(_mapper.Map<CatalogItemDeleted>(deletedItem));
-
-            bool result = await _repo.SaveChangesAsync();
-
-            if (!result) return BadRequest("Could not delete item and save changed to the database.");
-
-            return NoContent();
+            }
         }
     }
 }

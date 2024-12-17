@@ -12,7 +12,7 @@ interface CategoryCardProps {
     name: string;
     items: Item[];
     setEditedCategory: (category: { id: string; name: string, items: Item[] }) => void;
-    setEditedItem: ( item: {id: string; name: string; categoryId: string }) => void;
+    setEditedItem: ( item: {id: string; name: string; categoryId: string, sku: string }) => void;
     setIsEditItemModalOpen: (action: boolean) => void;
     setIsEditCategoryModalOpen: (action: boolean) => void;
 }
@@ -59,6 +59,7 @@ export default function CategoryCard({ id, name, items, setEditedCategory, setEd
                         key={item.id}
                         name={item.name}
                         id={item.id}
+                        sku={item.sku}
                         categoryId={item.categoryId}
                         setEditedItem={setEditedItem}
                         setIsEditItemModalOpen={setIsEditItemModalOpen}

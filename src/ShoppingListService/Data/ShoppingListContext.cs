@@ -1,4 +1,5 @@
 using System;
+using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Microsoft.EntityFrameworkCore.Migrations;
@@ -17,6 +18,11 @@ public class ShoppingListContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        // support for outbox pattern 
+        modelBuilder.AddInboxStateEntity();
+        modelBuilder.AddOutboxMessageEntity();
+        modelBuilder.AddOutboxStateEntity();
+
         modelBuilder.Entity<ShoppingList>()
             .HasIndex(sl => new { sl.OwnerId, sl.Family });
 

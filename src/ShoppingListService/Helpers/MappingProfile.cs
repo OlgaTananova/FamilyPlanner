@@ -33,7 +33,8 @@ public class MappingProfile : Profile
 
         //  CatalogItemCreated -> CatalogItem
         CreateMap<CatalogItemCreated, CatalogItem>();
-        CreateMap<CatalogItemUpdated, CatalogItem>();
+
+        CreateMap<UpdatedItem, CatalogItem>();
 
         // CatalogItem --> CatalogItem
         CreateMap<CatalogItem, CatalogItemDto>();

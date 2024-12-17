@@ -1,6 +1,7 @@
 using System;
 using CatalogService.DTOs;
 using CatalogService.Entities;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace CatalogService.Data;
 
@@ -19,5 +20,6 @@ public interface ICatalogRepository
     void AddItem(Item item);
 
     Task<bool> SaveChangesAsync();
+    public Task<IDbContextTransaction> BeginTransactionAsync();
 
 }

@@ -4,6 +4,7 @@ using AutoMapper.QueryableExtensions;
 using CatalogService.DTOs;
 using CatalogService.Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace CatalogService.Data;
 
@@ -116,6 +117,11 @@ public class CatalogRepository : ICatalogRepository
     public async Task<bool> SaveChangesAsync()
     {
         return await _context.SaveChangesAsync() > 0;
+    }
+
+     public async Task<IDbContextTransaction> BeginTransactionAsync()
+    {
+        return await _context.Database.BeginTransactionAsync();
     }
 
 }

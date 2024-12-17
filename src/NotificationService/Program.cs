@@ -1,8 +1,10 @@
+using Contracts.Catalog;
 using DotNetEnv;
 using MassTransit;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Identity.Web;
+using NotificationService.Consumers;
 using NotificationService.Hubs;
 using ShoppingListService.Consumers;
 
@@ -22,9 +24,17 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddMassTransit(x =>
 {
 
-    x.AddConsumersFromNamespaceContaining<CatalogItemUpdatedConsumer>();
+
     x.AddConsumersFromNamespaceContaining<CatalogCategoryUpdatedConsumer>();
+    x.AddConsumersFromNamespaceContaining<CatalogCategoryCreatedConsumer>();
+    x.AddConsumersFromNamespaceContaining<CatalogCategoryDeletedConsumer>();
+
+    x.AddConsumersFromNamespaceContaining<CatalogItemCreatedConsumer>();
+    x.AddConsumersFromNamespaceContaining<CatalogItemUpdatedConsumer>();
     x.AddConsumersFromNamespaceContaining<CatalogItemDeletedConsumer>();
+
+
+
 
     x.SetEndpointNameFormatter(new KebabCaseEndpointNameFormatter("notifications", false));
     x.UsingRabbitMq((context, cfg) =>

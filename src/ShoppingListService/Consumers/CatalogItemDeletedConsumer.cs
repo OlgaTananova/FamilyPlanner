@@ -4,6 +4,7 @@ using Contracts.Catalog;
 using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using ShoppingListService.Data;
+using ShoppingListService.Entities;
 using ShoppingListService.Helpers;
 
 namespace ShoppingListService.Consumers;
@@ -36,21 +37,38 @@ public class CatalogItemDeletedConsumer : IConsumer<CatalogItemDeleted>
 
             Console.WriteLine("--> Consuming catalog item deleted " + context.Message.SKU);
 
+            // Begin a transaction
+            using var transaction = await _context.Database.BeginTransactionAsync();
+
             var catalogItem = await _context.CatalogItems.FirstOrDefaultAsync(x => x.SKU == context.Message.SKU
-                    && x.Family == context.Message.Family && x.OwnerId == context.Message.OwnerId);
+                    && x.Family == context.Message.Family);
 
-            if (catalogItem != null)
+            if (catalogItem == null)
             {
-                catalogItem.IsDeleted = true;
 
-                // TODO: update ShoppingListItems 
-
-                await _context.SaveChangesAsync();
-            }
-            else
-            {
                 Console.WriteLine($"Catalog item with SKU {context.Message.SKU} not found. Skipping delete.");
+                await transaction.RollbackAsync();
+                return;
             }
+
+            catalogItem.IsDeleted = true;
+
+            List<ShoppingListItem> shoppingListItems = await _context.ShoppingListItems
+            .Where(x => x.SKU == context.Message.SKU && x.Family == context.Message.Family).ToListAsync();
+
+            foreach (var shoppingListItem in shoppingListItems)
+            {
+                shoppingListItem.IsOrphaned = true;
+                _context.ShoppingListItems.Update(shoppingListItem);
+            }
+            _context.CatalogItems.Update(catalogItem);
+
+            await _context.SaveChangesAsync();
+
+            // Commit the transaction
+            await transaction.CommitAsync();
+
+            Console.WriteLine("Transaction committed successfully.");
 
         }
         catch (Exception ex)

@@ -18,6 +18,6 @@ public class CatalogItemDeletedConsumer : IConsumer<CatalogItemDeleted>
     public async Task Consume(ConsumeContext<CatalogItemDeleted> context)
     {
         Console.WriteLine("--> Catalog item deleted message received");
-        await _hubContext.Clients.Group(context.Message.Family).SendAsync("CatalogItemDeletedMessage", context.Message);
+        await _hubContext.Clients.Group(context.Message.Family).SendAsync("CatalogItemDeleted", context.Message);
     }
 }
