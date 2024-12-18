@@ -48,45 +48,65 @@ export const catalogSlice = createSlice({
             state.itemsWOCategories = initialState.itemsWOCategories;
         },
         addCategory(state, action: PayloadAction<Category>) {
-            state.categories.push(action.payload);
+            const existingCategory = state.categories.find(
+                (cat) => cat.sku === action.payload.sku
+            );
+            if (existingCategory) return;
+
+            const newCategory = { ...action.payload, items: action.payload.items || [] };
+            state.categories.push(newCategory);
+            // Update itemsWOCategories by flattening all category items
             state.itemsWOCategories = state.categories
                 .flatMap((category) => category.items)
                 .sort((a, b) => a.name.localeCompare(b.name));
         },
         addItem(state, action: PayloadAction<Item>) {
-            const { categorySKU } = action.payload;
-            const category = state.categories.find((cat) => cat.sku === categorySKU);
-            if (category) {
-                category.items.push(action.payload);
-            }
+            const existingCategory = state.categories.find(
+                (cat) => cat.sku === action.payload.categorySKU
+            );
+            const existingItem = existingCategory?.items.find((i) => i.sku == action.payload.sku);
+            if (existingItem) return;
+
+            existingCategory?.items.push(action.payload);
+
             state.itemsWOCategories = state.categories
                 .flatMap((category) => category.items)
                 .sort((a, b) => a.name.localeCompare(b.name));
         },
-        updateItemInStore(state, action: PayloadAction<{ updatedItem: Item; previousCategoryId: string }>) {
-            const { id, name, categoryId } = action.payload.updatedItem;
-            const { previousCategoryId } = action.payload;
-
-            // Remove the item from the current category if the category has changed
-            if (categoryId !== previousCategoryId) {
-                state.categories = state.categories.map((cat) =>
-                    cat.id === previousCategoryId
-                        ? { ...cat, items: cat.items.filter((item) => item.id !== id) }
-                        : cat
+        updateItemInStore(
+            state,
+            action: PayloadAction<{ updatedItem: Item; previousCategorySKU: string }>
+        ) {
+            const { sku, name, categorySKU } = action.payload.updatedItem;
+            const { previousCategorySKU } = action.payload;
+        
+            // Step 1: Remove the item from the previous category if it has changed
+            if (categorySKU !== previousCategorySKU) {
+                const previousCategory = state.categories.find(
+                    (cat) => cat.sku === previousCategorySKU
                 );
-            }
-
-            // Add or update the item in the new category
-            const category = state.categories.find((cat) => cat.sku === categoryId);
-            if (category) {
-                const existingItem = category.items.find((item) => item.id === id);
-
-                if (existingItem) {
-                    existingItem.name = name; // Update existing item
-                } else {
-                    category.items.push(action.payload.updatedItem); // Add new item if not found
+                if (previousCategory) {
+                    previousCategory.items = previousCategory.items.filter(
+                        (item) => item.sku !== sku
+                    );
                 }
             }
+        
+            // Step 2: Add or update the item in the new category
+            const targetCategory = state.categories.find((cat) => cat.sku === categorySKU);
+            if (targetCategory) {
+                const existingItem = targetCategory.items.find((item) => item.sku === sku);
+        
+                if (existingItem) {
+                    // Update existing item
+                    existingItem.name = name;
+                } else {
+                    // Add the new item
+                    targetCategory.items.push(action.payload.updatedItem);
+                }
+            }
+        
+            // Step 3: Recalculate the flattened list of items without categories
             state.itemsWOCategories = state.categories
                 .flatMap((category) => category.items)
                 .sort((a, b) => a.name.localeCompare(b.name));
@@ -100,7 +120,7 @@ export const catalogSlice = createSlice({
                 .sort((a, b) => a.name.localeCompare(b.name));
         },
         updateCategoryInStore(state, action: PayloadAction<Category>) {
-            const category = state.categories.find((cat) => cat.id === action.payload.id);
+            const category = state.categories.find((cat) => cat.sku === action.payload.sku);
             if (category) {
                 category.name = action.payload.name;
             }
@@ -109,7 +129,7 @@ export const catalogSlice = createSlice({
                 .sort((a, b) => a.name.localeCompare(b.name));
         },
         removeCategoryFromStore(state, action: PayloadAction<string>) {
-            state.categories = state.categories.filter((cat) => cat.id !== action.payload);
+            state.categories = state.categories.filter((cat) => cat.sku !== action.payload);
             state.itemsWOCategories = state.categories
                 .flatMap((category) => category.items)
                 .sort((a, b) => a.name.localeCompare(b.name));

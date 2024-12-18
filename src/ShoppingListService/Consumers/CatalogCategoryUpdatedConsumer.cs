@@ -34,28 +34,47 @@ public class CatalogCategoryUpdatedConsumer : IConsumer<CatalogCategoryUpdated>
                 throw new ArgumentException("Invalid CatalogCategoryUpdated message received.");
             }
 
-            Console.WriteLine("--> Consuming catalog category updated " + context.Message.CategorySKU);
+            Console.WriteLine("--> Consuming catalog category updated " + context.Message.Sku);
 
+            // Begin a transaction
+            using var transaction = await _context.Database.BeginTransactionAsync();
+
+            // Update catalog items    
             var catalogItems = await _context.CatalogItems
-                .Where(x => x.CategorySKU == context.Message.CategorySKU &&
-                x.OwnerId == context.Message.OwnerId && x.Family == context.Message.Family).ToListAsync();
+                .Where(x => x.CategorySKU == context.Message.Sku
+                && x.Family == context.Message.Family).ToListAsync();
 
             if (catalogItems.Any())
             {
                 foreach (var catalogItem in catalogItems)
                 {
                     catalogItem.CategoryName = context.Message.Name;
+                    _context.CatalogItems.Update(catalogItem);
                 }
-                // Save changes to the database
-                await _context.SaveChangesAsync();
-                Console.WriteLine("--> Successfully updated catalog items for category: " + context.Message.CategorySKU);
 
             }
             else
             {
-                Console.WriteLine($"No catalog items found for category SKU: {context.Message.CategorySKU}");
+                Console.WriteLine($"No catalog items found for category SKU: {context.Message.Sku}");
+                await transaction.RollbackAsync();
+                return;
             }
 
+            // if there are shopping list items with the category - update them
+            var shoppingListItems = await _context.ShoppingListItems.Where(x => x.CategorySKU == context.Message.Sku
+                     && x.Family == context.Message.Family).ToListAsync();
+            if (shoppingListItems.Count > 0)
+            {
+                foreach (var shoppingItem in shoppingListItems)
+                {
+                    shoppingItem.CategoryName = context.Message.Name;
+                    _context.ShoppingListItems.Update(shoppingItem);
+                }
+            }
+            // Save changes to the database
+            await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
+            Console.WriteLine($"--> Successfully updated category name for SKU: {context.Message.Sku}");
         }
         catch (Exception ex)
         {

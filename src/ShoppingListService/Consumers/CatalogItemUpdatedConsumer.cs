@@ -1,4 +1,5 @@
 using System;
+using System.Transactions;
 using AutoMapper;
 using Contracts.Catalog;
 using MassTransit;
@@ -67,8 +68,6 @@ public class CatalogItemUpdatedConsumer : IConsumer<CatalogItemUpdated>
             var shoppingListItems = await _context.ShoppingListItems
                 .Where(x => x.SKU == context.Message.UpdatedItem.SKU && x.Family == context.Message.UpdatedItem.Family)
                 .ToListAsync();
-
-
 
             // Update related shopping list items
             foreach (var shoppingListItem in shoppingListItems)

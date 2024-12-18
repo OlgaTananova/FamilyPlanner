@@ -5,6 +5,7 @@ import { useDispatch } from "react-redux";
 import { updateCategory, deleteCategory } from "../lib/fetchCatalog";
 import { removeCategoryFromStore, updateCategoryInStore } from "../redux/catalogSlice";
 import ConfirmationModal from "./ConfirmationModal";
+import { updateCatalogCategory } from "../redux/shoppingListSlice";
 
 interface EditCategoryModalProps {
     isOpen: boolean;
@@ -12,6 +13,7 @@ interface EditCategoryModalProps {
     category: {
         id: string;
         name: string;
+        sku: string;
         items: Array<{ id: string; name: string }>;
     };
 
@@ -24,7 +26,7 @@ export default function EditCategoryModal({
 }: EditCategoryModalProps) {
     const dispatch = useDispatch();
 
-    const [categoryState, setCategoryState] = useState<{ id: string, name: string, items: Array<{ id: string; name: string }> }>(category);
+    const [categoryState, setCategoryState] = useState<{ id: string, name: string, sku: string, items: Array<{ id: string; name: string }> }>(category);
     const [isSaving, setIsSaving] = useState(false);
     const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
 
@@ -45,9 +47,10 @@ export default function EditCategoryModal({
         setIsSaving(true);
 
         try {
-            const updatedCategory = await updateCategory(categoryState.id, categoryState.name);
+            const updatedCategory = await updateCategory(categoryState.sku, categoryState.name);
             if (updatedCategory) {
                 dispatch(updateCategoryInStore(updatedCategory));
+                dispatch(updateCatalogCategory(updatedCategory));
                 toast.success(`Category "${categoryState.name}" updated successfully!`);
                 onClose();
             }
@@ -58,9 +61,9 @@ export default function EditCategoryModal({
 
     const handleDeleteConfirm = async () => {
         try {
-            const result = await deleteCategory(category.id);
+            const result = await deleteCategory(category.sku);
             if (result) {
-                dispatch(removeCategoryFromStore(category.id));
+                dispatch(removeCategoryFromStore(category.sku));
                 toast.success(`Category "${category.name}" deleted successfully!`);
                 setIsConfirmModalOpen(false);
                 onClose();

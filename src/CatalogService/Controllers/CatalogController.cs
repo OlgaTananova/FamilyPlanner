@@ -51,10 +51,10 @@ namespace CatalogService.Controllers
             return await _repo.GetAllCategoriesAsync(_familyName);
         }
 
-        [HttpGet("categories/{id}")]
-        public async Task<ActionResult<CategoryDto>> GetCategoryById(Guid id)
+        [HttpGet("categories/{sku}")]
+        public async Task<ActionResult<CategoryDto>> GetCategoryBySku(Guid sku)
         {
-            CategoryDto category = await _repo.GetCategoryByIdAsync(id, _familyName);
+            CategoryDto category = await _repo.GetCategoryBySkuAsync(sku, _familyName);
 
             if (category == null)
             {
@@ -72,11 +72,11 @@ namespace CatalogService.Controllers
 
         }
 
-        [HttpGet("items/{id}")]
-        public async Task<ActionResult<ItemDto>> GetItemById(Guid id)
+        [HttpGet("items/{sku}")]
+        public async Task<ActionResult<ItemDto>> GetItemBySku(Guid sku)
         {
 
-            var item = await _repo.GetItemByIdAsync(id, _familyName);
+            var item = await _repo.GetItemBySkuAsync(sku, _familyName);
 
             if (item == null)
             {
@@ -112,7 +112,7 @@ namespace CatalogService.Controllers
 
             if (!result) return BadRequest("Could not save changes to the DB");
 
-            return CreatedAtAction(nameof(GetCategoryById), new { category.Id }, newCategory);
+            return Ok(newCategory);
         }
 
         [HttpPost("items")]
@@ -125,7 +125,7 @@ namespace CatalogService.Controllers
                 return BadRequest("The item with this name already exists.");
             }
 
-            Category category = await _repo.GetCategoryEntityById(itemDto.CategoryId, _familyName);
+            Category category = await _repo.GetCategoryEntityBySku(itemDto.CategorySKU, _familyName);
 
             if (category == null)
             {
@@ -148,16 +148,16 @@ namespace CatalogService.Controllers
 
             if (!result) return BadRequest("Could not save changes to the DB.");
 
-            return CreatedAtAction(nameof(GetItemById), new { item.Id }, _mapper.Map<ItemDto>(item));
+            return Ok(_mapper.Map<ItemDto>(item));
         }
 
-        [HttpPut("categories/{id}")]
-        public async Task<ActionResult<CategoryDto>> UpdateCategory(Guid id, UpdateCategoryDto categoryDto)
+        [HttpPut("categories/{sku}")]
+        public async Task<ActionResult<CategoryDto>> UpdateCategory(Guid sku, UpdateCategoryDto categoryDto)
         {
             using var transaction = await _repo.BeginTransactionAsync();
             try
             {
-                Category category = await _repo.GetCategoryEntityById(id, _familyName);
+                Category category = await _repo.GetCategoryEntityBySku(sku, _familyName);
 
                 if (category == null)
                 {
@@ -172,7 +172,7 @@ namespace CatalogService.Controllers
 
                 bool result = await _repo.SaveChangesAsync();
 
-                if (!result) return BadRequest("Problem saving changes");
+                if (!result) return BadRequest("Problem with updating the category.");
 
                 await transaction.CommitAsync();
                 return Ok(updatedCategory);
@@ -182,42 +182,48 @@ namespace CatalogService.Controllers
             {
                 // Rollback the transaction on any exception
                 await transaction.RollbackAsync();
-                return BadRequest("Problem with commiting transaction. Possibly another user tried to change the data.");
+                return BadRequest("Problem with updating the category.");
             }
 
         }
 
-        [HttpPut("items/{id}")]
-        public async Task<ActionResult<CatalogItemUpdated>> UpdateItem(Guid id, UpdateItemDto itemDto)
+        [HttpPut("items/{sku}")]
+        public async Task<ActionResult<CatalogItemUpdated>> UpdateItem(Guid sku, UpdateItemDto itemDto)
         {
             using var transaction = await _repo.BeginTransactionAsync();
 
             try
             {
-                Item item = await _repo.GetItemEntityByIdAsync(id, _familyName);
+                Item item = await _repo.GetItemEntityBySkuAsync(sku, _familyName);
 
-                Category category = await _repo.GetCategoryEntityById(itemDto.CategoryId, _familyName);
+                Category category = await _repo.GetCategoryEntityBySku(itemDto.CategorySKU, _familyName);
 
                 if (item == null || category == null)
                 {
                     return NotFound("The item or category was not found.");
                 }
 
-                Guid previousCategoryId = item.CategoryId != itemDto.CategoryId ? item.CategoryId : itemDto.CategoryId;
+                Guid previousCategorySKU = item.CategorySKU != itemDto.CategorySKU ? item.CategorySKU : itemDto.CategorySKU;
 
                 await _repo.UpdateItemAsync(item, itemDto);
-
 
                 CatalogItemUpdated catalogItemUpdated = new CatalogItemUpdated
                 {
                     UpdatedItem = _mapper.Map<UpdatedItem>(item),
-                    PreviousCategoryId = previousCategoryId
+                    PreviousCategorySKU = previousCategorySKU
                 };
                 await _publishEndpoint.Publish(catalogItemUpdated);
 
                 bool result = await _repo.SaveChangesAsync();
-                if (!result) return BadRequest("Problem saving changes");
+
+                if (!result)
+                {
+                    await transaction.RollbackAsync();
+                    return BadRequest("Failed to save changes to the database.");
+                }
+
                 await transaction.CommitAsync();
+
                 return Ok(catalogItemUpdated);
             }
             catch (Exception ex)
@@ -228,14 +234,14 @@ namespace CatalogService.Controllers
             }
         }
 
-        [HttpDelete("categories/{id}")]
-        public async Task<ActionResult> DeleteCategory(Guid id)
+        [HttpDelete("categories/{sku}")]
+        public async Task<ActionResult> DeleteCategory(Guid sku)
         {
 
             using var transaction = await _repo.BeginTransactionAsync();
             try
             {
-                Category category = await _repo.GetCategoryEntityById(id, _familyName);
+                Category category = await _repo.GetCategoryEntityBySku(sku, _familyName);
 
                 if (category == null)
                 {
@@ -249,7 +255,9 @@ namespace CatalogService.Controllers
 
                 category.IsDeleted = true;
 
-                await _publishEndpoint.Publish(_mapper.Map<CatalogCategoryDeleted>(category));
+                CategoryDto deletedCategory = _mapper.Map<CategoryDto>(category);
+
+                await _publishEndpoint.Publish(_mapper.Map<CatalogCategoryDeleted>(deletedCategory));
 
                 bool result = await _repo.SaveChangesAsync();
                 if (!result) return BadRequest("Could not delete category and save changed to the database.");
@@ -260,18 +268,18 @@ namespace CatalogService.Controllers
             {
                 // Rollback the transaction on any exception
                 await transaction.RollbackAsync();
-                return BadRequest("Problem with commiting transaction. Possibly another user tried to delete the data.");
+                return BadRequest("Could not delete category and save changed to the database.");
             }
 
         }
 
-        [HttpDelete("items/{id}")]
-        public async Task<ActionResult> DeleteItem(Guid id)
+        [HttpDelete("items/{sku}")]
+        public async Task<ActionResult> DeleteItem(Guid sku)
         {
             using var transaction = await _repo.BeginTransactionAsync();
             try
             {
-                Item item = await _repo.GetItemEntityByIdAsync(id, _familyName);
+                Item item = await _repo.GetItemEntityBySkuAsync(sku, _familyName);
 
                 if (item == null)
                 {

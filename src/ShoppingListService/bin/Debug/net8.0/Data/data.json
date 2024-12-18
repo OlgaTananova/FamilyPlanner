@@ -1,0 +1,248 @@
+[{
+    "id": "084be7c2-5e1a-4c15-b287-7362a6eec3bf",
+    "sku": "6b0eaee4-c2b8-481b-98d7-ff73b4f4f8d7",
+    "name": "Veggies",
+    "ownerId": "63e6299d-567c-49fc-a0e4-4d53e7ca1dd5",
+    "family": "Smith",
+    "isDeleted": false,
+    "items": [
+        {
+            "id": "44ee905c-5071-475a-b253-7e0622995aa6",
+            "sku": "63226390-de56-4c3a-8075-809c6dedde00",
+            "name": "Bananas",
+            "ownerId": "63e6299d-567c-49fc-a0e4-4d53e7ca1dd5",
+            "family": "Smith",
+            "isDeleted": false,
+            "categoryId": "084be7c2-5e1a-4c15-b287-7362a6eec3bf",
+            "categorySKU": "6b0eaee4-c2b8-481b-98d7-ff73b4f4f8d7",
+            "categoryName": "Veggies"
+        },
+        {
+            "id": "626be36b-f8df-44cd-99e9-5be4992b4306",
+            "sku": "4215227f-dec7-43a2-8c17-0d07397bbadb",
+            "name": "Apples",
+            "ownerId": "63e6299d-567c-49fc-a0e4-4d53e7ca1dd5",
+            "family": "Smith",
+            "isDeleted": false,
+            "categoryId": "084be7c2-5e1a-4c15-b287-7362a6eec3bf",
+            "categorySKU": "6b0eaee4-c2b8-481b-98d7-ff73b4f4f8d7",
+            "categoryName": "Veggies"
+        },
+        {
+            "id": "8ebcb09f-e2cc-4441-97b0-3014f36e6cb6",
+            "sku": "77923080-cda6-4288-8b24-f1d0900cfa0e",
+            "name": "Oranges",
+            "ownerId": "63e6299d-567c-49fc-a0e4-4d53e7ca1dd5",
+            "family": "Smith",
+            "isDeleted": false,
+            "categoryId": "084be7c2-5e1a-4c15-b287-7362a6eec3bf",
+            "categorySKU": "6b0eaee4-c2b8-481b-98d7-ff73b4f4f8d7",
+            "categoryName": "Veggies"
+        }
+    ]
+},
+{
+    "id": "551852f1-2f59-4ae7-8da4-4e1908a9df93",
+    "sku": "67257e7e-4782-4889-ad35-53847c3bf32f",
+    "name": "Frozen Foods",
+    "ownerId": "63e6299d-567c-49fc-a0e4-4d53e7ca1dd5",
+    "family": "Smith",
+    "isDeleted": false,
+    "items": [
+        {
+            "id": "d6bad1b5-3b98-4f0b-86da-c6055e204075",
+            "sku": "cc6be8cd-c65d-4009-9aaf-4ec70a85b10e",
+            "name": "Frozen Pizza",
+            "ownerId": "63e6299d-567c-49fc-a0e4-4d53e7ca1dd5",
+            "family": "Smith",
+            "isDeleted": false,
+            "categoryId": "551852f1-2f59-4ae7-8da4-4e1908a9df93",
+            "categorySKU": "67257e7e-4782-4889-ad35-53847c3bf32f",
+            "categoryName": "Frozen Foods"
+        },
+        {
+            "id": "e85614d2-58ae-4186-bdce-a37d6bd631a9",
+            "sku": "2873d074-9850-4e15-b193-322fc5fa4aad",
+            "name": "Ice Cream",
+            "ownerId": "63e6299d-567c-49fc-a0e4-4d53e7ca1dd5",
+            "family": "Smith",
+            "isDeleted": false,
+            "categoryId": "551852f1-2f59-4ae7-8da4-4e1908a9df93",
+            "categorySKU": "67257e7e-4782-4889-ad35-53847c3bf32f",
+            "categoryName": "Frozen Foods"
+        }
+    ]
+},
+{
+    "id": "6bdab326-124a-4d82-8697-05ffeb90335e",
+    "sku": "57134ac7-5446-4377-88f4-b0f9b71bf57f",
+    "name": "Bakery",
+    "ownerId": "63e6299d-567c-49fc-a0e4-4d53e7ca1dd5",
+    "family": "Smith",
+    "isDeleted": false,
+    "items": [
+        {
+            "id": "1e84b2d1-db30-4735-b712-3bc0d888f4be",
+            "sku": "b76cb564-0871-4846-b33e-8bc31480b97a",
+            "name": "Bread",
+            "ownerId": "63e6299d-567c-49fc-a0e4-4d53e7ca1dd5",
+            "family": "Smith",
+            "isDeleted": false,
+            "categoryId": "6bdab326-124a-4d82-8697-05ffeb90335e",
+            "categorySKU": "57134ac7-5446-4377-88f4-b0f9b71bf57f",
+            "categoryName": "Bakery"
+        },
+        {
+            "id": "62731e52-0587-4a5c-815b-16a2bda9a5a8",
+            "sku": "4f74e086-8d71-4d8f-a7ee-d24bb73cb46b",
+            "name": "Donuts",
+            "ownerId": "63e6299d-567c-49fc-a0e4-4d53e7ca1dd5",
+            "family": "Smith",
+            "isDeleted": false,
+            "categoryId": "6bdab326-124a-4d82-8697-05ffeb90335e",
+            "categorySKU": "57134ac7-5446-4377-88f4-b0f9b71bf57f",
+            "categoryName": "Bakery"
+        },
+        {
+            "id": "e4c4f694-b386-4b03-a47a-3b8955403af4",
+            "sku": "3c69875f-ec0f-4a65-b751-ad9014d143f1",
+            "name": "Bagels",
+            "ownerId": "63e6299d-567c-49fc-a0e4-4d53e7ca1dd5",
+            "family": "Smith",
+            "isDeleted": false,
+            "categoryId": "6bdab326-124a-4d82-8697-05ffeb90335e",
+            "categorySKU": "57134ac7-5446-4377-88f4-b0f9b71bf57f",
+            "categoryName": "Bakery"
+        }
+    ]
+},
+{
+    "id": "7e9ed42c-cd44-4899-9f64-c1a2b949ee90",
+    "sku": "89414ca2-592b-46e3-9770-6f61a1d320b9",
+    "name": "Meat",
+    "ownerId": "63e6299d-567c-49fc-a0e4-4d53e7ca1dd5",
+    "family": "Smith",
+    "isDeleted": false,
+    "items": [
+        {
+            "id": "97ad2572-679a-4cc5-8234-02298a23f48c",
+            "sku": "03cf6ddd-c51b-4dce-9745-9cbde9ea2c19",
+            "name": "Ground Beef",
+            "ownerId": "63e6299d-567c-49fc-a0e4-4d53e7ca1dd5",
+            "family": "Smith",
+            "isDeleted": false,
+            "categoryId": "7e9ed42c-cd44-4899-9f64-c1a2b949ee90",
+            "categorySKU": "89414ca2-592b-46e3-9770-6f61a1d320b9",
+            "categoryName": "Meat"
+        },
+        {
+            "id": "cfa10c17-26b3-4e82-8c30-a672b08ed494",
+            "sku": "5c85fc05-1d88-4c3b-8c56-bbf96b33ec76",
+            "name": "Chicken Breast",
+            "ownerId": "63e6299d-567c-49fc-a0e4-4d53e7ca1dd5",
+            "family": "Smith",
+            "isDeleted": false,
+            "categoryId": "7e9ed42c-cd44-4899-9f64-c1a2b949ee90",
+            "categorySKU": "89414ca2-592b-46e3-9770-6f61a1d320b9",
+            "categoryName": "Meat"
+        },
+        {
+            "id": "e2c4d1d2-380d-44d4-81fc-770b89eeeceb",
+            "sku": "9f30746f-8ed3-4dd9-bca5-8991c9298fb4",
+            "name": "Pork Chops",
+            "ownerId": "63e6299d-567c-49fc-a0e4-4d53e7ca1dd5",
+            "family": "Smith",
+            "isDeleted": false,
+            "categoryId": "7e9ed42c-cd44-4899-9f64-c1a2b949ee90",
+            "categorySKU": "89414ca2-592b-46e3-9770-6f61a1d320b9",
+            "categoryName": "Meat"
+        }
+    ]
+},
+{
+    "id": "b74f12af-cb18-4c11-988c-eb341fdeda25",
+    "sku": "c93953b1-e58e-467b-9c25-8cecdc97eb2a",
+    "name": "Beverages",
+    "ownerId": "63e6299d-567c-49fc-a0e4-4d53e7ca1dd5",
+    "family": "Smith",
+    "isDeleted": false,
+    "items": [
+        {
+            "id": "67ad4287-3e77-4324-a4bb-726b2b9fd077",
+            "sku": "ef7df054-c821-45ff-8633-e83066a17fed",
+            "name": "Coffee",
+            "ownerId": "63e6299d-567c-49fc-a0e4-4d53e7ca1dd5",
+            "family": "Smith",
+            "isDeleted": false,
+            "categoryId": "b74f12af-cb18-4c11-988c-eb341fdeda25",
+            "categorySKU": "c93953b1-e58e-467b-9c25-8cecdc97eb2a",
+            "categoryName": "Beverages"
+        },
+        {
+            "id": "a96240dc-643a-4dcc-84b1-43e33eca6f3b",
+            "sku": "ad9f4aba-2cfa-42e0-b81d-185707c4679c",
+            "name": "Orange Juice",
+            "ownerId": "63e6299d-567c-49fc-a0e4-4d53e7ca1dd5",
+            "family": "Smith",
+            "isDeleted": false,
+            "categoryId": "b74f12af-cb18-4c11-988c-eb341fdeda25",
+            "categorySKU": "c93953b1-e58e-467b-9c25-8cecdc97eb2a",
+            "categoryName": "Beverages"
+        },
+        {
+            "id": "aaae1472-16b3-4f07-9c20-d854c43a6409",
+            "sku": "9a5da087-b16c-48f6-b1e1-b0d44b248966",
+            "name": "Soda",
+            "ownerId": "63e6299d-567c-49fc-a0e4-4d53e7ca1dd5",
+            "family": "Smith",
+            "isDeleted": false,
+            "categoryId": "b74f12af-cb18-4c11-988c-eb341fdeda25",
+            "categorySKU": "c93953b1-e58e-467b-9c25-8cecdc97eb2a",
+            "categoryName": "Beverages"
+        }
+    ]
+},
+{
+    "id": "dc65e10f-5dde-4388-a5f9-64c7e1f90654",
+    "sku": "17521a0e-3594-4e05-a9bd-36b9b2be57ef",
+    "name": "Dairy",
+    "ownerId": "63e6299d-567c-49fc-a0e4-4d53e7ca1dd5",
+    "family": "Smith",
+    "isDeleted": false,
+    "items": [
+        {
+            "id": "9d6168b2-c43e-4efd-94a1-2058baabefad",
+            "sku": "6ea38f9f-bd76-43cd-987c-2d653de4b595",
+            "name": "Cheese",
+            "ownerId": "63e6299d-567c-49fc-a0e4-4d53e7ca1dd5",
+            "family": "Smith",
+            "isDeleted": false,
+            "categoryId": "dc65e10f-5dde-4388-a5f9-64c7e1f90654",
+            "categorySKU": "17521a0e-3594-4e05-a9bd-36b9b2be57ef",
+            "categoryName": "Dairy"
+        },
+        {
+            "id": "ae8d2d6e-08c2-4d27-b58c-d1772d1fa3a7",
+            "sku": "b441510b-b286-4fec-8c7b-8d2103cded98",
+            "name": "Yogurt",
+            "ownerId": "63e6299d-567c-49fc-a0e4-4d53e7ca1dd5",
+            "family": "Smith",
+            "isDeleted": false,
+            "categoryId": "dc65e10f-5dde-4388-a5f9-64c7e1f90654",
+            "categorySKU": "17521a0e-3594-4e05-a9bd-36b9b2be57ef",
+            "categoryName": "Dairy"
+        },
+        {
+            "id": "bfbe9cf7-b199-4002-941e-231377af695a",
+            "sku": "66769f5e-8146-441b-bbc9-df77971abd75",
+            "name": "Milk",
+            "ownerId": "63e6299d-567c-49fc-a0e4-4d53e7ca1dd5",
+            "family": "Smith",
+            "isDeleted": false,
+            "categoryId": "dc65e10f-5dde-4388-a5f9-64c7e1f90654",
+            "categorySKU": "17521a0e-3594-4e05-a9bd-36b9b2be57ef",
+            "categoryName": "Dairy"
+        }
+    ]
+}
+]

@@ -12,6 +12,6 @@ public class CatalogCategoryUpdateValidator : AbstractValidator<CatalogCategoryU
         RuleFor(x => x.Name).NotEmpty().WithMessage("Category name is required.");
         RuleFor(x => x.Family).NotEmpty().WithMessage("Family is required.");
         RuleFor(x => x.OwnerId).NotEmpty().WithMessage("OwnerId is required.");
-        RuleFor(x => x.CategorySKU).NotEmpty().WithMessage("CategorySKU is required.");
+        RuleFor(x => x.Sku).NotEmpty().WithMessage("CategorySKU is required.");
     }
 }

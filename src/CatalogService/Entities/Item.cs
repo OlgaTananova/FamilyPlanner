@@ -23,6 +23,8 @@ public class Item
     //navigation properties
     [Required]
     public Guid CategoryId { get; set; }
+    [Required]
+    public Guid CategorySKU { get; set; }
     public virtual Category Category { get; set; }
 
 }

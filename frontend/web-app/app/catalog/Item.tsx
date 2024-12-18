@@ -6,18 +6,18 @@ import { useState } from "react";
 interface ItemProps {
     name: string;
     id: string;
-    categoryId: string;
+    categorySKU: string;
     sku: string;
-    setEditedItem: (item: { id: string; name: string; categoryId: string, sku: string }) => void;
+    setEditedItem: (item: { id: string; name: string; categorySKU: string, sku: string }) => void;
     setIsEditItemModalOpen: (action: boolean) => void;
 }
 
-export default function ItemComponent({ name, id, categoryId, sku, setEditedItem, setIsEditItemModalOpen}: ItemProps) {
+export default function ItemComponent({ name, id, categorySKU, sku, setEditedItem, setIsEditItemModalOpen}: ItemProps) {
 
     //const [isEditItemModalOpen, setIsEditItemModalOpen] = useState(false);
 
     const handleEditItemClick = ()=> {
-        setEditedItem({id, name, categoryId, sku});
+        setEditedItem({id, name, categorySKU, sku});
         setIsEditItemModalOpen(true);
     }
 

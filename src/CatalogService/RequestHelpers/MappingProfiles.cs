@@ -57,13 +57,13 @@ public class MappingProfiles : Profile
         CreateMap<ItemDto, CatalogItemDeleted>();
 
         CreateMap<CategoryDto, CatalogCategoryCreated>()
-            .ForMember(dest => dest.CategorySKU, opt => opt.MapFrom(src => src.SKU));
+            .ForMember(dest => dest.Sku, opt => opt.MapFrom(src => src.SKU));
 
-        CreateMap<Category, CatalogCategoryDeleted>()
-        .ForMember(dest => dest.CategorySKU, opt => opt.MapFrom(src => src.SKU));
+        CreateMap<CategoryDto, CatalogCategoryDeleted>()
+        .ForMember(dest => dest.Sku, opt => opt.MapFrom(src => src.SKU));
 
         CreateMap<CategoryDto, CatalogCategoryUpdated>()
-            .ForMember(dest => dest.CategorySKU, opt => opt.MapFrom(src => src.SKU));
+            .ForMember(dest => dest.Sku, opt => opt.MapFrom(src => src.SKU));
 
 
 

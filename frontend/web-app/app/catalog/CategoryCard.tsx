@@ -10,14 +10,15 @@ import AddCategoryModal from "./AddCategoryModal";
 interface CategoryCardProps {
     id: string;
     name: string;
+    sku: string;
     items: Item[];
-    setEditedCategory: (category: { id: string; name: string, items: Item[] }) => void;
-    setEditedItem: ( item: {id: string; name: string; categoryId: string, sku: string }) => void;
+    setEditedCategory: (category: { id: string; name: string, sku: string, items: Item[] }) => void;
+    setEditedItem: ( item: {id: string; name: string; categorySKU: string, sku: string }) => void;
     setIsEditItemModalOpen: (action: boolean) => void;
     setIsEditCategoryModalOpen: (action: boolean) => void;
 }
 
-export default function CategoryCard({ id, name, items, setEditedCategory, setEditedItem, setIsEditItemModalOpen, setIsEditCategoryModalOpen }: CategoryCardProps) {
+export default function CategoryCard({ id, name, items, sku, setEditedCategory, setEditedItem, setIsEditItemModalOpen, setIsEditCategoryModalOpen }: CategoryCardProps) {
     const [visibleItemsCount, setVisibleItemsCount] = useState(6);
 
     const handleShowMore = () => {
@@ -29,7 +30,7 @@ export default function CategoryCard({ id, name, items, setEditedCategory, setEd
     };
 
     const handleEditCategory = () => {
-        setEditedCategory({ id: id, name: name, items});
+        setEditedCategory({ id: id, name: name, items, sku: sku});
         setIsEditCategoryModalOpen(true);
     };
 
@@ -54,13 +55,13 @@ export default function CategoryCard({ id, name, items, setEditedCategory, setEd
 
             {/* Items */}
             <div className="mt-4 flex flex-wrap gap-2">
-                {items.slice(0, visibleItemsCount).map((item) => (
+                {items?.slice(0, visibleItemsCount).map((item) => (
                     <ItemComponent
-                        key={item.id}
+                        key={item.sku}
                         name={item.name}
-                        id={item.id}
+                        id={item.sku}
                         sku={item.sku}
-                        categoryId={item.categoryId}
+                        categorySKU={item.categorySKU}
                         setEditedItem={setEditedItem}
                         setIsEditItemModalOpen={setIsEditItemModalOpen}
                     />
@@ -68,7 +69,7 @@ export default function CategoryCard({ id, name, items, setEditedCategory, setEd
             </div>
 
             {/* Show More/Show Less Buttons */}
-            {items.length > 6 && (
+            {items?.length > 6 && (
                 <div className="mt-4 flex justify-end space-x-2">
                     {visibleItemsCount < items.length && (
                         <button

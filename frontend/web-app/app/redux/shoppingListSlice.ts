@@ -1,4 +1,5 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { Category } from "./catalogSlice";
 
 export interface ShoppingListItem {
     id: string;
@@ -88,6 +89,25 @@ const shoppingListSlice = createSlice({
                 });
             }
         },
+        updateCatalogCategory(state, action: PayloadAction<Category>) {
+            const { sku, name } = action.payload;
+            // Update the items in all shopping lists
+            state.lists.forEach((list) => {
+                list.items.forEach((item) => {
+                    if (item.categorySKU === sku) {
+                        item.categoryName = name;
+                    }
+                });
+            });
+            // Update the items in the current shopping list
+            if (state.currentShoppingList) {
+                state.currentShoppingList.items.forEach((item) => {
+                    if (item.categorySKU === sku) {
+                        item.categoryName = name;
+                    }
+                });
+            }
+        }
     },
 });
 
@@ -96,7 +116,8 @@ export const {
     clearShoppingLists,
     setCurrentShoppingList,
     clearCurrentShoppingList,
-    updateCatalogItem
+    updateCatalogItem,
+    updateCatalogCategory
 } = shoppingListSlice.actions;
 
 export default shoppingListSlice.reducer;

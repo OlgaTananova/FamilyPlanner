@@ -99,7 +99,7 @@ export default function AddNewItemModal({ isOpen, onClose }: AddNewItemModalProp
                                 Choose a category
                             </option>
                             {categories.categories.map((category) => (
-                                <option key={category.id} value={category.id}>
+                                <option key={category.sku} value={category.sku}>
                                     {category.name}
                                 </option>
                             ))}

@@ -15,7 +15,7 @@ interface EditItemModalProps {
         id: string;
         sku: string;
         name: string;
-        categoryId: string;
+        categorySKU: string;
     };
 }
 
@@ -24,18 +24,18 @@ export default function EditItemModal({ isOpen, onClose, item }: EditItemModalPr
     const dispatch = useDispatch();
 
     const [itemName, setItemName] = useState(item.name);
-    const [selectedCategory, setSelectedCategory] = useState(item.categoryId);
+    const [selectedCategory, setSelectedCategory] = useState(item.categorySKU);
     const [isSaving, setIsSaving] = useState(false);
     const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
-    const [currentCategory, setCurrentCategory] = useState(item.categoryId);
+    const [currentCategory, setCurrentCategory] = useState(item.categorySKU);
 
     const validateName = (name: string) => name.trim().length >= 3;
 
     useEffect(() => {
         if (item) {
             setItemName(item.name);
-            setSelectedCategory(item.categoryId);
-            setCurrentCategory(item.categoryId);
+            setSelectedCategory(item.categorySKU);
+            setCurrentCategory(item.categorySKU);
         }
     }, [item]);
 
@@ -48,7 +48,7 @@ export default function EditItemModal({ isOpen, onClose, item }: EditItemModalPr
         setIsSaving(true);
 
         try {
-            const updatedItem = await updateItem(item.id, itemName, selectedCategory);
+            const updatedItem = await updateItem(item.sku, itemName, selectedCategory);
 
             if (updatedItem) {
                 dispatch(updateItemInStore(updatedItem));
@@ -64,7 +64,7 @@ export default function EditItemModal({ isOpen, onClose, item }: EditItemModalPr
 
     const handleDelete = async () => {
 
-        const result = await deleteItem(item.id);
+        const result = await deleteItem(item.sku);
         if (result) {
             dispatch(removeItemFromStore(item.sku));
             toast.success("Item deleted successfully!");
@@ -110,7 +110,7 @@ export default function EditItemModal({ isOpen, onClose, item }: EditItemModalPr
                                 className="w-full border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-300"
                             >
                                 {categories.map((category) => (
-                                    <option key={category.id} value={category.id}>
+                                    <option key={category.sku} value={category.sku}>
                                         {category.name}
                                     </option>
                                 ))}

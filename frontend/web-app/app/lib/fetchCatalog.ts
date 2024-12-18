@@ -29,13 +29,13 @@ export async function createCategory(name: string): Promise<Category | null> {
 }
 
 // Create a new item
-export async function createItem(name: string, categoryId: string): Promise<Item | null> {
+export async function createItem(name: string, categorySKU: string): Promise<Item | null> {
     const newItem = await fetchApi<Item>(catalogServiceUrl!, "/api/Catalog/items", {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
         },
-        body: JSON.stringify({ name, categoryId }),
+        body: JSON.stringify({ name, categorySKU }),
     });
 
     if (newItem) {
@@ -47,13 +47,13 @@ export async function createItem(name: string, categoryId: string): Promise<Item
 
 
 // Update an item
-export async function updateItem(id: string, name: string, categoryId: string): Promise<{ updatedItem: Item, previousCategoryId: string } | null> {
-    const updatedItem = await fetchApi<{ updatedItem: Item, previousCategoryId: string }>(catalogServiceUrl!, `/api/Catalog/items/${id}`, {
+export async function updateItem(sku: string, name: string, categorySKU: string): Promise<{ updatedItem: Item, previousCategorySKU: string } | null> {
+    const updatedItem = await fetchApi<{ updatedItem: Item, previousCategorySKU: string }>(catalogServiceUrl!, `/api/Catalog/items/${sku}`, {
         method: "PUT",
         headers: {
             "Content-Type": "application/json",
         },
-        body: JSON.stringify({ name, categoryId }),
+        body: JSON.stringify({ name, categorySKU }),
     });
 
     if (updatedItem) {
@@ -64,8 +64,8 @@ export async function updateItem(id: string, name: string, categoryId: string): 
 }
 
 // Delete an item
-export async function deleteItem(id: string): Promise<boolean> {
-    const success = await fetchApi<null>(catalogServiceUrl!, `/api/Catalog/items/${id}`, {
+export async function deleteItem(sku: string): Promise<boolean> {
+    const success = await fetchApi<null>(catalogServiceUrl!, `/api/Catalog/items/${sku}`, {
         method: "DELETE",
     });
 
@@ -77,15 +77,15 @@ export async function deleteItem(id: string): Promise<boolean> {
     return false;
 }
 
-export async function updateCategory(id: string, name: string): Promise<Category | null> {
-    return await fetchApi(catalogServiceUrl!, `/api/Catalog/categories/${id}`, {
+export async function updateCategory(sku: string, name: string): Promise<Category | null> {
+    return await fetchApi(catalogServiceUrl!, `/api/Catalog/categories/${sku}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name }),
     });
 }
 
-export async function deleteCategory(id: string): Promise<boolean> {
-    const response = await fetchApi(catalogServiceUrl!, `/api/Catalog/categories/${id}`, { method: "DELETE" });
+export async function deleteCategory(sku: string): Promise<boolean> {
+    const response = await fetchApi(catalogServiceUrl!, `/api/Catalog/categories/${sku}`, { method: "DELETE" });
     return response === null; // 204 No Content
 }

@@ -47,22 +47,22 @@ public class CatalogRepository : ICatalogRepository
            .ToListAsync();
     }
 
-    public async Task<CategoryDto> GetCategoryByIdAsync(Guid id, string familyName)
+    public async Task<CategoryDto> GetCategoryBySkuAsync(Guid sku, string familyName)
     {
         return await _context.Categories.AsQueryable()
             .Where(c => c.Family == familyName && !c.IsDeleted)
             .Include(x => x.Items.Where(i => !i.IsDeleted))
             .ProjectTo<CategoryDto>(_mapper.ConfigurationProvider)
-            .FirstOrDefaultAsync(x => x.Id == id);
+            .FirstOrDefaultAsync(x => x.SKU == sku);
 
     }
 
-    public async Task<Category> GetCategoryEntityById(Guid id, string familyName)
+    public async Task<Category> GetCategoryEntityBySku(Guid sku, string familyName)
     {
         return await _context.Categories.AsQueryable()
             .Where(c => c.Family == familyName && !c.IsDeleted)
             .Include(x => x.Items.Where(i => !i.IsDeleted))
-            .FirstOrDefaultAsync(x => x.Id == id);
+            .FirstOrDefaultAsync(x => x.SKU == sku);
     }
 
     public async Task<Category> GetCategoryEntityByName(string name, string familyName)
@@ -74,21 +74,21 @@ public class CatalogRepository : ICatalogRepository
         && x.Family == familyName && !x.IsDeleted);
     }
 
-    public async Task<ItemDto> GetItemByIdAsync(Guid id, string familyName)
+    public async Task<ItemDto> GetItemBySkuAsync(Guid sku, string familyName)
     {
         return await _context.Items.AsQueryable()
            .Where(c => !c.IsDeleted && c.Family == familyName)
            .Include(x => x.Category)
            .ProjectTo<ItemDto>(_mapper.ConfigurationProvider)
-           .FirstOrDefaultAsync(x => x.Id == id);
+           .FirstOrDefaultAsync(x => x.SKU == sku);
     }
 
-    public async Task<Item> GetItemEntityByIdAsync(Guid id, string familyName)
+    public async Task<Item> GetItemEntityBySkuAsync(Guid sku, string familyName)
     {
         return await _context.Items.AsQueryable()
                 .Where(c => !c.IsDeleted && c.Family == familyName)
                 .Include(x => x.Category)
-                .FirstOrDefaultAsync(x => x.Id == id);
+                .FirstOrDefaultAsync(x => x.SKU == sku);
     }
 
     public async Task<Item> GetItemEntityByNameAsync(string name, string familyName)
@@ -102,16 +102,27 @@ public class CatalogRepository : ICatalogRepository
 
     public async Task UpdateItemAsync(Item item, UpdateItemDto itemDto)
     {
-        if (item.CategoryId != itemDto.CategoryId)
+        if (item.CategorySKU != itemDto.CategorySKU)
         {
-            // Update CategoryId and reload the Category navigation property
-            item.CategoryId = itemDto.CategoryId;
-            item.Category = await _context.Categories.FindAsync(itemDto.CategoryId);
+            // Update CategorySKU and explicitly attach the new category
+            item.CategorySKU = itemDto.CategorySKU;
+
+            var newCategory = await _context.Categories.FirstOrDefaultAsync(x => x.SKU == itemDto.CategorySKU);
+            if (newCategory != null)
+            {
+                _context.Entry(newCategory).State = EntityState.Unchanged; // Attach new category
+                item.Category = newCategory;
+            }
         }
 
         // Update other properties
-        item.Name = itemDto.Name ?? item.Name;
-        _context.Items.Update(item);
+        if (!string.IsNullOrEmpty(itemDto.Name))
+        {
+            item.Name = itemDto.Name;
+        }
+
+        // Explicitly mark Item as modified
+        _context.Entry(item).State = EntityState.Modified;
     }
 
     public async Task<bool> SaveChangesAsync()
@@ -119,7 +130,7 @@ public class CatalogRepository : ICatalogRepository
         return await _context.SaveChangesAsync() > 0;
     }
 
-     public async Task<IDbContextTransaction> BeginTransactionAsync()
+    public async Task<IDbContextTransaction> BeginTransactionAsync()
     {
         return await _context.Database.BeginTransactionAsync();
     }

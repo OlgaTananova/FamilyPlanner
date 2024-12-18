@@ -6,9 +6,9 @@ import { useAuth } from "../hooks/useAuth";
 import { getAccessToken } from "../lib/getAccessToken";
 import getIdToken from "../lib/getIdToken";
 import { useDispatch, useSelector } from "react-redux";
-import { updateCatalogItem } from "../redux/shoppingListSlice";
+import { updateCatalogCategory, updateCatalogItem } from "../redux/shoppingListSlice";
 import { RootState } from "../redux/store";
-import { addItem, removeItemFromStore, updateItemInStore } from "../redux/catalogSlice";
+import { addCategory, addItem, Category, removeCategoryFromStore, removeItemFromStore, updateCategoryInStore, updateItemInStore } from "../redux/catalogSlice";
 
 interface SignalRContextType {
     connection: signalR.HubConnection | null;
@@ -91,22 +91,36 @@ export const SignalRProvider: React.FC<SignalRProviderProps> = ({ hubUrl, childr
 
     useEffect(() => {
         if (connection && isConnected) {
+            // Catalog Events
+            connection.on("CatalogCategoryCreated", (category: Category) => {
+                dispatch(addCategory(category));
+            });
+            connection.on("CatalogCategoryDeleted", (deletedCategory: Category) => {
+                dispatch(removeCategoryFromStore(deletedCategory.sku));
+            });
+            connection.on("CatalogCategoryUpdated", (updatedCategory: Category) => {
+                dispatch(updateCategoryInStore(updatedCategory));
+                dispatch(updateCatalogCategory(updatedCategory));
+            });
             connection.on("CatalogItemUpdated", (updatedItem) => {
                 dispatch(updateItemInStore(updatedItem));
                 dispatch(updateCatalogItem(updatedItem.updatedItem));
             });
             connection.on("CatalogItemCreated", (createdItem) => {
-                console.log(createdItem);
                 dispatch(addItem(createdItem));
             });
             connection.on("CatalogItemDeleted", (deletedItem) => {
-                console.log(deletedItem);
                 dispatch(removeItemFromStore(deletedItem.sku))
             })
 
             return () => {
                 connection.off("CatalogItemUpdated");
                 connection.off("CatalogItemCreated");
+                connection.off("CatalogItemDeleted");
+
+                connection.off("CatalogCategoryCreated");
+                connection.off("CatalogCategoryDeleted");
+                connection.off("CatalogCategoryUpdated");
             };
         }
     }, [connection, isConnected]);

@@ -5,7 +5,7 @@ namespace Contracts.Catalog;
 public class CatalogItemUpdated
 {
     public UpdatedItem UpdatedItem { get; set; }
-    public Guid PreviousCategoryId { get; set; }
+    public Guid PreviousCategorySKU { get; set; }
 }
 
 public class UpdatedItem
