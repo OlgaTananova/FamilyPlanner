@@ -1,4 +1,6 @@
 using AutoMapper;
+using Contracts.ShoppingLists;
+using MassTransit;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -19,11 +21,13 @@ namespace ShoppingListService.Controllers
         private readonly IShoppingListService _shoppingListService;
         private readonly string _familyName;
         private readonly string _userId;
-        public ShoppingListsController(ShoppingListContext context, IMapper mapper, IShoppingListService service, IHttpContextAccessor httpContextAccessor)
+        private IPublishEndpoint _publisher;
+        public ShoppingListsController(ShoppingListContext context, IMapper mapper, IShoppingListService service, IHttpContextAccessor httpContextAccessor, IPublishEndpoint publishEndpoint)
         {
             _mapper = mapper;
             _context = context;
             _shoppingListService = service;
+            _publisher = publishEndpoint;
             // Centralized family and user ID extraction
             _familyName = httpContextAccessor.HttpContext?.User.Claims.FirstOrDefault(c => c.Type == "family")?.Value;
             _userId = httpContextAccessor.HttpContext?.User.Claims.FirstOrDefault(c => c.Type == "userId")?.Value;
@@ -66,6 +70,7 @@ namespace ShoppingListService.Controllers
                 {
                     BadRequest(validationResult.Errors.Select(e => e.ErrorMessage));
                 }
+                shoppingList.Heading = shoppingListDto.Heading ?? shoppingList.Heading;
                 // Find catalog items by SKUs
                 if (shoppingListDto.SKUs != null && shoppingListDto.SKUs.Count > 0)
                 {
@@ -82,9 +87,16 @@ namespace ShoppingListService.Controllers
             }
 
             _shoppingListService.AddShoppingList(shoppingList);
+
+            ShoppingListDto newShoppingList = _mapper.Map<ShoppingListDto>(shoppingList);
+
+            // public a newly created shopping list to rabbitmq
+            await _publisher.Publish(_mapper.Map<ShoppingListCreated>(newShoppingList));
+
             bool result = await _shoppingListService.SaveChangesAsync();
+
             if (!result) return BadRequest("Could not save changes to the DB");
-            
+
             return CreatedAtAction(nameof(GetShoppingList), new
             {
                 shoppingList.Id
@@ -134,22 +146,38 @@ namespace ShoppingListService.Controllers
                 return BadRequest(validationResult.Errors.Select(e => e.ErrorMessage));
             }
 
-            ShoppingList shoppingList = await _shoppingListService.GetShoppingListById(id, _familyName);
+            using var transaction = await _shoppingListService.BeginTransactionAsync();
 
-            if (shoppingList == null)
+            try
             {
-                return NotFound($"Cannot find the shopping list with id {id}");
+                ShoppingList shoppingList = await _shoppingListService.GetShoppingListById(id, _familyName);
+
+                if (shoppingList == null)
+                {
+                    return NotFound($"Cannot find the shopping list with id {id}");
+                }
+                await _shoppingListService.UpdateShoppingList(shoppingList, shoppingListDto);
+
+                ShoppingListDto updatedShoppingList = _mapper.Map<ShoppingListDto>(shoppingList);
+
+                await _publisher.Publish(_mapper.Map<ShoppingListUpdated>(updatedShoppingList));
+
+                bool result = await _shoppingListService.SaveChangesAsync();
+
+                if (!result)
+                {
+                    await transaction.RollbackAsync();
+                    return BadRequest("Cannot save changes to the database.");
+                }
+                await transaction.CommitAsync();
+                return Ok(updatedShoppingList);
             }
-            await _shoppingListService.UpdateShoppingList(shoppingList, shoppingListDto);
-
-            bool result = await _shoppingListService.SaveChangesAsync();
-
-            ShoppingListDto updatedShoppingList = _mapper.Map<ShoppingListDto>(shoppingList);
-            if (!result)
+            catch (Exception ex)
             {
-                return BadRequest("Cannot save changes to the database.");
+                Console.WriteLine(ex.Message);
+                await transaction.RollbackAsync();
+                return BadRequest("Could not commit the transaction to update the shopping list.");
             }
-            return Ok(updatedShoppingList);
 
         }
 
@@ -204,51 +232,75 @@ namespace ShoppingListService.Controllers
             {
                 return BadRequest(validationResult.Errors.Select(e => e.ErrorMessage));
             }
+            using var transaction = await _shoppingListService.BeginTransactionAsync();
 
-            ShoppingListItem shoppingListItem = await _shoppingListService.GetShoppingListItemById(itemId, id, _familyName);
-            if (shoppingListItem == null)
+            try
             {
-                return NotFound($"Cannot find the item with id {itemId} within the shopping list with id {id}.");
+                ShoppingList updatedShoppingList = await _shoppingListService.GetShoppingListById(id, _familyName);
+                ShoppingListItem shoppingListItem = await _shoppingListService.GetShoppingListItemById(itemId, id, _familyName);
+
+                if (shoppingListItem == null || updatedShoppingList == null)
+                {
+                    return NotFound($"Cannot find the item with id {itemId} within the shopping list with id {id}.");
+                }
+
+                _shoppingListService.UpdateShoppingListItem(shoppingListItem, updateShoppingListItemDto);
+
+                // Map the updated shopping list to the DTO
+                var shoppingListDto = _mapper.Map<ShoppingListDto>(updatedShoppingList);
+
+                await _publisher.Publish(_mapper.Map<ShoppingListItemUpdated>(shoppingListDto));
+
+                bool result = await _shoppingListService.SaveChangesAsync();
+
+                if (!result)
+                {
+                    return BadRequest("Could not save changes to the DB");
+                }
+                await transaction.CommitAsync();
+                // Return the updated shopping list DTO
+                return Ok(shoppingListDto);
             }
-
-            _shoppingListService.UpdateShoppingListItem(shoppingListItem, updateShoppingListItemDto);
-
-            bool result = await _shoppingListService.SaveChangesAsync();
-
-            if (!result)
+            catch (Exception ex)
             {
-                return BadRequest("Could not save changes to the DB");
+                await transaction.RollbackAsync();
+                return BadRequest("Could not commit the transaction to update the shopping list item.");
             }
-
-            // Fetch the updated shopping list to include the newly added item
-            var updatedShoppingList = await _shoppingListService.GetShoppingListById(id, _familyName);
-
-            // Map the updated shopping list to the DTO
-            var shoppingListDto = _mapper.Map<ShoppingListDto>(updatedShoppingList);
-
-            // Return the updated shopping list DTO
-            return Ok(shoppingListDto);
         }
 
         // Delete shopping list
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteShoppingList(Guid id)
         {
-            ShoppingList shoppingList = await _shoppingListService.GetShoppingListById(id, _familyName);
+            using var transaction = await _shoppingListService.BeginTransactionAsync();
 
-            if (shoppingList == null)
+            try
             {
-                return NotFound($"Cannot find the shopping list with id {id} to add a new item");
+                ShoppingList shoppingList = await _shoppingListService.GetShoppingListById(id, _familyName);
+                if (shoppingList == null)
+                {
+                    return NotFound($"Cannot find the shopping list with id {id} to add a new item");
+                }
+                _shoppingListService.DeleteShoppingList(shoppingList);
+
+                // Send the message to the message broker    
+                await _publisher.Publish(_mapper.Map<ShoppingListDeleted>(shoppingList));
+
+                bool result = await _shoppingListService.SaveChangesAsync();
+                if (!result)
+                {
+                    await transaction.RollbackAsync();
+                    return BadRequest("Could not save changes to the DB");
+                }
+                await transaction.CommitAsync();
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                return BadRequest("Could not commint the transaction");
             }
 
-            _shoppingListService.DeleteShoppingList(shoppingList);
-            bool result = await _shoppingListService.SaveChangesAsync();
-            if (!result)
-            {
-                return BadRequest("Could not save changes to the DB");
-            }
-
-            return NoContent();
         }
 
         // Delete shopping list item 

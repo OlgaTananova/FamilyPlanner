@@ -37,7 +37,6 @@ export const useInitializeUser = () => {
                 }
             } catch (error) {
                 console.error("Error handling redirect:", error);
-                toast.error("Error handling redirect.");
             }
         };
 

@@ -14,7 +14,7 @@ export default function ConfirmationModal({
     onClose,
     onConfirm,
     title = "Confirm Deletion",
-    message = "Are you sure you want to delete this item? This action cannot be undone.",
+    message,
 }: ConfirmationModalProps) {
     return (
         <Modal show={isOpen} onClose={onClose} size="md" className="rounded-lg">

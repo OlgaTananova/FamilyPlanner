@@ -1,4 +1,5 @@
 using System;
+using Microsoft.EntityFrameworkCore.Storage;
 using ShoppingListService.DTOs;
 using ShoppingListService.Entities;
 
@@ -23,4 +24,6 @@ public interface IShoppingListService
 
     Task<ShoppingList> GetShoppingListById(Guid id, string family);
     Task<bool> SaveChangesAsync();
+    Task<IDbContextTransaction> BeginTransactionAsync();
+
 }

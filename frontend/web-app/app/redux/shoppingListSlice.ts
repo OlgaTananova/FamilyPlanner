@@ -1,5 +1,6 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { Category } from "./catalogSlice";
+import { updateShoppingList } from "../lib/fetchShoppingLists";
 
 export interface ShoppingListItem {
     id: string;
@@ -107,8 +108,41 @@ const shoppingListSlice = createSlice({
                     }
                 });
             }
+        },
+        addShoppingList(state, action: PayloadAction<ShoppingList>) {
+            const existingShoppingList = state.lists.find(sl => sl.id == action.payload.id);
+            if (existingShoppingList) return;
+            state.lists.unshift(action.payload);
+        },
+        deleteShoppingListFromStore(state, action: PayloadAction<string>) {
+            state.lists = state.lists.filter((sl) => sl.id !== action.payload);
+            if (action.payload === state.currentShoppingList?.id) {
+                state.currentShoppingList = null;
+            }
+        },
+        updateShoppingListInStore(state, action: PayloadAction<ShoppingList>) {
+            state.lists = state.lists.map((sl) => {
+                if (sl.id === action.payload.id) {
+                    return action.payload;
+                }
+                return sl;
+            });
+            if (state.currentShoppingList?.id === action.payload.id) {
+                state.currentShoppingList = action.payload;
+            }
+        },
+        updateShoppingListItemInStore(state, action: PayloadAction<ShoppingList>) {
+            state.lists = state.lists.map((sl) => {
+                if (sl.id === action.payload.id) {
+                    return action.payload;
+                }
+                return sl;
+            });
+            if (state.currentShoppingList?.id === action.payload.id) {
+                state.currentShoppingList = action.payload;
+            }
         }
-    },
+    }
 });
 
 export const {
@@ -117,7 +151,10 @@ export const {
     setCurrentShoppingList,
     clearCurrentShoppingList,
     updateCatalogItem,
-    updateCatalogCategory
+    updateCatalogCategory,
+    addShoppingList,
+    deleteShoppingListFromStore,
+    updateShoppingListInStore
 } = shoppingListSlice.actions;
 
 export default shoppingListSlice.reducer;

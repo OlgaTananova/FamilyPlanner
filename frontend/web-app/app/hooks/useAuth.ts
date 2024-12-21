@@ -1,5 +1,6 @@
 import { InteractionRequiredAuthError } from "@azure/msal-browser";
 import { useMsal, useIsAuthenticated, useAccount } from "@azure/msal-react";
+import { usePathname, useRouter } from "next/navigation";
 
 
 const catalogReadScope = process.env.NEXT_PUBLIC_AZURE_AD_B2C_CATALOG_READ_SCOPE ?? "";
@@ -12,7 +13,7 @@ export const loginRequest = {
     catalogReadScope,
     "profile",
     "email",
-    ],
+  ],
 
 };
 
@@ -20,6 +21,7 @@ export const useAuth = () => {
   const { instance } = useMsal();
   const isAuthenticated = useIsAuthenticated();
   const account = useAccount(instance.getAllAccounts()[0] || undefined);
+  const router = useRouter();
 
   const signIn = async () => {
     //await instance.loginPopup(loginRequest).catch((error) => console.error("Login error:", error));
@@ -32,11 +34,12 @@ export const useAuth = () => {
       redirectUri: process.env.NEXT_PUBLIC_AZURE_AD_B2C_EDIT_PROFILE_REDIRECT_URI,
       scopes: ["openid"],
       prompt: "login",
-    }).catch(()=> console.error("Edit profile redirect error."))
+    }).catch(() => console.error("Edit profile redirect error."))
   }
 
   const signOut = () => {
     instance.logoutPopup().catch((error) => console.error("Logout error:", error));
+    router.push("/");
   };
 
   const acquireToken = async (): Promise<{ accessToken: string | null; idTokenClaims: any | null }> => {

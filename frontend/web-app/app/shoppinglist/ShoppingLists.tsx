@@ -75,10 +75,6 @@ export default function ShoppingLists({ activeSection, onSelectActiveSection }: 
             <AddShoppingListModal
                 isOpen={isAddShoppingListModalOpen}
                 onClose={() => setAddShoppingListModalOpen(false)}
-                onSave={(shoppingList) => {
-                    console.log("New Shopping List:", shoppingList);
-                    // Dispatch action or call API to save the shopping list
-                }}
             />
         </>
     )

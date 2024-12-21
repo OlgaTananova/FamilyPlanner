@@ -16,8 +16,6 @@ export default function Navbar() {
   const { isAuthenticated, account, signIn, signOut } = auth;
   const user = useSelector((state: RootState) => state.user);
   const [userInitials, setUserInitials] = useState("");
-  const router = useRouter();
-  const path = usePathname();
   const dispatch = useDispatch();
 
   const handleSignOut = () => {

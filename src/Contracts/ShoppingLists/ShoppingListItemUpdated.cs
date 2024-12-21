@@ -2,7 +2,7 @@ using System;
 
 namespace Contracts.ShoppingLists;
 
-public class UpdateShoppingListItem
+public class ShoppingListItemUpdated
 {
     public Guid Id { get; set; }
     public string Heading { get; set; }

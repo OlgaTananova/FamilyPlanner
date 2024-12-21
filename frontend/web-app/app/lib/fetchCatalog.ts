@@ -56,11 +56,7 @@ export async function updateItem(sku: string, name: string, categorySKU: string)
         body: JSON.stringify({ name, categorySKU }),
     });
 
-    if (updatedItem) {
-        toast.success(`Item "${name}" updated successfully!`);
-    }
-
-    return updatedItem;
+   return updatedItem;
 }
 
 // Delete an item

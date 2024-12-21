@@ -33,7 +33,11 @@ builder.Services.AddMassTransit(x =>
     x.AddConsumersFromNamespaceContaining<CatalogItemUpdatedConsumer>();
     x.AddConsumersFromNamespaceContaining<CatalogItemDeletedConsumer>();
 
+    x.AddConsumersFromNamespaceContaining<ShoppingListCreatedConsumer>();
+    x.AddConsumersFromNamespaceContaining<ShoppingListDeletedConsumer>();
+    x.AddConsumersFromNamespaceContaining<ShoppingListUpdatedConsumer>();
 
+    x.AddConsumersFromNamespaceContaining<ShoppingListItemUpdatedConsumer>();
 
 
     x.SetEndpointNameFormatter(new KebabCaseEndpointNameFormatter("notifications", false));
@@ -53,6 +57,7 @@ builder.Services.AddMassTransit(x =>
         cfg.ConfigureEndpoints(context);
     });
 });
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowSpecificOrigins", policy =>

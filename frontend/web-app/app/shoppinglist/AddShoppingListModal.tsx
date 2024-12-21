@@ -1,36 +1,39 @@
 import React, { useState } from "react";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { Modal, Button, TextInput } from "flowbite-react";
 import { RootState } from "../redux/store";
 import { Item } from "../redux/catalogSlice";
 import { HiChevronDown } from "react-icons/hi";
 import toast from "react-hot-toast";
+import { addNewShoppingList } from "../lib/fetchShoppingLists";
+import { addShoppingList } from "../redux/shoppingListSlice";
 
 interface AddShoppingListModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSave: (shoppingList: { heading: string; items: string[] }) => void;
 }
 
 export default function AddShoppingListModal({
     isOpen,
     onClose,
-    onSave,
 }: AddShoppingListModalProps) {
     const items = useSelector((state: RootState) => state.categories.itemsWOCategories);
     const [heading, setHeading] = useState<string>("");
     const [selectedItems, setSelectedItems] = useState<string[]>([]);
     const [dropdownOpen, setDropdownOpen] = useState<boolean>(false);
     const [isSaving, setIsSaving] = useState<boolean>(false);
+    const dispatch = useDispatch();
 
     const handleSave = async () => {
         setIsSaving(true);
 
         try {
-            const newShoppingList = { heading: heading.trim(), items: selectedItems };
-            onSave(newShoppingList);
-
-            toast.success("Shopping list created successfully!");
+            const newShoppingList = { heading: heading.trim(), SKUs: selectedItems };
+            const addedShoppingList = await addNewShoppingList(newShoppingList);
+            if (addedShoppingList) {
+                dispatch(addShoppingList(addedShoppingList));
+                toast.success("Shopping list created successfully!");
+            }
             // Reset form
             handleModalClose();
         } catch (error) {
@@ -101,7 +104,7 @@ export default function AddShoppingListModal({
                                                 className="mr-2"
                                             />
                                             <label
-                                                htmlFor={`item-${item.id}`}
+                                                htmlFor={`item-${item.sku}`}
                                                 className="text-gray-700 text-sm"
                                             >
                                                 {item.name}

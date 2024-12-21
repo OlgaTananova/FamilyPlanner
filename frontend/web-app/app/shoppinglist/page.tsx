@@ -15,7 +15,6 @@ export default function ShoppingListPage() {
     const shoppingLists = useSelector((state: RootState) => state.shoppinglists.lists);
     const currentShoppingList = useSelector((state: RootState) => state.shoppinglists.currentShoppingList);
     const [activeSection, setActiveSection] = useState<"lists" | "current" | "frequent">("lists");
-   
 
     return (
         <div className="container mx-auto px-4 py-6">
@@ -30,7 +29,7 @@ export default function ShoppingListPage() {
                 <ShoppingLists activeSection={activeSection} onSelectActiveSection={setActiveSection} />
 
                 {/* Second Column: Current Shopping List */}
-                <div className={`p-4 bg-white border border-gray-300 rounded-lg shadow-md ${activeSection === "current" ? "block" : "hidden"} md:block`}>
+                <div className={`p-4 bg-purple-50 border border-purple-300 rounded-lg shadow-md ${activeSection === "current" ? "block" : "hidden"} md:block`}>
                     <CurrentShoppingList />
                 </div>
 

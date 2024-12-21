@@ -2,6 +2,9 @@
 import { useAuth } from "./hooks/useAuth";
 import { useRouter } from "next/navigation";
 import DashboardPage from "./dashboard/page";
+import CatalogPage from "./catalog/page";
+import ShoppingListPage from "./shoppinglist/page";
+import ProfilePage from "./profile/page";
 
 
 export default function Home() {
@@ -12,7 +15,9 @@ export default function Home() {
 
   if (isAuthenticated) {
     return (
-      <DashboardPage />
+      <>
+        <DashboardPage />
+      </>
     );
   }
 

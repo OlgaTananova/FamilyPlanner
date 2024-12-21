@@ -229,6 +229,7 @@ namespace CatalogService.Controllers
             catch (Exception ex)
             {
                 // Rollback the transaction on any exception
+                
                 await transaction.RollbackAsync();
                 return BadRequest("Problem with commiting transaction. Possibly another user tried to change the data.");
             }

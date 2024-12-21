@@ -10,11 +10,14 @@ import { setCategories } from "../redux/catalogSlice";
 
 export default function AppInitializer({ children }: { children: React.ReactNode }) {
     useInitializeUser();
-    const { acquireToken } = useAuth();
+    const { acquireToken, isAuthenticated } = useAuth();
     const dispatch = useDispatch()
 
     // Fetch Catalog Data and Shopping list data
     useEffect(() => {
+        if (!isAuthenticated) {
+            return;
+        }
         async function fetchData() {
 
             // make sure there is a valid token in the storage
@@ -35,7 +38,7 @@ export default function AppInitializer({ children }: { children: React.ReactNode
         }
         fetchData();
 
-    }, []);
+    }, [isAuthenticated, acquireToken, dispatch]);
 
     return <>{children}</>;
 }

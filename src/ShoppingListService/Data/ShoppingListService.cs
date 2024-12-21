@@ -2,6 +2,7 @@ using System;
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Caching.Memory;
 using ShoppingListService.DTOs;
 using ShoppingListService.Entities;
@@ -73,18 +74,24 @@ public class ShoppingListService : IShoppingListService
         if (dto.IsArchived.HasValue)
         {
             list.IsArchived = dto.IsArchived.Value;
-
+            var shoppingItems = await _dbcontext.ShoppingListItems
+                                .Include(i => i.CatalogItem)
+                                .Where(x => x.ShoppingListId == list.Id)
+                                .ToListAsync();
             if (list.IsArchived)
             {
-                var shoppingItems = await _dbcontext.ShoppingListItems
-                    .Include(i => i.CatalogItem)
-                    .Where(x => x.ShoppingListId == list.Id)
-                    .ToListAsync();
-
+                shoppingItems.ForEach(i =>
+                  {
+                      i.CatalogItem.Count += (int)i.Quantity;
+                      i.Status = Status.Finished;
+                  });
+            }
+            else
+            {
                 shoppingItems.ForEach(i =>
                 {
-                    i.CatalogItem.Count += (int)i.Quantity;
-                    i.Status = Status.Finished;
+                    i.CatalogItem.Count -= (int)i.Quantity;
+                    i.Status = Status.Pending;
                 });
             }
         }
@@ -235,5 +242,9 @@ public class ShoppingListService : IShoppingListService
         return await _dbcontext.CatalogItems
             .Where(c => skus.Contains(c.SKU) && c.Family == familyName && !c.IsDeleted)
             .ToListAsync();
+    }
+    public async Task<IDbContextTransaction> BeginTransactionAsync()
+    {
+        return await _dbcontext.Database.BeginTransactionAsync();
     }
 }

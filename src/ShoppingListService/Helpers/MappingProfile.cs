@@ -1,6 +1,7 @@
 using System;
 using AutoMapper;
 using Contracts.Catalog;
+using Contracts.ShoppingLists;
 using MassTransit.Scheduling;
 using ShoppingListService.DTOs;
 using ShoppingListService.Entities;
@@ -12,7 +13,7 @@ public class MappingProfile : Profile
     public MappingProfile()
     {
         // ShoppingListItem -> ShoppingListItemDto
-        CreateMap<ShoppingListItem, ShoppingListItemDto>()
+        CreateMap<ShoppingListItem, DTOs.ShoppingListItemDto>()
             .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString()))
             .ForMember(dest => dest.Unit, opt => opt.MapFrom(src => src.Unit.ToString()));
 
@@ -22,7 +23,7 @@ public class MappingProfile : Profile
 
 
         // ShoppingListItemDto -> ShoppingListItem
-        CreateMap<ShoppingListItemDto, ShoppingListItem>()
+        CreateMap<DTOs.ShoppingListItemDto, ShoppingListItem>()
             .ForMember(dest => dest.Status, opt => opt.MapFrom(src => Enum.Parse<Status>(src.Status)))
             .ForMember(dest => dest.Unit, opt => opt.MapFrom(src => Enum.Parse<Units>(src.Unit)));
 
@@ -43,6 +44,18 @@ public class MappingProfile : Profile
             .ForMember(dest => dest.CatalogItemId, opt => opt.MapFrom(c => c.Id))
              .ForMember(dest => dest.Id, opt => opt.Ignore());
 
+        CreateMap<ShoppingListDto, ShoppingListCreated>()
+        .ForMember(dest => dest.Items, opt => opt.MapFrom(s => s.Items));
 
+        // Map ShoppingListItemDto to itself
+        CreateMap<DTOs.ShoppingListItemDto, Contracts.ShoppingLists.ShoppingListItemDto>();
+
+        CreateMap<ShoppingList, ShoppingListDeleted>();
+
+        CreateMap<ShoppingListDto, ShoppingListUpdated>()
+            .ForMember(dest => dest.Items, opt => opt.MapFrom(src => src.Items));
+
+        CreateMap<ShoppingList, ShoppingListUpdated>()
+            .ForMember(dest => dest.Items, opt => opt.MapFrom(src => src.Items));
     }
 }

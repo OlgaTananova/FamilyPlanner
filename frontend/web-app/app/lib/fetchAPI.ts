@@ -10,7 +10,6 @@ export default async function fetchApi<T>(
     const accessToken = getAccessToken();
 
     if (!serviceUrl || !accessToken) {
-        toast.error("API URL or Access Token is not available.");
         console.error("API URL or Access Token is not available.");
         return null;
     }
