@@ -57,5 +57,7 @@ public class MappingProfile : Profile
 
         CreateMap<ShoppingList, ShoppingListUpdated>()
             .ForMember(dest => dest.Items, opt => opt.MapFrom(src => src.Items));
+        CreateMap<ShoppingListDto, ShoppingListItemUpdated>()
+            .ForMember(dest => dest.Items, opt => opt.MapFrom(src => src.Items));    
     }
 }

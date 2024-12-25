@@ -263,6 +263,7 @@ namespace ShoppingListService.Controllers
             }
             catch (Exception ex)
             {
+                Console.WriteLine(ex.Message);
                 await transaction.RollbackAsync();
                 return BadRequest("Could not commit the transaction to update the shopping list item.");
             }
