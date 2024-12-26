@@ -47,3 +47,19 @@ export async function updateShoppingListItem(shoppingListId: string, itemId: str
         body: JSON.stringify(itemData),
     });
 }
+
+export async function searchShoppingListItems(searchTerm: string): Promise<Item[] | null> {
+    return await fetchApi<Item[]>(shoppingListServiceUrl!, `/api/ShoppingLists/catalogitems/search?query=${searchTerm}`, {
+        method: "GET",
+    });
+}
+
+export async function addShoppingListItem(shoppingListId: string, itemData: { sku: string}): Promise<ShoppingList | null> {    
+    return await fetchApi<ShoppingList>(shoppingListServiceUrl!, `/api/ShoppingLists/${shoppingListId}/items`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify(itemData),
+    });
+}

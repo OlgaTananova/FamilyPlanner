@@ -218,15 +218,15 @@ public class ShoppingListService : IShoppingListService
         var formattedQuery = query.Replace(" ", " | "); // Convert query into tsquery format
 
         var dbQuerySearchResult = await _dbcontext.CatalogItems
-            .FromSqlInterpolated(
-            $@"SELECT * 
-                FROM ""CatalogItems""
-                WHERE ""SearchVector"" @@ plainto_tsquery('english', {formattedQuery})
-                OR ""Name"" % {query} OR ""CategoryName"" % {query}
-                AND ""Family"" = {family}
-                ORDER BY GREATEST(similarity(""Name"", {query}), similarity(""CategoryName"", {query})) DESC
-                LIMIT 10")
-            .ToListAsync();
+        .FromSqlInterpolated(
+        $@"SELECT * 
+        FROM ""CatalogItems""
+        WHERE ""SearchVector"" @@ plainto_tsquery('english', {formattedQuery})
+        OR ""Name""::text % {query} OR ""CategoryName""::text % {query}
+        AND ""Family"" = {family}
+        ORDER BY GREATEST(similarity(""Name"", {query}), similarity(""CategoryName"", {query})) DESC
+        LIMIT 10")
+        .ToListAsync();
 
         var cacheEntryOptions = new MemoryCacheEntryOptions()
             .SetSlidingExpiration(TimeSpan.FromMinutes(5))

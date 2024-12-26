@@ -29,11 +29,11 @@ export default function ShoppingListItemComponent({ item }: ShoppingListItemProp
     const validatePrice = (price: number) => price >= 0;
 
 
-    const onUpdateItem = async () => {
+    const onUpdateItem = async (newStatus?: boolean) => {
         try {
             setIsSaving(true);
             await acquireToken();
-            const status = isFinished ? "Finished" : "Pending";
+            const status = newStatus ? "Finished" : "Pending";
             const shoppingList = await updateShoppingListItem(item.shoppingListId, item.id, { unit, quantity, pricePerUnit, price, status });
             if (shoppingList) {
                 dispatch(updateShoppingListInStore(shoppingList));
@@ -41,6 +41,7 @@ export default function ShoppingListItemComponent({ item }: ShoppingListItemProp
             }
         } catch (error) {
             console.error(error);
+            newStatus ?? setIsFinished(!newStatus);
             toast.error("Failed to update item.");
         } finally {
             handleCloseTooltip();
@@ -50,10 +51,9 @@ export default function ShoppingListItemComponent({ item }: ShoppingListItemProp
 
     // TODO: Implement handleCheckboxChange properly
     const handleCheckboxChange = () => {
-        console.log(`before ${isFinished}`);
-        setIsFinished(!isFinished);
-        //onUpdateItem();
-        console.log(`after ${isFinished}`);
+        const newStatus = !isFinished;
+        setIsFinished(newStatus);
+        onUpdateItem(newStatus);
     };
 
     const handleOpenTooltip = () => setIsTooltipOpen(true);
@@ -68,6 +68,7 @@ export default function ShoppingListItemComponent({ item }: ShoppingListItemProp
         setPricePerUnit(Number(item.pricePerUnit));
         setPrice(Number(item.price));
         setUnit(item.unit);
+        setIsFinished(item.status === "Finished");
     };
 
     const handleSave = () => {

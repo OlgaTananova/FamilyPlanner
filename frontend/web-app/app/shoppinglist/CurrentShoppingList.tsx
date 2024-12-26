@@ -7,6 +7,7 @@ import EditShoppingListModal from "./EditShoppingListModal";
 import { FaArchive } from "react-icons/fa";
 import ShoppingListDropdownMenu from "./ShoppingListDropdownMenu";
 import ShoppingListItems from "./ShoppingListItems";
+import ShoppingListSearchBar from "./ShoppingListSearchBar";
 
 
 export default function CurrentShoppingList() {
@@ -48,7 +49,7 @@ export default function CurrentShoppingList() {
                     isHiddenCategories={isHiddenCategories}
                     setIsHiddenCategories={setIsHiddenCategories} />
             </div>
-
+            <ShoppingListSearchBar />
             {/* Shopping List Items */}
             <ShoppingListItems isHiddenCategories={isHiddenCategories} groupedItems={groupedItems} shoppingList={shoppingList} />
 
