@@ -6,5 +6,5 @@ namespace ShoppingListService.DTOs;
 public class CreateShoppingListItemDto
 {
     [Required]
-    public Guid SKU { get; set; }
+    public List<Guid> SKUs { get; set; }
 }

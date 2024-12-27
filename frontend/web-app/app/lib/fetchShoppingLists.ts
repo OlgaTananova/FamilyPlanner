@@ -54,7 +54,7 @@ export async function searchShoppingListItems(searchTerm: string): Promise<Item[
     });
 }
 
-export async function addShoppingListItem(shoppingListId: string, itemData: { sku: string}): Promise<ShoppingList | null> {    
+export async function addShoppingListItems(shoppingListId: string, itemData: { skus: string[] }): Promise<ShoppingList | null> {
     return await fetchApi<ShoppingList>(shoppingListServiceUrl!, `/api/ShoppingLists/${shoppingListId}/items`, {
         method: "POST",
         headers: {

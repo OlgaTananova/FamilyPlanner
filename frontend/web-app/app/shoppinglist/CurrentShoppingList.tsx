@@ -8,6 +8,7 @@ import { FaArchive } from "react-icons/fa";
 import ShoppingListDropdownMenu from "./ShoppingListDropdownMenu";
 import ShoppingListItems from "./ShoppingListItems";
 import ShoppingListSearchBar from "./ShoppingListSearchBar";
+import AddItemsFromList from "./AddItemsFromList";
 
 
 export default function CurrentShoppingList() {
@@ -50,6 +51,7 @@ export default function CurrentShoppingList() {
                     setIsHiddenCategories={setIsHiddenCategories} />
             </div>
             <ShoppingListSearchBar />
+            <AddItemsFromList />
             {/* Shopping List Items */}
             <ShoppingListItems isHiddenCategories={isHiddenCategories} groupedItems={groupedItems} shoppingList={shoppingList} />
 

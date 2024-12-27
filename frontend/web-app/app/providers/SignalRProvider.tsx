@@ -130,6 +130,11 @@ export const SignalRProvider: React.FC<SignalRProviderProps> = ({ hubUrl, childr
                 console.log(updatedShoppingList);
                 dispatch(updateShoppingListInStore(updatedShoppingList));
             });
+
+            connection.on("ShoppingListItemsAdded", (updatedShoppingList) => {
+                console.log(updatedShoppingList);
+                dispatch(updateShoppingListInStore(updatedShoppingList));
+            });
             return () => {
                 connection.off("CatalogItemUpdated");
                 connection.off("CatalogItemCreated");
@@ -144,6 +149,7 @@ export const SignalRProvider: React.FC<SignalRProviderProps> = ({ hubUrl, childr
                 connection.off("ShoppingListUpdated");
 
                 connection.off("ShoppingListItemUpdated");
+                connection.off("ShoppingListItemsAdded");
             };
         }
     }, [connection, isConnected]);

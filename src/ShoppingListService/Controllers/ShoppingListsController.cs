@@ -183,7 +183,7 @@ namespace ShoppingListService.Controllers
 
         // Create a new shopping list item within the shopping list
         [HttpPost("{id}/items")]
-        public async Task<ActionResult<ShoppingListDto>> CreateShoppingListItem(Guid id, CreateShoppingListItemDto item)
+        public async Task<ActionResult<ShoppingListDto>> CreateShoppingListItem(Guid id, CreateShoppingListItemDto items)
         {
             ShoppingList shoppingList = await _shoppingListService.GetShoppingListById(id, _familyName);
 
@@ -191,32 +191,58 @@ namespace ShoppingListService.Controllers
             {
                 return NotFound($"Cannot find the shopping list with id {id} to add a new item");
             }
-            CatalogItem catalogItem = await _shoppingListService.GetCatalogItemBySKU(item.SKU, _familyName);
-
-            if (catalogItem == null)
+            using var transaction = await _shoppingListService.BeginTransactionAsync();
+            try
             {
-                return NotFound($"Cannot find the catalog item wi SKU {item.SKU}.");
+                List<CatalogItem> catalogItems = new List<CatalogItem>();
+                foreach (var sku in items.SKUs)
+                {
+                    var catalogItem = await _shoppingListService.GetCatalogItemBySKU(sku, _familyName);
+                    if (catalogItem == null)
+                    {
+                        return NotFound($"Cannot find the catalog item with SKU {sku}");
+                    }
+                    catalogItems.Add(catalogItem);
+                }
+                if (catalogItems.Count == 0)
+                {
+                    return BadRequest("No catalog items found for the provided SKUs.");
+                }
+                foreach (var catalogItem in catalogItems)
+                {
+                    ShoppingListItem shoppingListItem = _mapper.Map<ShoppingListItem>(catalogItem);
+                    shoppingListItem.ShoppingListId = id;
+
+                    _shoppingListService.AddShoppingListItem(shoppingListItem);
+                }
+
+                bool result = await _shoppingListService.SaveChangesAsync();
+                if (!result)
+                {
+                    return BadRequest("Could not save changes to the DB");
+                }
+                // Fetch the updated shopping list to include the newly added item
+                var updatedShoppingList = await _shoppingListService.GetShoppingListById(id, _familyName);
+
+                // Map the updated shopping list to the DTO
+                var shoppingListDto = _mapper.Map<ShoppingListDto>(updatedShoppingList);
+
+                
+                // TODO: check if the message is sent to the correct exchange
+                // Send the message to the message broker
+                await _publisher.Publish(_mapper.Map<ShoppingListItemsAdded>(shoppingListDto));
+
+                await transaction.CommitAsync();
+
+                // Return the updated shopping list DTO
+                return Ok(shoppingListDto);
             }
-
-            ShoppingListItem shoppingListItem = _mapper.Map<ShoppingListItem>(catalogItem);
-            shoppingListItem.ShoppingListId = id;
-
-            _shoppingListService.AddShoppingListItem(shoppingListItem);
-            bool result = await _shoppingListService.SaveChangesAsync();
-
-            if (!result)
+            catch (Exception ex)
             {
-                return BadRequest("Could not save changes to the DB");
+                Console.WriteLine(ex.Message);
+                await transaction.RollbackAsync();
+                return BadRequest("Could not commit the transaction to add new items to the shopping list.");
             }
-            // Fetch the updated shopping list to include the newly added item
-            var updatedShoppingList = await _shoppingListService.GetShoppingListById(id, _familyName);
-
-            // Map the updated shopping list to the DTO
-            var shoppingListDto = _mapper.Map<ShoppingListDto>(updatedShoppingList);
-
-            // Return the updated shopping list DTO
-            return Ok(shoppingListDto);
-
         }
 
         // Update the item in the shopping list

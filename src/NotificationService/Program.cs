@@ -38,6 +38,7 @@ builder.Services.AddMassTransit(x =>
     x.AddConsumersFromNamespaceContaining<ShoppingListUpdatedConsumer>();
 
     x.AddConsumersFromNamespaceContaining<ShoppingListItemUpdatedConsumer>();
+    x.AddConsumersFromNamespaceContaining<ShoppingListItemsAddedConsumer>();
 
 
     x.SetEndpointNameFormatter(new KebabCaseEndpointNameFormatter("notifications", false));
