@@ -6,6 +6,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../redux/store';
 import toast from 'react-hot-toast';
 import { updateShoppingListInStore } from '../redux/shoppingListSlice';
+import { useAuth } from '../hooks/useAuth';
 
 export default function ShoppingListSearchBar() {
     const [searchTerm, setSearchTerm] = useState("");
@@ -14,6 +15,7 @@ export default function ShoppingListSearchBar() {
     const [showResults, setShowResults] = useState(false);
     const shoppingList = useSelector((state: RootState) => state.shoppinglists.currentShoppingList);
     const dispatch = useDispatch();
+    const { acquireToken } = useAuth();
     const resultsRef = useRef<HTMLDivElement | null>(null);
 
     useEffect(() => {
@@ -36,6 +38,7 @@ export default function ShoppingListSearchBar() {
         setIsSearching(true);
 
         try {
+            await acquireToken();
             const results = await searchShoppingListItems(query);
             if (results) {
                 setSearchResults(results);
@@ -50,7 +53,11 @@ export default function ShoppingListSearchBar() {
     // TODO: fix the comoponent
     const handleAddItem = async (item: Item) => {
         try {
-            // Send request to add item to shopping list
+            if (!shoppingList) {
+                toast.error("No shopping list selected.");
+                return;
+            }
+            await acquireToken();
             const updatedShoppingList = await addShoppingListItems(shoppingList!.id, { skus: [item.sku] });
 
             if (updatedShoppingList) {

@@ -191,59 +191,42 @@ namespace ShoppingListService.Controllers
             {
                 return NotFound($"Cannot find the shopping list with id {id} to add a new item");
             }
-            using var transaction = await _shoppingListService.BeginTransactionAsync();
-            try
+
+            List<CatalogItem> catalogItems = new List<CatalogItem>();
+            foreach (var sku in items.SKUs)
             {
-                List<CatalogItem> catalogItems = new List<CatalogItem>();
-                foreach (var sku in items.SKUs)
+                var catalogItem = await _shoppingListService.GetCatalogItemBySKU(sku, _familyName);
+                if (catalogItem == null)
                 {
-                    var catalogItem = await _shoppingListService.GetCatalogItemBySKU(sku, _familyName);
-                    if (catalogItem == null)
-                    {
-                        return NotFound($"Cannot find the catalog item with SKU {sku}");
-                    }
-                    catalogItems.Add(catalogItem);
+                    return NotFound($"Cannot find the catalog item with SKU {sku}");
                 }
-                if (catalogItems.Count == 0)
-                {
-                    return BadRequest("No catalog items found for the provided SKUs.");
-                }
-                foreach (var catalogItem in catalogItems)
-                {
-                    ShoppingListItem shoppingListItem = _mapper.Map<ShoppingListItem>(catalogItem);
-                    shoppingListItem.ShoppingListId = id;
-
-                    _shoppingListService.AddShoppingListItem(shoppingListItem);
-                }
-
-                bool result = await _shoppingListService.SaveChangesAsync();
-                if (!result)
-                {
-                    return BadRequest("Could not save changes to the DB");
-                }
-                // Fetch the updated shopping list to include the newly added item
-                var updatedShoppingList = await _shoppingListService.GetShoppingListById(id, _familyName);
-
-                // Map the updated shopping list to the DTO
-                var shoppingListDto = _mapper.Map<ShoppingListDto>(updatedShoppingList);
-
-                
-                // TODO: check if the message is sent to the correct exchange
-                // Send the message to the message broker
-                await _publisher.Publish(_mapper.Map<ShoppingListItemsAdded>(shoppingListDto));
-
-                await transaction.CommitAsync();
-
-                // Return the updated shopping list DTO
-                return Ok(shoppingListDto);
+                catalogItems.Add(catalogItem);
             }
-            catch (Exception ex)
+            if (catalogItems.Count == 0)
             {
-                Console.WriteLine(ex.Message);
-                await transaction.RollbackAsync();
-                return BadRequest("Could not commit the transaction to add new items to the shopping list.");
+                return BadRequest("No catalog items found for the provided SKUs.");
             }
+            foreach (var catalogItem in catalogItems)
+            {
+                ShoppingListItem shoppingListItem = _mapper.Map<ShoppingListItem>(catalogItem);
+                shoppingListItem.ShoppingListId = id;
+
+                _shoppingListService.AddShoppingListItem(shoppingListItem);
+            }
+            // Map the updated shopping list to the DTO
+            var shoppingListDto = _mapper.Map<ShoppingListDto>(shoppingList);
+
+            // Publish the message to the message broker    
+            await _publisher.Publish(_mapper.Map<ShoppingListItemsAdded>(shoppingListDto));
+
+            bool result = await _shoppingListService.SaveChangesAsync();
+            if (!result)
+            {
+                return BadRequest("Could not save changes to the DB");
+            }
+            return Ok(shoppingListDto);
         }
+
 
         // Update the item in the shopping list
         [HttpPut("{id}/items/{itemId}")]
@@ -334,22 +317,37 @@ namespace ShoppingListService.Controllers
         [HttpDelete("{id}/items/{itemId}")]
         public async Task<ActionResult> DeleteShoppingListItem(Guid id, Guid itemId)
         {
-            ShoppingListItem shoppingListItem = await _shoppingListService.GetShoppingListItemById(itemId, id, _familyName);
-            if (shoppingListItem == null)
+            using var transaction = await _shoppingListService.BeginTransactionAsync();
+            try
             {
-                return NotFound($"Cannot find the item with id {itemId} within the shopping list with id {id}.");
+                ShoppingListItem shoppingListItem = await _shoppingListService.GetShoppingListItemById(itemId, id, _familyName);
+                ShoppingList shoppingList = await _shoppingListService.GetShoppingListById(id, _familyName);
+                if (shoppingListItem == null)
+                {
+                    return NotFound($"Cannot find the item with id {itemId} within the shopping list with id {id}.");
+                }
+                var message = _mapper.Map<ShoppingListItemDeleted>(shoppingListItem);
+                _shoppingListService.DeleteShoppingListItem(shoppingListItem);
+                
+                await _publisher.Publish(message);
+
+                bool result = await _shoppingListService.SaveChangesAsync();
+
+                if (!result)
+                {
+                    await transaction.RollbackAsync();
+                    return BadRequest("Could not save changes to the DB");
+                }
+
+                await transaction.CommitAsync();
+
+                return NoContent();
             }
-            _shoppingListService.DeleteShoppingListItem(shoppingListItem);
-
-            bool result = await _shoppingListService.SaveChangesAsync();
-
-            if (!result)
+            catch (Exception ex)
             {
-                return BadRequest("Could not save changes to the DB");
+                await transaction.RollbackAsync();
+                return BadRequest("Could not commit the transaction to delete the shopping list item.");
             }
-
-            return NoContent();
-
         }
 
         // Get frequently bought catalog items

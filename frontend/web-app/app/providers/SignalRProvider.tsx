@@ -6,7 +6,7 @@ import { useAuth } from "../hooks/useAuth";
 import { getAccessToken } from "../lib/getAccessToken";
 import getIdToken from "../lib/getIdToken";
 import { useDispatch, useSelector } from "react-redux";
-import { addShoppingList, deleteShoppingListFromStore, updateCatalogCategory, updateCatalogItem, updateShoppingListInStore } from "../redux/shoppingListSlice";
+import { addShoppingList, deleteShoppingListFromStore, deleteShoppingListItemFromStore, updateCatalogCategory, updateCatalogItem, updateShoppingListInStore } from "../redux/shoppingListSlice";
 import { RootState } from "../redux/store";
 import { addCategory, addItem, Category, removeCategoryFromStore, removeItemFromStore, updateCategoryInStore, updateItemInStore } from "../redux/catalogSlice";
 
@@ -135,6 +135,11 @@ export const SignalRProvider: React.FC<SignalRProviderProps> = ({ hubUrl, childr
                 console.log(updatedShoppingList);
                 dispatch(updateShoppingListInStore(updatedShoppingList));
             });
+            connection.on("ShoppingListItemDeleted", (data: {shoppingListId: string, itemId: string, ownerId: string, family: string}) => {
+                console.log(data);
+                dispatch(deleteShoppingListItemFromStore({shoppingListId: data.shoppingListId, itemId: data.itemId}));
+            });
+
             return () => {
                 connection.off("CatalogItemUpdated");
                 connection.off("CatalogItemCreated");
@@ -150,6 +155,7 @@ export const SignalRProvider: React.FC<SignalRProviderProps> = ({ hubUrl, childr
 
                 connection.off("ShoppingListItemUpdated");
                 connection.off("ShoppingListItemsAdded");
+                connection.off("ShoppingListItemDeleted");
             };
         }
     }, [connection, isConnected]);

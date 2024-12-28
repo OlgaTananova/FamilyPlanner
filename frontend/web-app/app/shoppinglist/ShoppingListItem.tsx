@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
-import { ShoppingListItem, updateShoppingListInStore } from "../redux/shoppingListSlice";
+import { deleteShoppingListItemFromStore, ShoppingListItem, updateShoppingListInStore } from "../redux/shoppingListSlice";
 import { useAuth } from "../hooks/useAuth";
-import { updateShoppingListItem } from "../lib/fetchShoppingLists";
+import { deleteShoppingListItem, updateShoppingListItem } from "../lib/fetchShoppingLists";
 import { useDispatch } from "react-redux";
 import toast from "react-hot-toast";
 import { Button } from "flowbite-react";
@@ -74,6 +74,23 @@ export default function ShoppingListItemComponent({ item }: ShoppingListItemProp
     const handleSave = () => {
         onUpdateItem();
     };
+
+    const handleItemDelete = async () => {
+        try {
+            setIsSaving(true);
+            await acquireToken();
+            const result = await deleteShoppingListItem(item.shoppingListId, item.id);
+            if (result) {
+                dispatch(deleteShoppingListItemFromStore({ shoppingListId: item.shoppingListId, itemId: item.id }));
+                toast.success("Item deleted successfully.");
+            }
+        } catch (error) {
+            console.error(error);
+            toast.error("Failed to delete item.");
+        } finally {
+            setIsSaving(false);
+        }
+    }
 
     // Close tooltip when clicking outside
     useEffect(() => {
@@ -216,7 +233,7 @@ export default function ShoppingListItemComponent({ item }: ShoppingListItemProp
                         </Button>
                         <Button
                             size="xs"
-                            onClick={() => { }}
+                            onClick={() => handleItemDelete()}
                             className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
                         >
                             Delete

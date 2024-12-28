@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { Category } from "./catalogSlice";
-import { updateShoppingList } from "../lib/fetchShoppingLists";
+import { deleteShoppingListItem, updateShoppingList } from "../lib/fetchShoppingLists";
 
 export interface ShoppingListItem {
     id: string;
@@ -141,6 +141,18 @@ const shoppingListSlice = createSlice({
             if (state.currentShoppingList?.id === action.payload.id) {
                 state.currentShoppingList = action.payload;
             }
+        },
+        deleteShoppingListItemFromStore(state, action: PayloadAction<{ shoppingListId: string, itemId: string }>) {
+            const { shoppingListId, itemId } = action.payload;
+            state.lists = state.lists.map((sl) => {
+                if (sl.id === shoppingListId) {
+                    sl.items = sl.items.filter((item) => item.id !== itemId);
+                }
+                return sl;
+            });
+            if (state.currentShoppingList?.id === shoppingListId) {
+                state.currentShoppingList.items = state.currentShoppingList.items.filter((item) => item.id !== itemId);
+            }
         }
     }
 });
@@ -154,7 +166,8 @@ export const {
     updateCatalogCategory,
     addShoppingList,
     deleteShoppingListFromStore,
-    updateShoppingListInStore
+    updateShoppingListInStore, 
+    deleteShoppingListItemFromStore
 } = shoppingListSlice.actions;
 
 export default shoppingListSlice.reducer;

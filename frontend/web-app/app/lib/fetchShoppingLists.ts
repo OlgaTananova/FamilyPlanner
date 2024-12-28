@@ -63,3 +63,11 @@ export async function addShoppingListItems(shoppingListId: string, itemData: { s
         body: JSON.stringify(itemData),
     });
 }
+
+export async function deleteShoppingListItem(shoppingListId: string, itemId: string): Promise<boolean> {
+    const result = await fetchApi<ShoppingList>(shoppingListServiceUrl!, `/api/ShoppingLists/${shoppingListId}/items/${itemId}`, {
+        method: "DELETE",
+    });
+
+    return result === null;
+}

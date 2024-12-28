@@ -14,10 +14,11 @@ public class ShoppingListItemsAddedConsumer : IConsumer<ShoppingListItemsAdded>
     {
         _hubContext = hubContext;
     }
-    public Task Consume(ConsumeContext<ShoppingListItemsAdded> context)
+
+    public async Task Consume(ConsumeContext<ShoppingListItemsAdded> context)
     {
         Console.WriteLine("--> shopping list items added message received");
 
-        return _hubContext.Clients.Group(context.Message.Family).SendAsync("ShoppingListItemsAdded", context.Message);
+        await _hubContext.Clients.Group(context.Message.Family).SendAsync("ShoppingListItemsAdded", context.Message);
     }
 }

@@ -61,5 +61,10 @@ public class MappingProfile : Profile
             .ForMember(dest => dest.Items, opt => opt.MapFrom(src => src.Items));
         CreateMap<ShoppingListDto, ShoppingListItemsAdded>()
             .ForMember(dest => dest.Items, opt => opt.MapFrom(src => src.Items));
+        CreateMap<ShoppingListItem, ShoppingListItemDeleted>()
+            .ForMember(dest => dest.ItemId, opt => opt.MapFrom(src => src.Id))
+            .ForMember(dest => dest.ShoppingListId, opt => opt.MapFrom(src => src.ShoppingListId))
+            .ForMember(dest => dest.Family, opt => opt.MapFrom(src => src.Family))
+            .ForMember(dest => dest.OwnerId, opt => opt.MapFrom(src => src.OwnerId));
     }
 }
