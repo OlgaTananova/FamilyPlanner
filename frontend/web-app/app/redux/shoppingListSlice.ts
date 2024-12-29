@@ -1,6 +1,7 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { Category } from "./catalogSlice";
 import { deleteShoppingListItem, updateShoppingList } from "../lib/fetchShoppingLists";
+import { get } from "http";
 
 export interface ShoppingListItem {
     id: string;
@@ -31,14 +32,29 @@ export interface ShoppingList {
     family: string
 }
 
+export interface CatalogItem {
+
+    id: string;
+    sku: string;
+    name: string;
+    categoryName: string;
+    categorySKU: string;
+    count: number;
+    isDeleted: boolean;
+    ownerId: string;
+    family: string;
+}
+
 export interface ShoppingListState {
     lists: ShoppingList[],
-    currentShoppingList: ShoppingList | null
+    currentShoppingList: ShoppingList | null,
+    frequentItems: CatalogItem[]
 }
 
 const initialState: ShoppingListState = {
     lists: [],
-    currentShoppingList: null
+    currentShoppingList: null,
+    frequentItems: []
 }
 
 const shoppingListSlice = createSlice({
@@ -153,6 +169,9 @@ const shoppingListSlice = createSlice({
             if (state.currentShoppingList?.id === shoppingListId) {
                 state.currentShoppingList.items = state.currentShoppingList.items.filter((item) => item.id !== itemId);
             }
+        },
+        getFrequentItems(state, action: PayloadAction<CatalogItem[]>) {
+            state.frequentItems = action.payload;
         }
     }
 });
@@ -166,8 +185,9 @@ export const {
     updateCatalogCategory,
     addShoppingList,
     deleteShoppingListFromStore,
-    updateShoppingListInStore, 
-    deleteShoppingListItemFromStore
+    updateShoppingListInStore,
+    deleteShoppingListItemFromStore,
+    getFrequentItems
 } = shoppingListSlice.actions;
 
 export default shoppingListSlice.reducer;

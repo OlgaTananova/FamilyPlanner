@@ -9,6 +9,7 @@ import ShoppingListDropdownMenu from "./ShoppingListDropdownMenu";
 import ShoppingListItems from "./ShoppingListItems";
 import ShoppingListSearchBar from "./ShoppingListSearchBar";
 import AddItemsFromList from "./AddItemsFromList";
+import SendShoppingList from "./SendShoppingList";
 
 
 export default function CurrentShoppingList() {
@@ -16,6 +17,7 @@ export default function CurrentShoppingList() {
     const [groupedItems, setGroupedItems] = useState<Record<string, ShoppingListItem[]>>({});
     const [isEditShoppingListModalOpen, setEditShoppingListModalOpen] = useState(false);
     const [isHiddenCategories, setIsHiddenCategories] = useState(false);
+    const [isSendShoppingListModalOpen, setSendShoppingListModalOpen] = useState(false);
 
     useEffect(() => {
         if (shoppingList?.items?.length) {
@@ -48,7 +50,9 @@ export default function CurrentShoppingList() {
                 {/* Dropdown Menu */}
                 <ShoppingListDropdownMenu setEditShoppingListModalOpen={setEditShoppingListModalOpen}
                     isHiddenCategories={isHiddenCategories}
-                    setIsHiddenCategories={setIsHiddenCategories} />
+                    setIsHiddenCategories={setIsHiddenCategories}
+                    isSendShoppingListModalOpen={isSendShoppingListModalOpen}
+                    setIsSendShoppingListModalOpen={setSendShoppingListModalOpen} />
             </div>
             <ShoppingListSearchBar />
             <AddItemsFromList />
@@ -85,6 +89,7 @@ export default function CurrentShoppingList() {
                 onClose={() => { setEditShoppingListModalOpen(false) }}
                 shoppingList={shoppingList}
             />
+            <SendShoppingList isOpen={isSendShoppingListModalOpen} onClose={() => setSendShoppingListModalOpen(false)} shoppingList={shoppingList} />
         </div>
     );
 

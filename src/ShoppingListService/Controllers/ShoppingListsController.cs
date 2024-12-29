@@ -333,6 +333,7 @@ namespace ShoppingListService.Controllers
 
                 bool result = await _shoppingListService.SaveChangesAsync();
 
+
                 if (!result)
                 {
                     await transaction.RollbackAsync();

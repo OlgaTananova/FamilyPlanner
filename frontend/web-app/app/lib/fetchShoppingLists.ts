@@ -1,7 +1,7 @@
 import toast from "react-hot-toast";
 import { Category, Item } from "../redux/catalogSlice";
 import fetchApi from "./fetchAPI";
-import { ShoppingList, ShoppingListItem } from "../redux/shoppingListSlice";
+import { CatalogItem, ShoppingList, ShoppingListItem } from "../redux/shoppingListSlice";
 const shoppingListServiceUrl = process.env.NEXT_PUBLIC_SHOPPING_LIST_SERVICE_URL;
 
 // Fetch all categories
@@ -70,4 +70,10 @@ export async function deleteShoppingListItem(shoppingListId: string, itemId: str
     });
 
     return result === null;
+}
+
+export async function getFrequentyBoughtItems(): Promise<CatalogItem[] | null> {
+    return await fetchApi<CatalogItem[]>(shoppingListServiceUrl!, "/api/ShoppingLists/catalogitems/freq-bought", {
+        method: "GET",
+    });
 }

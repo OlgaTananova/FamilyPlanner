@@ -3,8 +3,8 @@ import React, { useEffect } from "react";
 import { useInitializeUser } from "../hooks/useInitializeUser";
 import { useAuth } from "../hooks/useAuth";
 import { useDispatch } from "react-redux";
-import { fetchShoppingListData } from "../lib/fetchShoppingLists";
-import { setCurrentShoppingList, setShoppingLists } from "../redux/shoppingListSlice";
+import { fetchShoppingListData, getFrequentyBoughtItems } from "../lib/fetchShoppingLists";
+import { getFrequentItems, setCurrentShoppingList, setShoppingLists } from "../redux/shoppingListSlice";
 import { fetchCatalogData } from "../lib/fetchCatalog";
 import { setCategories } from "../redux/catalogSlice";
 
@@ -34,6 +34,11 @@ export default function AppInitializer({ children }: { children: React.ReactNode
             if (fetchedShoppingLists) {
                 dispatch(setShoppingLists(fetchedShoppingLists));
                 dispatch(setCurrentShoppingList(fetchedShoppingLists[0]));
+            }
+
+            const frequentItems = await getFrequentyBoughtItems();
+            if (frequentItems) {
+                dispatch(getFrequentItems(frequentItems));
             }
         }
         fetchData();

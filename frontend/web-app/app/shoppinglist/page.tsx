@@ -10,6 +10,8 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useAuth } from '../hooks/useAuth';
 import { RootState } from '../redux/store';
 import { fetchShoppingListData } from '../lib/fetchShoppingLists';
+import FrequentItems from './FrequentItems';
+import Link from 'next/link';
 
 export default function ShoppingListPage() {
     const shoppingLists = useSelector((state: RootState) => state.shoppinglists.lists);
@@ -17,10 +19,15 @@ export default function ShoppingListPage() {
     const [activeSection, setActiveSection] = useState<"lists" | "current" | "frequent">("lists");
 
     return (
-        <div className="container mx-auto px-4 py-6">
+        <div className="container mx-auto px-4 py-6 relative">
             {/* Header */}
             <h1 className="text-2xl font-bold text-purple-700 mb-6">Shopping Lists</h1>
-
+            <Link href={("/")}
+                className="absolute top-0 right-0 text-gray-600 hover:text-gray-900"
+                aria-label="Close Shopping Lists"
+            >
+                ✖
+            </Link>
             {/* Mobile View Toggles (Placed Below Heading) */}
             <MobileViewToggles onSetActiveSection={setActiveSection} activeSection={activeSection} />
             {/* Responsive Sections */}
@@ -35,18 +42,7 @@ export default function ShoppingListPage() {
 
                 {/* Third Column: Frequently Bought Items */}
                 <div className={`p-4 bg-gray-50 border border-gray-300 rounded-lg shadow-md ${activeSection === "frequent" ? "block" : "hidden"} md:block`}>
-                    <h2 className="text-lg font-semibold text-gray-800 mb-4">Frequently Bought Items</h2>
-                    <ul className="space-y-2">
-                        <li className="flex justify-between items-center">
-                            <span>Apples</span>
-                            <Button size="xs" color="purple">Add</Button>
-                        </li>
-                        <li className="flex justify-between items-center">
-                            <span>Eggs</span>
-                            <Button size="xs" color="purple">Add</Button>
-                        </li>
-                        {/* Add more items */}
-                    </ul>
+                    <FrequentItems />
                 </div>
             </div>
         </div>
