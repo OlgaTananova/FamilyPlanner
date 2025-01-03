@@ -10,6 +10,7 @@ import SideBar from "./nav/SideBar";
 import AppInitializer from "./providers/AppInitializer";
 import { SignalRProvider } from "./providers/SignalRProvider";
 
+
 const hubUrl = process.env.NEXT_PUBLIC_SIGNALR_HUB_URL;
 
 
@@ -38,9 +39,12 @@ export default function RootLayout({
                   <Navbar />
                   <div className="flex flex-1">
                     <SideBar />
-                    <main className="flex-1 p-4 bg-gradient-to-r from-purple-50 via-purple-100 to-fuchsia-50">
+                    <main className="flex-1 p-4 bg-gradient-to-r from-purple-50 via-purple-100 to-fuchsia-50 relative z-0">
                       {children}
                     </main>
+                    {/* <main className="flex-1 p-4 bg-gradient-to-r from-purple-50 via-purple-100 to-fuchsia-50">
+                      {children}
+                    </main> */}
                   </div>
                 </div>
               </SignalRProvider>

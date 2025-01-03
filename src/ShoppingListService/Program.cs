@@ -101,7 +101,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowSpecificOrigins", policy =>
     {
-        policy.WithOrigins("http://localhost:3000") // Allow only these origins
+        policy.WithOrigins("http://localhost:3000", "https://locally-talented-pipefish.ngrok-free.app") // Allow only these origins
               .AllowAnyHeader()            // Allow any headers
               .AllowAnyMethod()           // Allow any HTTP methods
               .AllowCredentials();
