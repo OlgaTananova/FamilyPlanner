@@ -9,6 +9,7 @@ import { RootState } from '../redux/store';
 import { Button, Dropdown } from 'flowbite-react';
 import { HiPlus } from 'react-icons/hi';
 import AddShoppingListModal from './AddShoppingListModal';
+import FilterShoppingListsModal from './FilterShoppingListsModal';
 
 interface ShoppingListsProps {
     activeSection: "lists" | "current" | "frequent";
@@ -19,6 +20,26 @@ export default function ShoppingLists({ activeSection, onSelectActiveSection }: 
     const dispatch = useDispatch();
     const shoppingLists = useSelector((state: RootState) => state.shoppinglists.lists);
     const [isAddShoppingListModalOpen, setAddShoppingListModalOpen] = useState(false);
+    const [showArchived, setShowArchived] = useState(true); // State to toggle archived visibility
+    const [visibleShoppingLists, setVisibleShoppingLists] = useState<ShoppingList[]>([]);
+    const [isFilterModalOpen, setFilterModalOpen] = useState(false);
+    const [filterStartDate, setFilterStartDate] = useState<string>("");
+    const [filterEndDate, setFilterEndDate] = useState<string>("");
+    const [filteredShoppingLists, setFilteredShoppingLists] = useState<ShoppingList[]>(shoppingLists);
+    const [isFiltered, setIsFiltered] = useState(false);
+
+    useEffect(() => {
+        const visibleShoppingLists = showArchived
+            ? shoppingLists // Show all lists
+            : shoppingLists.filter((list) => !list.isArchived);
+        setVisibleShoppingLists(visibleShoppingLists);
+        visibleShoppingLists.length > 0 ? dispatch(setCurrentShoppingList(visibleShoppingLists[0])) :
+            dispatch(setCurrentShoppingList(null));
+    }, [shoppingLists, showArchived]);
+
+    const handleToggleArchived = () => {
+        setShowArchived(!showArchived);
+    };
 
     const handleSelectList = async (list: ShoppingList) => {
         dispatch(setCurrentShoppingList(list));
@@ -43,18 +64,18 @@ export default function ShoppingLists({ activeSection, onSelectActiveSection }: 
                         <Dropdown.Item onClick={() => setAddShoppingListModalOpen(true)}>
                             Create New Shopping List
                         </Dropdown.Item>
-                        <Dropdown.Item onClick={() => alert("Hide archived shopping lists")}>
-                            Hide Archived Shopping Lists
+                        <Dropdown.Item onClick={() => handleToggleArchived()}>
+                            {showArchived ? "Hide Archived Shopping Lists" : "Show Archived Shopping Lists"}
                         </Dropdown.Item>
-                        <Dropdown.Item onClick={() => alert("Filter shopping lists by date")}>
+                        <Dropdown.Item onClick={() => setFilterModalOpen(true)}>
                             Filter Shopping Lists by Date
                         </Dropdown.Item>
                     </Dropdown>
                 </div>
-                {shoppingLists.length > 0 ?
+                {visibleShoppingLists.length > 0 ?
 
                     <ul className="space-y-2">
-                        {shoppingLists.map((list) => (
+                        {visibleShoppingLists.map((list) => (
                             <li key={list.id}>
                                 <ShoppingListButton
                                     key={list.id}
@@ -76,6 +97,14 @@ export default function ShoppingLists({ activeSection, onSelectActiveSection }: 
                 isOpen={isAddShoppingListModalOpen}
                 onClose={() => setAddShoppingListModalOpen(false)}
             />
+            <FilterShoppingListsModal
+                isFilterModalOpen={isFilterModalOpen}
+                setFilterModalOpen={setFilterModalOpen}
+                filterStartDate={''}
+                setFilterStartDate={setFilterStartDate}
+                filterEndDate={''}
+                setFilterEndDate={setFilterEndDate}
+                applyDateFilter={() => { }} />
         </>
     )
 }

@@ -67,7 +67,7 @@ const shoppingListSlice = createSlice({
         clearShoppingLists(state) {
             state.lists = [];
         },
-        setCurrentShoppingList(state, action: PayloadAction<ShoppingList>) {
+        setCurrentShoppingList(state, action: PayloadAction<ShoppingList | null>) {
             state.currentShoppingList = action.payload;
         },
         clearCurrentShoppingList(state) {
