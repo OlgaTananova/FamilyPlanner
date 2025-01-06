@@ -8,7 +8,7 @@ import { RootState } from "../redux/store";
 import { useAuth } from "../hooks/useAuth";
 
 export default function SideBar() {
-    const [isCollapsed, setIsCollapsed] = useState(false);
+    const [isCollapsed, setIsCollapsed] = useState(true);
     const [isOpen, setIsOpen] = useState(false); // For mobile view
     const familyName = useSelector((state: RootState) => state.user.family);
     const auth = useAuth();
@@ -20,6 +20,10 @@ export default function SideBar() {
         setIsOpen(!isOpen);
         setIsCollapsed(false);
     };
+
+    const closeSideBar = () => {
+        setIsCollapsed(false)
+    }
 
     if (!isAuthenticated) {
         return <></>;
@@ -61,24 +65,28 @@ export default function SideBar() {
                         icon={<FaUsers size={24} />}
                         label="Family"
                         isCollapsed={isCollapsed}
+                        onClick={() => { setIsCollapsed(true); setIsOpen(false) }}
                     />
                     <SidebarLink
                         href="/catalog"
                         icon={<FaListUl size={24} />}
                         label="Catalog"
                         isCollapsed={isCollapsed}
+                        onClick={() => { setIsCollapsed(true); setIsOpen(false) }}
                     />
                     <SidebarLink
                         href="/shoppinglist"
                         icon={<FaShoppingCart size={24} />}
                         label="Shopping List"
                         isCollapsed={isCollapsed}
+                        onClick={() => { setIsCollapsed(true); setIsOpen(false) }}
                     />
                     <SidebarLink
                         href="/budget"
                         icon={<FaMoneyBillWave size={24} />}
                         label="Budget"
                         isCollapsed={isCollapsed}
+                        onClick={() => { setIsCollapsed(true); setIsOpen(false) }}
                     />
                 </div>
             </div>
@@ -95,10 +103,11 @@ export default function SideBar() {
 }
 
 // Sidebar Link Component
-function SidebarLink({ href, icon, label, isCollapsed }: any) {
+function SidebarLink({ href, icon, label, isCollapsed, onClick }: any) {
     return (
         <Link
             href={href}
+            onClick={onClick}
             className={`flex items-center p-2 rounded-md transition-all 
                     hover:bg-purple-200 text-purple-600 
                     ${isCollapsed ? "justify-center" : "space-x-3"}`}

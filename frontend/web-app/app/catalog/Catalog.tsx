@@ -30,10 +30,14 @@ export default function Catalog() {
   const [isAddItemModalOpen, setIsAddItemModalOpen] = useState(false);
   const [isEditItemModalOpen, setIsEditItemModalOpen] = useState(false);
   const [isEditCategoryModalOpen, setIsEditCategoryModalOpen] = useState(false);
-  const [editedItem, setEditedItem] = useState<{ id: string, name: string, categorySKU: string, sku: string }>({ id: "", name: "", categorySKU: "", sku: ""});
+  const [editedItem, setEditedItem] = useState<{ id: string, name: string, categorySKU: string, sku: string }>({ id: "", name: "", categorySKU: "", sku: "" });
   const [editedCategory, setEditedCategory] = useState<{ id: string, name: string, sku: string, items: Item[] }>({ id: "", name: "", sku: "", items: [] });
-  const { acquireToken } = useAuth();
-  const dispatch = useDispatch();
+  const [showTooltip, setShowTooltip] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setShowTooltip(false), 5000);
+    return () => clearTimeout(timer);
+  }, [])
 
 
   const handleShowOnlyItems = () => {
@@ -64,7 +68,7 @@ export default function Catalog() {
 
   // Render catalog
   return (
-    <>
+
       <div className="container mx-auto px-4 py-6 relative">
         <Link href={("/")}
           className="absolute top-0 right-0 text-gray-600 hover:text-gray-900"
@@ -78,71 +82,78 @@ export default function Catalog() {
             {/* Heading */}
             <h1 className="text-2xl font-bold text-purple-700">Catalog</h1>
             {/* Dropdown Button */}
-            <DropdownMenu showOnlyItems={showOnlyItems}
-              handleShowOnlyItems={handleShowOnlyItems}
-              setIsAddCategoryModalOpen={setIsAddCategoryModalOpen}
-              setIsAddItemModalOpen={setIsAddItemModalOpen} />
+            <div className="relative">
+              <DropdownMenu showOnlyItems={showOnlyItems}
+                handleShowOnlyItems={handleShowOnlyItems}
+                setIsAddCategoryModalOpen={setIsAddCategoryModalOpen}
+                setIsAddItemModalOpen={setIsAddItemModalOpen} />
+              {showTooltip && (
+                <div className="absolute top-5 -left-1/2 w-40 transform -translate-x-1/2 px-3 py-1 text-xs text-white bg-purple-500 rounded-lg shadow-lg animate-fade-in-out">
+                  Add a new catalog item
+                </div>
+              )}
+            </div>
           </div>
 
-          {/* Search Bar */}
-          <div className="mt-4 sm:mt-0">
-            <div className="relative w-full sm:w-80">
-              <input
-                id="search"
-                type="text"
-                placeholder="Search categories and items..."
-                className="w-full px-4 py-2 text-sm text-gray-900 bg-white border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 focus:outline-none"
-              />
+        </div>
 
-              <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none text-gray-400">
-                <HiSearch />
-              </div>
+        {/* Search Bar */}
+        <div className="mt-4 sm:mt-0">
+          <div className="relative w-full sm:w-80">
+            <input
+              id="search"
+              type="text"
+              placeholder="Search categories and items..."
+              className="w-full px-4 py-2 text-sm text-gray-900 bg-white border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 focus:outline-none"
+            />
+
+            <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none text-gray-400">
+              <HiSearch />
             </div>
           </div>
         </div>
-        {/*Modals*/}
-        <AddCategoryModal isOpen={isAddCategoryModalOpen} onClose={() => setIsAddCategoryModalOpen(false)} />
-        <AddNewItemModal isOpen={isAddItemModalOpen} onClose={() => setIsAddItemModalOpen(false)} />
-        <EditItemModal isOpen={isEditItemModalOpen} onClose={() => setIsEditItemModalOpen(false)} item={editedItem} />
-        <EditCategoryModal isOpen={isEditCategoryModalOpen} onClose={() => setIsEditCategoryModalOpen(false)} category={{
-          id: editedCategory.id,
-          name: editedCategory.name,
-          items: editedCategory.items,
-          sku: editedCategory.sku
-        }} />
-        {/* Render Content */}
-        {!showOnlyItems ? (
-          <div className="mt-4">
-            {categories.map((category) => (
-              <CategoryCard
-                key={category.sku}
-                id={category.sku}
-                sku={category.sku}
-                name={category.name}
-                items={category.items}
-                setEditedCategory={setEditedCategory}
-                setEditedItem={setEditedItem}
-                setIsEditItemModalOpen={setIsEditItemModalOpen}
-                setIsEditCategoryModalOpen={setIsEditCategoryModalOpen}
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-            {itemsWOCategories.map((item) => (
-              <ItemComponent
-                key={item.sku}
-                id={item.sku}
-                sku={item.sku}
-                name={item.name}
-                categorySKU={item.categorySKU}
-                setEditedItem={setEditedItem}
-                setIsEditItemModalOpen={setIsEditItemModalOpen}
-              />
-            ))}
-          </div>
-        )}
-      </div >
-    </>
+      {/*Modals*/}
+      <AddCategoryModal isOpen={isAddCategoryModalOpen} onClose={() => setIsAddCategoryModalOpen(false)} />
+      <AddNewItemModal isOpen={isAddItemModalOpen} onClose={() => setIsAddItemModalOpen(false)} />
+      <EditItemModal isOpen={isEditItemModalOpen} onClose={() => setIsEditItemModalOpen(false)} item={editedItem} />
+      <EditCategoryModal isOpen={isEditCategoryModalOpen} onClose={() => setIsEditCategoryModalOpen(false)} category={{
+        id: editedCategory.id,
+        name: editedCategory.name,
+        items: editedCategory.items,
+        sku: editedCategory.sku
+      }} />
+      {/* Render Content */}
+      {!showOnlyItems ? (
+        <div className="mt-4">
+          {categories.map((category) => (
+            <CategoryCard
+              key={category.sku}
+              id={category.sku}
+              sku={category.sku}
+              name={category.name}
+              items={category.items}
+              setEditedCategory={setEditedCategory}
+              setEditedItem={setEditedItem}
+              setIsEditItemModalOpen={setIsEditItemModalOpen}
+              setIsEditCategoryModalOpen={setIsEditCategoryModalOpen}
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+          {itemsWOCategories.map((item) => (
+            <ItemComponent
+              key={item.sku}
+              id={item.sku}
+              sku={item.sku}
+              name={item.name}
+              categorySKU={item.categorySKU}
+              setEditedItem={setEditedItem}
+              setIsEditItemModalOpen={setIsEditItemModalOpen}
+            />
+          ))}
+        </div>
+      )}
+    </div>
   );
 }

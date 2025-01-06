@@ -3,6 +3,8 @@ import { Button } from "flowbite-react";
 import { FaListUl, FaPlus, FaUpload, FaCalendarAlt, FaDollarSign } from "react-icons/fa";
 import { useSelector } from "react-redux";
 import { RootState } from "../redux/store";
+import Link from "next/link";
+import toast from "react-hot-toast";
 
 export default function Dashboard() {
     const user = useSelector((state: RootState) => state.user);
@@ -22,30 +24,30 @@ export default function Dashboard() {
             {/* Quick Actions Bar */}
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
                 {/* Create a New Shopping List */}
-                <Button
+                <Link
                     color="purple"
                     className="flex flex-col items-center justify-center p-4 space-y-2 bg-purple-50 hover:bg-purple-200 border border-purple-300 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:-translate-y-1"
-                    onClick={() => alert("Quick Action!")}
+                    href={"/shoppinglist"}
                 >
                     <FaListUl size={24} className="text-purple-600 mr-2" />
                     <span className="text-sm font-medium text-purple-700">New Shopping List</span>
-                </Button>
+                </Link>
 
                 {/* Add a New Item */}
-                <Button
+                <Link
                     color="purple"
-                    className="flex flex-col items-center justify-center p-4 space-y-2 bg-purple-50 hover:border-fuchsia-950 border-purple-300 rounded-lg shadow-md"
-                    onClick={() => alert("Add a new item to the catalog!")}
+                    className="flex flex-col items-center justify-center p-4 space-y-2 bg-purple-50 hover:bg-purple-200 border border-purple-300 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:-translate-y-1"
+                    href={"/catalog"}
                 >
                     <FaPlus size={24} className="text-purple-600 mr-2" />
                     <span className="text-sm font-medium text-purple-700">Add New Item</span>
-                </Button>
+                </Link>
 
                 {/* Upload Grocery Bill */}
                 <Button
                     color="purple"
                     className="flex flex-col items-center justify-center p-4 space-y-2 bg-purple-50 hover:bg-purple-100 border border-purple-300 rounded-lg shadow-md"
-                    onClick={() => alert("Upload a grocery bill!")}
+                    onClick={() => toast.success("Coming soon!")}
                 >
                     <FaUpload size={24} className="text-purple-600 mr-2" />
                     <span className="text-sm font-medium text-purple-700">Upload Bill</span>
@@ -55,7 +57,7 @@ export default function Dashboard() {
                 <Button
                     color="purple"
                     className="flex flex-col items-center justify-center p-4 space-y-2 bg-purple-50 hover:bg-purple-100 border border-purple-300 rounded-lg shadow-md"
-                    onClick={() => alert("Create a weekly menu!")}
+                    onClick={() => toast.success("Create a weekly menu!")}
                 >
                     <FaCalendarAlt size={24} className="text-purple-600 mr-2" />
                     <span className="text-sm font-medium text-purple-700">Weekly Menu</span>
@@ -65,7 +67,7 @@ export default function Dashboard() {
                 <Button
                     color="purple"
                     className="flex flex-col items-center justify-center p-4 space-y-2 bg-purple-50 hover:bg-purple-100 border border-purple-300 rounded-lg shadow-md"
-                    onClick={() => alert("Add expenses to your budget!")}
+                    onClick={() => toast.success("Add expenses to your budget!")}
                 >
                     <FaDollarSign size={24} className="text-purple-600 mr-2" />
                     <span className="text-sm font-medium text-purple-700">Add Expenses</span>

@@ -25,8 +25,8 @@ export default function ShoppingLists({ activeSection, onSelectActiveSection }: 
     const [isFilterModalOpen, setFilterModalOpen] = useState(false);
     const [filterStartDate, setFilterStartDate] = useState<string>("");
     const [filterEndDate, setFilterEndDate] = useState<string>("");
-    const [filteredShoppingLists, setFilteredShoppingLists] = useState<ShoppingList[]>(shoppingLists);
     const [isFiltered, setIsFiltered] = useState(false);
+    const [showTooltip, setShowTooltip] = useState(true);
 
     useEffect(() => {
         const visibleShoppingLists = showArchived
@@ -37,6 +37,12 @@ export default function ShoppingLists({ activeSection, onSelectActiveSection }: 
             dispatch(setCurrentShoppingList(null));
     }, [shoppingLists, showArchived]);
 
+    useEffect(() => {
+        const timer = setTimeout(() => setShowTooltip(false), 5000);
+        return () => clearTimeout(timer);
+
+    }, [])
+
     const handleToggleArchived = () => {
         setShowArchived(!showArchived);
     };
@@ -45,12 +51,37 @@ export default function ShoppingLists({ activeSection, onSelectActiveSection }: 
         dispatch(setCurrentShoppingList(list));
         onSelectActiveSection("current");
     };
+
+    const applyDateFilter = () => {
+        if (visibleShoppingLists.length > 0) {
+            const filteredLists = visibleShoppingLists.filter((list) => {
+                const listDate = new Date(list.createdAt);
+                const startDate = new Date(filterStartDate);
+                const endDate = new Date(filterEndDate);
+                return listDate >= startDate && listDate <= endDate;
+            });
+            setVisibleShoppingLists(filteredLists);
+            setIsFiltered(true);
+            setFilterModalOpen(false);
+        }
+    };
+
+    // Clear date filter
+    const clearFilter = () => {
+        setVisibleShoppingLists(shoppingLists);
+        setFilterStartDate("");
+        setFilterEndDate("");
+        setIsFiltered(false);
+        setShowArchived(true);
+        dispatch(setCurrentShoppingList(shoppingLists[0]));
+    };
+
     return (
         <>
             <div className={`p-4 bg-purple-50 border border-purple-300 rounded-lg shadow-md ${activeSection === "lists" ? "block" : "hidden"} md:block`}>
                 <div className="flex justify-between items-center mb-4">
-
-                    {/* Circle button for creating a new shopping list */}
+                    <div className='relative'>
+                    {/* Circle button for creating a new shopping list with a tooltip */}
                     <Button
                         size="xs"
                         color="purple"
@@ -59,6 +90,13 @@ export default function ShoppingLists({ activeSection, onSelectActiveSection }: 
                     >
                         <HiPlus className="w-3 h-3" />
                     </Button>
+                    {/* Tooltip */}
+                    {showTooltip && (
+                        <div className="absolute top-10 left-3 w-40 transform -translate-x-1/2 px-3 py-1 text-xs text-white bg-purple-500 rounded-lg shadow-lg animate-fade-in-out">
+                            Add a new shopping list
+                        </div>
+                    )}
+                    </div>
                     {/* Dropdown for actions */}
                     <Dropdown label="" inline placement="bottom-end" className="relative">
                         <Dropdown.Item onClick={() => setAddShoppingListModalOpen(true)}>
@@ -72,6 +110,19 @@ export default function ShoppingLists({ activeSection, onSelectActiveSection }: 
                         </Dropdown.Item>
                     </Dropdown>
                 </div>
+                {/* Clear Filter Button */}
+                {isFiltered && (
+                    <div className="mb-4">
+                        <Button
+                            size="xs"
+                            color="light"
+                            onClick={clearFilter}
+                            className="text-purple-700 border-purple-300 hover:bg-purple-100 focus:ring-purple-500"
+                        >
+                            Clear Date Filter
+                        </Button>
+                    </div>
+                )}
                 {visibleShoppingLists.length > 0 ?
 
                     <ul className="space-y-2">
@@ -104,7 +155,7 @@ export default function ShoppingLists({ activeSection, onSelectActiveSection }: 
                 setFilterStartDate={setFilterStartDate}
                 filterEndDate={''}
                 setFilterEndDate={setFilterEndDate}
-                applyDateFilter={() => { }} />
+                applyDateFilter={applyDateFilter} />
         </>
     )
 }

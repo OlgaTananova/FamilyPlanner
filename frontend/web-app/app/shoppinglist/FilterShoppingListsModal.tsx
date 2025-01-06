@@ -1,5 +1,5 @@
-import { Button, Modal } from 'flowbite-react'
-import React from 'react'
+import { Button, Modal, Datepicker } from 'flowbite-react'
+import React, { useEffect, useState } from 'react'
 
 interface FilterShoppingListsModalProps {
     isFilterModalOpen: boolean;
@@ -18,6 +18,7 @@ export default function FilterShoppingListsModal({ isFilterModalOpen,
     setFilterEndDate,
     setFilterStartDate,
     applyDateFilter }: FilterShoppingListsModalProps) {
+
     return (
         <Modal show={isFilterModalOpen} onClose={() => setFilterModalOpen(false)}>
             <Modal.Header>Filter by Date</Modal.Header>
@@ -27,7 +28,6 @@ export default function FilterShoppingListsModal({ isFilterModalOpen,
                         <label className="block mb-2 text-sm font-medium text-gray-700">Start Date</label>
                         <input
                             type="date"
-                            value={filterStartDate}
                             onChange={(e) => setFilterStartDate(e.target.value)}
                             className="w-full border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500"
                         />
@@ -36,7 +36,6 @@ export default function FilterShoppingListsModal({ isFilterModalOpen,
                         <label className="block mb-2 text-sm font-medium text-gray-700">End Date</label>
                         <input
                             type="date"
-                            value={filterEndDate}
                             onChange={(e) => setFilterEndDate(e.target.value)}
                             className="w-full border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500"
                         />
