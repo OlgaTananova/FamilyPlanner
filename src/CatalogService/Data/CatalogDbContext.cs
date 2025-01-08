@@ -27,6 +27,14 @@ public class CatalogDbContext : DbContext
         modelBuilder.AddInboxStateEntity();
         modelBuilder.AddOutboxMessageEntity();
         modelBuilder.AddOutboxStateEntity();
+
+        modelBuilder.Entity<Item>()
+        .HasGeneratedTsVectorColumn(
+            p => p.SearchVector,
+            "english",  // Text search config
+            p => new { p.Name, p.CategoryName})  // Included properties
+        .HasIndex(p => p.SearchVector)
+        .HasMethod("GIN"); // Index method on the search vector (GIN or GIST)
     }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)

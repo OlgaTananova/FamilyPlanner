@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useSelector } from "react-redux";
 import { RootState } from "../redux/store";
 import { useAuth } from "../hooks/useAuth";
+import { GiMeal } from "react-icons/gi";
 
 export default function SideBar() {
     const [isCollapsed, setIsCollapsed] = useState(true);
@@ -43,7 +44,7 @@ export default function SideBar() {
             <div
                 className={`fixed z-50 top-19 h-[calc(100vh-64px)] bg-gradient-to-b from-purple-100 via-purple-50 to-fuchsia-100 
           shadow-md transition-all duration-300 flex flex-col justify-items-start
-          ${isCollapsed ? "w-9" : "w-56"}
+          ${isCollapsed ? "w-7" : "w-56"}
           ${isOpen ? "left-0" : "-left-full"} md:left-0`}
             >
                 {/* Collapse Button */}
@@ -81,13 +82,20 @@ export default function SideBar() {
                         isCollapsed={isCollapsed}
                         onClick={() => { setIsCollapsed(true); setIsOpen(false) }}
                     />
-                    <SidebarLink
+                    {/* <SidebarLink
                         href="/budget"
                         icon={<FaMoneyBillWave size={24} />}
                         label="Budget"
                         isCollapsed={isCollapsed}
                         onClick={() => { setIsCollapsed(true); setIsOpen(false) }}
                     />
+                     <SidebarLink
+                        href="/menu"
+                        icon={<GiMeal size={24} />}
+                        label="Meal Planner"
+                        isCollapsed={isCollapsed}
+                        onClick={() => { setIsCollapsed(true); setIsOpen(false) }}
+                    /> */}
                 </div>
             </div>
 

@@ -14,8 +14,17 @@ public static class DbInitializer
     {
         using var scope = app.Services.CreateScope();
         await SeedData(scope.ServiceProvider.GetService<ShoppingListContext>());
+        AddSearchingFunction(scope.ServiceProvider.GetService<ShoppingListContext>());
     }
 
+
+    private static void AddSearchingFunction(ShoppingListContext context)
+    {
+        context.Database.EnsureCreated();
+
+        // Execute the raw SQL to create the extension
+        context.Database.ExecuteSqlRaw("CREATE EXTENSION IF NOT EXISTS pg_trgm;");
+    }
     private static async Task SeedData(ShoppingListContext context)
     {
         context.Database.Migrate();

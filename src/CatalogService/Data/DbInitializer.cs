@@ -1,5 +1,6 @@
 using System;
 using System.Security.Cryptography;
+using CatalogService.Data.Migrations;
 using CatalogService.Entities;
 using Microsoft.EntityFrameworkCore;
 
@@ -13,6 +14,27 @@ public static class DbInitializer
     {
         using var scope = app.Services.CreateScope();
         await SeedData(scope.ServiceProvider.GetService<CatalogDbContext>());
+        AddSearchingFunction(scope.ServiceProvider.GetService<CatalogDbContext>());
+    }
+
+    private static async Task AddCaterotyNamesToItems(CatalogDbContext context)
+    {
+        var items = context.Items.Include(i => i.Category).ToList();
+        foreach (var item in items)
+        {
+            item.CategoryName = item.Category.Name;
+            item.CategorySKU = item.Category.SKU;
+        }
+
+        await context.SaveChangesAsync();
+    }
+
+    private static void AddSearchingFunction(CatalogDbContext context)
+    {
+        context.Database.EnsureCreated();
+
+        // Execute the raw SQL to create the extension
+        context.Database.ExecuteSqlRaw("CREATE EXTENSION IF NOT EXISTS pg_trgm;");
     }
 
     private static async Task SeedData(CatalogDbContext context)

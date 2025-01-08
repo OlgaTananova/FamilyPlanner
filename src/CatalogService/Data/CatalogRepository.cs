@@ -107,11 +107,12 @@ public class CatalogRepository : ICatalogRepository
             // Update CategorySKU and explicitly attach the new category
             item.CategorySKU = itemDto.CategorySKU;
 
-            var newCategory = await _context.Categories.FirstOrDefaultAsync(x => x.SKU == itemDto.CategorySKU);
+            Category newCategory = await _context.Categories.FirstOrDefaultAsync(x => x.SKU == itemDto.CategorySKU);
             if (newCategory != null)
             {
                 _context.Entry(newCategory).State = EntityState.Unchanged; // Attach new category
                 item.Category = newCategory;
+                item.CategoryName = newCategory.Name;
             }
         }
 
@@ -123,6 +124,36 @@ public class CatalogRepository : ICatalogRepository
 
         // Explicitly mark Item as modified
         _context.Entry(item).State = EntityState.Modified;
+    }
+
+    public async Task UpdateCategoryAsync(Category category, UpdateCategoryDto categoryDto)
+    {
+        category.Name = categoryDto.Name ?? category.Name;
+        List<Item> items = await _context.Items.Where((i) => i.CategoryId == category.Id).ToListAsync();
+        foreach (Item item in items)
+        {
+            item.CategoryName = categoryDto.Name ?? category.Name;
+            _context.Items.Update(item);
+        }
+    }
+
+    public async Task<List<Item>> SearchItemsAsync(string query, string family)
+    {
+        // query the database if the cache is empty
+        var formattedQuery = query.Replace(" ", " | "); // Convert query into tsquery format
+
+        var dbQuerySearchResult = await _context.Items
+        .FromSqlInterpolated(
+        $@"SELECT * 
+        FROM ""Items""
+        WHERE ""SearchVector"" @@ plainto_tsquery('english', {formattedQuery})
+        OR ""Name""::text % {query} OR ""CategoryName""::text % {query}
+        AND ""Family"" = {family}
+        ORDER BY GREATEST(similarity(""Name"", {query}), similarity(""CategoryName"", {query})) DESC
+        LIMIT 10")
+        .ToListAsync();
+
+        return dbQuerySearchResult;
     }
 
     public async Task<bool> SaveChangesAsync()

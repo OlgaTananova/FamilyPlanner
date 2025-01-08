@@ -56,7 +56,7 @@ export async function updateItem(sku: string, name: string, categorySKU: string)
         body: JSON.stringify({ name, categorySKU }),
     });
 
-   return updatedItem;
+    return updatedItem;
 }
 
 // Delete an item
@@ -85,3 +85,7 @@ export async function deleteCategory(sku: string): Promise<boolean> {
     const response = await fetchApi(catalogServiceUrl!, `/api/Catalog/categories/${sku}`, { method: "DELETE" });
     return response === null; // 204 No Content
 }
+
+export async function fetchCatalogSearchResults(query: string): Promise<Item[] | null> {
+    return await fetchApi(catalogServiceUrl!, `/api/Catalog/items/search?query=${query}`, { method: "GET" });
+};

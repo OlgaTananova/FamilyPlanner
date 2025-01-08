@@ -136,6 +136,8 @@ namespace CatalogService.Controllers
             item.OwnerId = _userId;
             item.Family = _familyName;
             item.Category = category;
+            item.CategorySKU = category.SKU;
+            item.CategoryName = category.Name;
 
             _repo.AddItem(item);
             // Send a created item to the rabbitmq
@@ -164,7 +166,7 @@ namespace CatalogService.Controllers
                     return NotFound("The category was not found or you are not allowed to update the category created by another user.");
                 }
 
-                category.Name = categoryDto.Name ?? category.Name;
+                await _repo.UpdateCategoryAsync(category, categoryDto);
 
                 CategoryDto updatedCategory = _mapper.Map<CategoryDto>(category);
 
@@ -205,6 +207,7 @@ namespace CatalogService.Controllers
 
                 Guid previousCategorySKU = item.CategorySKU != itemDto.CategorySKU ? item.CategorySKU : itemDto.CategorySKU;
 
+                // TODO - update the method
                 await _repo.UpdateItemAsync(item, itemDto);
 
                 CatalogItemUpdated catalogItemUpdated = new CatalogItemUpdated
@@ -229,7 +232,7 @@ namespace CatalogService.Controllers
             catch (Exception ex)
             {
                 // Rollback the transaction on any exception
-                
+
                 await transaction.RollbackAsync();
                 return BadRequest("Problem with commiting transaction. Possibly another user tried to change the data.");
             }
@@ -304,6 +307,22 @@ namespace CatalogService.Controllers
                 return BadRequest("Problem with commiting transaction. Possibly another user tried to change the data.");
 
             }
+        }
+
+
+        [HttpGet("items/search")]
+        public async Task<ActionResult<List<ItemDto>>> SearchItems([FromQuery] string query)
+        {
+            if (string.IsNullOrWhiteSpace(query))
+            {
+                return BadRequest("Query parameter cannot be empty.");
+            }
+
+            var items = await _repo.SearchItemsAsync(query, _familyName);
+
+            var catalogItemDtos = _mapper.Map<List<ItemDto>>(items);
+
+            return Ok(catalogItemDtos);
         }
     }
 }

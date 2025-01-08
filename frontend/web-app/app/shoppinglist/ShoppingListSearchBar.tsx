@@ -50,7 +50,6 @@ export default function ShoppingListSearchBar() {
         }
     };
 
-    // TODO: fix the comoponent
     const handleAddItem = async (item: Item) => {
         try {
             if (!shoppingList) {
