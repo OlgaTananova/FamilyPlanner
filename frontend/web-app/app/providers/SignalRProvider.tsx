@@ -114,7 +114,6 @@ export const SignalRProvider: React.FC<SignalRProviderProps> = ({ hubUrl, childr
             });
             // Shopping List Events
             connection.on("ShoppingListCreated", (shoppingList) => {
-                console.log(shoppingList);
                 dispatch(addShoppingList(shoppingList));
             });
             connection.on("ShoppingListDeleted", (shoppingList: { id: string, family: string, ownerId: string }) => {

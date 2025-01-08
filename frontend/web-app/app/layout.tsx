@@ -11,7 +11,7 @@ import AppInitializer from "./providers/AppInitializer";
 import { SignalRProvider } from "./providers/SignalRProvider";
 
 
-const hubUrl = process.env.NEXT_PUBLIC_SIGNALR_HUB_URL;
+const hubUrl = `${process.env.NEXT_PUBLIC_GATEWAY_URL}/notifications`;
 
 
 export const metadata: Metadata = {

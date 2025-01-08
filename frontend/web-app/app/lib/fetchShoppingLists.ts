@@ -2,17 +2,17 @@ import toast from "react-hot-toast";
 import { Category, Item } from "../redux/catalogSlice";
 import fetchApi from "./fetchAPI";
 import { CatalogItem, ShoppingList, ShoppingListItem } from "../redux/shoppingListSlice";
-const shoppingListServiceUrl = process.env.NEXT_PUBLIC_SHOPPING_LIST_SERVICE_URL;
+const gatewayUrl = process.env.NEXT_PUBLIC_GATEWAY_URL;
 
 // Fetch all categories
 export async function fetchShoppingListData(): Promise<ShoppingList[] | null> {
-    return await fetchApi<ShoppingList[]>(shoppingListServiceUrl!, "/api/ShoppingLists", {
+    return await fetchApi<ShoppingList[]>(gatewayUrl!, "/shoppingList", {
         method: "GET",
     });
 }
 
 export async function addNewShoppingList(shoppingListData: { heading: string, SKUs: string[] }): Promise<ShoppingList | null> {
-    return await fetchApi<ShoppingList>(shoppingListServiceUrl!, "/api/ShoppingLists", {
+    return await fetchApi<ShoppingList>(gatewayUrl!, "/shoppinglist", {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
@@ -22,14 +22,14 @@ export async function addNewShoppingList(shoppingListData: { heading: string, SK
 }
 
 export async function deleteShoppingList(shoppingListId: string): Promise<boolean> {
-    const result = await fetchApi<null>(shoppingListServiceUrl!, `/api/ShoppingLists/${shoppingListId}`, {
+    const result = await fetchApi<null>(gatewayUrl!, `/shoppinglist/${shoppingListId}`, {
         method: "DELETE",
     });
     return result === null;
 }
 
 export async function updateShoppingList(shoppingListData: { id: string, heading: string, salesTax: number, isArchived: boolean }): Promise<ShoppingList | null> {
-    return await fetchApi<ShoppingList>(shoppingListServiceUrl!, `/api/ShoppingLists/${shoppingListData.id}`, {
+    return await fetchApi<ShoppingList>(gatewayUrl!, `/shoppinglist/${shoppingListData.id}`, {
         method: "PUT",
         headers: {
             "Content-Type": "application/json",
@@ -39,7 +39,7 @@ export async function updateShoppingList(shoppingListData: { id: string, heading
 }
 
 export async function updateShoppingListItem(shoppingListId: string, itemId: string, itemData: Partial<ShoppingListItem>): Promise<ShoppingList | null> {
-    return await fetchApi<ShoppingList>(shoppingListServiceUrl!, `/api/ShoppingLists/${shoppingListId}/items/${itemId}`, {
+    return await fetchApi<ShoppingList>(gatewayUrl!, `/shoppinglist/${shoppingListId}/items/${itemId}`, {
         method: "PUT",
         headers: {
             "Content-Type": "application/json",
@@ -49,13 +49,13 @@ export async function updateShoppingListItem(shoppingListId: string, itemId: str
 }
 
 export async function searchShoppingListItems(searchTerm: string): Promise<Item[] | null> {
-    return await fetchApi<Item[]>(shoppingListServiceUrl!, `/api/ShoppingLists/catalogitems/search?query=${searchTerm}`, {
+    return await fetchApi<Item[]>(gatewayUrl!, `/shoppinglist/catalogitems/search?query=${searchTerm}`, {
         method: "GET",
     });
 }
 
 export async function addShoppingListItems(shoppingListId: string, itemData: { skus: string[] }): Promise<ShoppingList | null> {
-    return await fetchApi<ShoppingList>(shoppingListServiceUrl!, `/api/ShoppingLists/${shoppingListId}/items`, {
+    return await fetchApi<ShoppingList>(gatewayUrl!, `/shoppinglist/${shoppingListId}/items`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
@@ -65,7 +65,7 @@ export async function addShoppingListItems(shoppingListId: string, itemData: { s
 }
 
 export async function deleteShoppingListItem(shoppingListId: string, itemId: string): Promise<boolean> {
-    const result = await fetchApi<ShoppingList>(shoppingListServiceUrl!, `/api/ShoppingLists/${shoppingListId}/items/${itemId}`, {
+    const result = await fetchApi<ShoppingList>(gatewayUrl!, `/shoppinglist/${shoppingListId}/items/${itemId}`, {
         method: "DELETE",
     });
 
@@ -73,7 +73,7 @@ export async function deleteShoppingListItem(shoppingListId: string, itemId: str
 }
 
 export async function getFrequentyBoughtItems(): Promise<CatalogItem[] | null> {
-    return await fetchApi<CatalogItem[]>(shoppingListServiceUrl!, "/api/ShoppingLists/catalogitems/freq-bought", {
+    return await fetchApi<CatalogItem[]>(gatewayUrl!, "/shoppinglist/catalogitems/freq-bought", {
         method: "GET",
     });
 }

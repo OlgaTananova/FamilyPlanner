@@ -1,19 +1,19 @@
 import toast from "react-hot-toast";
 import { Category, Item } from "../redux/catalogSlice";
 import fetchApi from "./fetchAPI";
-const catalogServiceUrl = process.env.NEXT_PUBLIC_CATALOG_SERVICE_URL;
+const gatewayUrl = process.env.NEXT_PUBLIC_GATEWAY_URL;
 
 
 // Fetch all categories
 export async function fetchCatalogData(): Promise<Category[] | null> {
-    return await fetchApi<Category[]>(catalogServiceUrl!, "/api/Catalog/categories", {
+    return await fetchApi<Category[]>(gatewayUrl!, "/catalog/categories", {
         method: "GET",
     });
 }
 
 // Create a new category
 export async function createCategory(name: string): Promise<Category | null> {
-    const newCategory = await fetchApi<Category>(catalogServiceUrl!, "/api/Catalog/categories", {
+    const newCategory = await fetchApi<Category>(gatewayUrl!, "/catalog/categories", {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
@@ -30,7 +30,7 @@ export async function createCategory(name: string): Promise<Category | null> {
 
 // Create a new item
 export async function createItem(name: string, categorySKU: string): Promise<Item | null> {
-    const newItem = await fetchApi<Item>(catalogServiceUrl!, "/api/Catalog/items", {
+    const newItem = await fetchApi<Item>(gatewayUrl!, "/catalog/items", {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
@@ -48,7 +48,7 @@ export async function createItem(name: string, categorySKU: string): Promise<Ite
 
 // Update an item
 export async function updateItem(sku: string, name: string, categorySKU: string): Promise<{ updatedItem: Item, previousCategorySKU: string } | null> {
-    const updatedItem = await fetchApi<{ updatedItem: Item, previousCategorySKU: string }>(catalogServiceUrl!, `/api/Catalog/items/${sku}`, {
+    const updatedItem = await fetchApi<{ updatedItem: Item, previousCategorySKU: string }>(gatewayUrl!, `/catalog/items/${sku}`, {
         method: "PUT",
         headers: {
             "Content-Type": "application/json",
@@ -61,7 +61,7 @@ export async function updateItem(sku: string, name: string, categorySKU: string)
 
 // Delete an item
 export async function deleteItem(sku: string): Promise<boolean> {
-    const success = await fetchApi<null>(catalogServiceUrl!, `/api/Catalog/items/${sku}`, {
+    const success = await fetchApi<null>(gatewayUrl!, `/catalog/items/${sku}`, {
         method: "DELETE",
     });
 
@@ -74,7 +74,7 @@ export async function deleteItem(sku: string): Promise<boolean> {
 }
 
 export async function updateCategory(sku: string, name: string): Promise<Category | null> {
-    return await fetchApi(catalogServiceUrl!, `/api/Catalog/categories/${sku}`, {
+    return await fetchApi(gatewayUrl!, `/catalog/categories/${sku}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name }),
@@ -82,10 +82,10 @@ export async function updateCategory(sku: string, name: string): Promise<Categor
 }
 
 export async function deleteCategory(sku: string): Promise<boolean> {
-    const response = await fetchApi(catalogServiceUrl!, `/api/Catalog/categories/${sku}`, { method: "DELETE" });
+    const response = await fetchApi(gatewayUrl!, `/catalog/categories/${sku}`, { method: "DELETE" });
     return response === null; // 204 No Content
 }
 
 export async function fetchCatalogSearchResults(query: string): Promise<Item[] | null> {
-    return await fetchApi(catalogServiceUrl!, `/api/Catalog/items/search?query=${query}`, { method: "GET" });
+    return await fetchApi(gatewayUrl!, `/catalog/items/search?query=${query}`, { method: "GET" });
 };

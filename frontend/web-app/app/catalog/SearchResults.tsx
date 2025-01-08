@@ -26,7 +26,7 @@ export default function SearchResults({ results, onClearSearch }: SearchResultsP
             {results && results.length > 0 ? (
                 <ul className="space-y-4">
                     {results.map((item) => (
-                        <ItemComponent name={item.name} id={item.id} categorySKU={item.categorySKU} sku={item.sku}
+                        <ItemComponent name={item.name} key={item.sku} id={item.id} categorySKU={item.categorySKU} sku={item.sku}
                             setEditedItem={function (item: { id: string; name: string; categorySKU: string; sku: string; }): void {
                                 throw new Error("Function not implemented.");
                             }} showEditItemButton={false} />
