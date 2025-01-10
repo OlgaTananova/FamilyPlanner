@@ -1,5 +1,7 @@
 using CatalogService.Data;
+using Contracts.Authentication;
 using MassTransit;
+using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
@@ -8,25 +10,6 @@ using Microsoft.IdentityModel.Logging;
 
 var builder = WebApplication.CreateBuilder(args);
 
-IdentityModelEventSource.ShowPII = true;
-
-// Add User Secrets Manager to the container
-builder.Configuration.AddUserSecrets<Program>();
-
-// Get the secrets from user secrets
-var configuration = builder.Configuration;
-var username = configuration["PostgresUser"];
-var password = configuration["PostgresPassword"];
-var database = configuration["Database"];
-var rabbitmqUser = configuration["RABBIT_MQ_USER"];
-var rabbitmqPassword = configuration["RABBIT_MQ_PASSWORD"];
-
-
-// Construct the connection string
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
-    .Replace("{PostgresUser}", username)
-    .Replace("{PostgresPassword}", password)
-    .Replace("{Database}", database);
 
 // Add services to the container.
 
@@ -34,27 +17,21 @@ builder.Services.AddControllers();
 
 builder.Services.AddDbContext<CatalogDbContext>(opt =>
 {
-    opt.UseNpgsql(connectionString);
+    opt.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
 });
 
 // Add Telemetry
 builder.Services.AddApplicationInsightsTelemetry();
 
 // Configure built-in logging
-builder.Logging.ClearProviders(); // Optional: Clear default logging providers
-builder.Logging.AddConsole();     // Add console logging
-builder.Logging.AddFilter("Microsoft.EntityFrameworkCore.Database.Command", LogLevel.Warning);
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
 builder.Logging.AddApplicationInsights(configureTelemetryConfiguration: (config) =>
 {
     config.ConnectionString = builder.Configuration["ApplicationInsights:ConnectionString"];
 }, options =>
 {
     options.IncludeScopes = true;
-});
-
-builder.Services.AddHttpClient("CatalogService", client =>
-{
-    client.DefaultRequestHeaders.Add("Trace-ID", Guid.NewGuid().ToString());
 });
 
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
@@ -65,7 +42,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowSpecificOrigins", policy =>
     {
         //Console.WriteLine(builder.Configuration["ClientApps"][0]);
-        policy.WithOrigins("http://localhost:3000") // Allow only these origins
+        policy.WithOrigins(builder.Configuration.GetSection("ClientApps").Get<string[]>()) // Allow only these origins
               .AllowAnyHeader()            // Allow any headers
               .AllowAnyMethod();           // Allow any HTTP methods
     });
@@ -92,8 +69,8 @@ builder.Services.AddMassTransit(x =>
         });
         cfg.Host(builder.Configuration["RabbitMq:Host"], "/", h =>
         {
-            h.Username(rabbitmqUser);
-            h.Password(rabbitmqPassword);
+            h.Username(builder.Configuration["RabbitMq:User"]);
+            h.Password(builder.Configuration["RabbitMq:Password"]);
         });
 
         cfg.ConfigureEndpoints(context);
@@ -107,8 +84,8 @@ builder.Services.AddAuthentication("Bearer")
         builder.Configuration.Bind("AzureAdB2C", options);
     },
     options => builder.Configuration.Bind("AzureAdB2C", options));
-
 builder.Services.AddScoped<IClaimsTransformation, CustomClaimsTransformation>();
+
 // Add authorization
 builder.Services.AddAuthorization(options =>
 {
@@ -126,10 +103,10 @@ builder.Services.AddAuthorization(options =>
             context.User.HasClaim(c => c.Type == "role" &&
                 (c.Value == "Parent" || c.Value == "Other member")));
     });
-    // Read
 }
 );
-
+// Enrich telemetry with data
+builder.Services.AddSingleton<ITelemetryInitializer, CustomTelemetryInitializer>();
 
 
 var app = builder.Build();

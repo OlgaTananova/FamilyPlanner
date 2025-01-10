@@ -57,7 +57,6 @@ namespace CatalogService.Controllers
         public async Task<ActionResult<List<CategoryDto>>> GetAllCategoories()
         {
             var operationId = _httpContext.HttpContext.Request.Headers["traceparent"];
-            _logger.LogInformation($"GET Categories request received in CatalogService. User: {_userId}, Family: {_familyName}, operationId {operationId}");
             return await _repo.GetAllCategoriesAsync(_familyName);
         }
 
@@ -97,13 +96,12 @@ namespace CatalogService.Controllers
         [HttpPost("categories")]
         public async Task<ActionResult<CategoryDto>> CreateCategory(CreateCategoryDto categoryDto)
         {
-            _logger.LogInformation($"Create Category request received in Catalog Service. User: {_userId}, Family: {_familyName}, Category: {categoryDto.Name}, OperationId : {_operationId}",
-            _userId, _familyName, categoryDto.Name);
+            _logger.LogInformation($"Create Category request received. Service: Catalog Service. User: {_userId}, Family: {_familyName}, Category: {categoryDto.Name}, OperationId : {_operationId}");
             Category existingCategory = await _repo.GetCategoryEntityByName(categoryDto.Name, _familyName);
 
             if (existingCategory != null)
             {
-                _logger.LogWarning($"Category creation failed: Category with name {categoryDto.Name} already exists. User: {_userId}, Family: {_familyName}, OperationId : {_operationId}");
+                _logger.LogError($"Create Category request failed: Category with name {categoryDto.Name} already exists. Service: Catalog Service, User: {_userId}, Family: {_familyName}, OperationId : {_operationId}");
                 return BadRequest("The category with this name already exists.");
             }
 
@@ -118,7 +116,6 @@ namespace CatalogService.Controllers
 
             await _publishEndpoint.Publish(_mapper.Map<CatalogCategoryCreated>(newCategory), context =>
                 {
-                    Console.WriteLine(_operationId);
                     context.Headers.Set("OperationId", _operationId);
 
                 });
@@ -127,24 +124,24 @@ namespace CatalogService.Controllers
 
             if (!result)
             {
-                _logger.LogError("Failed to save new category {CategoryName} for Family: {FamilyName}, OperationId : {OperationId}", categoryDto.Name, _familyName, _operationId);
+                _logger.LogError($"Create Category request failed: Cannot save changes to db. Service: Catalog Service, User: {_userId}, Family: {_familyName}, OperationId : {_operationId}");
                 return BadRequest("Could not save changes to the DB");
 
             };
-            _logger.LogInformation("Category {CategoryName} created successfully. User: {UserId}, Family: {FamilyName}, OperationId: {OperationId}", categoryDto.Name, _userId, _familyName, _operationId);
+            _logger.LogInformation($"Create Category request succeded:Category {category.Name} created successfully. Service: Catalog Service, User: {_userId}, Family: {_familyName}, OperationId: {_operationId}");
             return Ok(newCategory);
         }
 
         [HttpPost("items")]
         public async Task<ActionResult<ItemDto>> CreateItem(CreateItemDto itemDto)
         {
-            _logger.LogInformation($"Create Item request received in Catalog Service. User: {_userId}, Family: {_familyName}, Item: {itemDto.Name}, OperationId : {_operationId}");
+            _logger.LogInformation($"Create Item request received. Service: Catalog Service, User: {_userId}, Family: {_familyName}, Item: {itemDto.Name} OperationId : {_operationId}");
 
             Item existingItem = await _repo.GetItemEntityByNameAsync(itemDto.Name, _familyName);
 
             if (existingItem != null)
             {
-                _logger.LogError($"Create Item request failed in Catalog Service. Item already exists. User: {_userId}, Family: {_familyName}, Item: {itemDto.Name}, OperationId : {_operationId}");
+                _logger.LogError($"Create Item request failed: Item with a name {itemDto.Name} already exists. Service: Catalog Service, User: {_userId}, Family: {_familyName}, Item: {itemDto.Name}, OperationId : {_operationId}");
 
                 return BadRequest("The item with this name already exists.");
             }
@@ -153,7 +150,7 @@ namespace CatalogService.Controllers
 
             if (category == null)
             {
-                _logger.LogError($"Create Item request failed in Catalog Service. Item category is not found. User: {_userId}, Family: {_familyName}, Item: {itemDto.Name}, OperationId : {_operationId}");
+                _logger.LogError($"Create Item request failed: Item's category is not found. Service: Catalog Service, User: {_userId}, Family: {_familyName}, Item: {itemDto.Name}, OperationId : {_operationId}");
                 return NotFound("Cannot find the category of the newly created item.");
             }
 
@@ -168,7 +165,7 @@ namespace CatalogService.Controllers
             // Send a created item to the rabbitmq
             var newItem = _mapper.Map<ItemDto>(item);
 
-            _logger.LogInformation($"Create Item message is sent to Notification Service. UserId: {_userId}, Family: {_familyName}, Item: {itemDto.Name}, OperationId : {_operationId}");
+            _logger.LogInformation($"Create Item request is sent to the message brocker. Service: Catalog Service,  UserId: {_userId}, Family: {_familyName}, Item: {itemDto.Name}, OperationId : {_operationId}");
 
             await _publishEndpoint.Publish(_mapper.Map<CatalogItemCreated>(newItem), context =>
             {
@@ -180,17 +177,19 @@ namespace CatalogService.Controllers
 
             if (!result)
             {
-                _logger.LogError($"Create Item request failed in Catalog Service. Could not save to the database. User: {_userId}, Family: {_familyName}, Item: {itemDto.Name}, OperationId : {_operationId}");
+                _logger.LogError($"Create Item request failed: Could not save to the database. Service: Catalog Service, User: {_userId}, Family: {_familyName}, Item: {itemDto.Name}, OperationId : {_operationId}");
                 return BadRequest("Could not save changes to the DB.");
             }
 
-            _logger.LogInformation($"Create Item request sucessfully handled in Catalog Service. User: {_userId}, Family: {_familyName}, Item: {itemDto.Name}, OperationId : {_operationId}");
+            _logger.LogInformation($"Create Item request sucessfully handled. Service: Catalog Service, User: {_userId}, Family: {_familyName}, Item: {itemDto.Name}, OperationId : {_operationId}");
             return Ok(_mapper.Map<ItemDto>(item));
         }
 
         [HttpPut("categories/{sku}")]
         public async Task<ActionResult<CategoryDto>> UpdateCategory(Guid sku, UpdateCategoryDto categoryDto)
         {
+            _logger.LogInformation($"Update Category request received. Service: Catalog Service. User: {_userId}, Family: {_familyName}, Category: {categoryDto.Name}, OperationId : {_operationId}");
+
             using var transaction = await _repo.BeginTransactionAsync();
             try
             {
@@ -198,6 +197,7 @@ namespace CatalogService.Controllers
 
                 if (category == null)
                 {
+                    _logger.LogError($"Update Category request failed: Category with name {categoryDto.Name} was not found. Service: Catalog Service, User: {_userId}, Family: {_familyName}, Category: {categoryDto.Name}, OperationId : {_operationId}");
                     return NotFound("The category was not found or you are not allowed to update the category created by another user.");
                 }
 
@@ -205,13 +205,22 @@ namespace CatalogService.Controllers
 
                 CategoryDto updatedCategory = _mapper.Map<CategoryDto>(category);
 
-                await _publishEndpoint.Publish(_mapper.Map<CatalogCategoryUpdated>(updatedCategory));
+                await _publishEndpoint.Publish(_mapper.Map<CatalogCategoryUpdated>(updatedCategory), context =>
+                {
+                    context.Headers.Set("OperationId", _operationId);
+                });
 
                 bool result = await _repo.SaveChangesAsync();
 
-                if (!result) return BadRequest("Problem with updating the category.");
+                if (!result)
+                {
+                    _logger.LogError($"Update Category request failed: Cannot save changes to db. Service: Catalog Service, User: {_userId}, Family: {_familyName}, Category: {categoryDto.Name}, OperationId : {_operationId}");
+
+                    return BadRequest("Problem with updating the category.");
+                }
 
                 await transaction.CommitAsync();
+                _logger.LogInformation($"Update Category request succeded:Category {category.Name} created successfully. Service: Catalog Service, User: {_userId}, Family: {_familyName}, Category: {categoryDto.Name}, OperationId: {_operationId}");
                 return Ok(updatedCategory);
 
             }
@@ -219,6 +228,7 @@ namespace CatalogService.Controllers
             {
                 // Rollback the transaction on any exception
                 await transaction.RollbackAsync();
+                _logger.LogError($"Update Category request failed: transaction problem. Service: Catalog Service, User: {_userId}, Family: {_familyName}, Category: {categoryDto.Name}, OperationId : {_operationId}");
                 return BadRequest("Problem with updating the category.");
             }
 
@@ -227,6 +237,8 @@ namespace CatalogService.Controllers
         [HttpPut("items/{sku}")]
         public async Task<ActionResult<CatalogItemUpdated>> UpdateItem(Guid sku, UpdateItemDto itemDto)
         {
+            _logger.LogInformation($"Update Item request received. Service: Catalog Service, User: {_userId}, Family: {_familyName}, Item: {itemDto.Name}, OperationId: {_operationId}");
+
             using var transaction = await _repo.BeginTransactionAsync();
 
             try
@@ -237,12 +249,12 @@ namespace CatalogService.Controllers
 
                 if (item == null || category == null)
                 {
+                    _logger.LogError($"Update Item request failed: Item or Category  is not found. Service: Catalog Service, User: {_userId}, Family: {_familyName}, Item: {itemDto.Name}, OperationId : {_operationId}");
                     return NotFound("The item or category was not found.");
                 }
 
                 Guid previousCategorySKU = item.CategorySKU != itemDto.CategorySKU ? item.CategorySKU : itemDto.CategorySKU;
 
-                // TODO - update the method
                 await _repo.UpdateItemAsync(item, itemDto);
 
                 CatalogItemUpdated catalogItemUpdated = new CatalogItemUpdated
@@ -250,25 +262,30 @@ namespace CatalogService.Controllers
                     UpdatedItem = _mapper.Map<UpdatedItem>(item),
                     PreviousCategorySKU = previousCategorySKU
                 };
-                await _publishEndpoint.Publish(catalogItemUpdated);
+                await _publishEndpoint.Publish(catalogItemUpdated, context =>
+                {
+                    context.Headers.Set("OperationId", _operationId);
+                });
 
                 bool result = await _repo.SaveChangesAsync();
 
                 if (!result)
                 {
                     await transaction.RollbackAsync();
+                    _logger.LogError($"Update Item request failed: Could not save to the database. Service: Catalog Service, User: {_userId}, Family: {_familyName}, Item: {itemDto.Name}, OperationId : {_operationId}");
                     return BadRequest("Failed to save changes to the database.");
                 }
 
                 await transaction.CommitAsync();
+                _logger.LogInformation($"Update Item request sucessfully handled. Service: Catalog Service, User: {_userId}, Family: {_familyName}, Item: {itemDto.Name}, OperationId : {_operationId}");
 
                 return Ok(catalogItemUpdated);
             }
             catch (Exception ex)
             {
                 // Rollback the transaction on any exception
-
                 await transaction.RollbackAsync();
+                _logger.LogError($"Update Item request failed: transaction error. Service: Catalog Service, User: {_userId}, Family: {_familyName}, Item: {itemDto.Name}, OperationId : {_operationId}");
                 return BadRequest("Problem with commiting transaction. Possibly another user tried to change the data.");
             }
         }
@@ -276,19 +293,21 @@ namespace CatalogService.Controllers
         [HttpDelete("categories/{sku}")]
         public async Task<ActionResult> DeleteCategory(Guid sku)
         {
-
             using var transaction = await _repo.BeginTransactionAsync();
             try
             {
+                _logger.LogInformation($"Delete Category request received. Service: Catalog Service. User: {_userId}, Family: {_familyName}, OperationId : {_operationId}");
+
                 Category category = await _repo.GetCategoryEntityBySku(sku, _familyName);
 
                 if (category == null)
                 {
+                    _logger.LogError($"Delete Category request failed: Category with name {category.Name} not found. Service: Catalog Service, User: {_userId}, Family: {_familyName}, OperationId : {_operationId}");
                     return NotFound("Cannot find the category to delete.");
                 }
                 if (category.Items.Any())
                 {
-
+                    _logger.LogError($"Delete Category request failed: Category with name {category.Name} is not empty. Service: Catalog Service, User: {_userId}, Family: {_familyName}, OperationId : {_operationId}");
                     return BadRequest("Cannot delete non empty category.");
                 }
 
@@ -296,16 +315,27 @@ namespace CatalogService.Controllers
 
                 CategoryDto deletedCategory = _mapper.Map<CategoryDto>(category);
 
-                await _publishEndpoint.Publish(_mapper.Map<CatalogCategoryDeleted>(deletedCategory));
+                await _publishEndpoint.Publish(_mapper.Map<CatalogCategoryDeleted>(deletedCategory), context =>
+                {
+                    context.Headers.Set("OperationId", _operationId);
+
+                });
 
                 bool result = await _repo.SaveChangesAsync();
-                if (!result) return BadRequest("Could not delete category and save changed to the database.");
+                if (!result)
+                {
+                    _logger.LogError($"Delete Category request failed: cannot save changes to the db. Service: Catalog Service, User: {_userId}, Family: {_familyName}, OperationId : {_operationId}");
+                    return BadRequest("Could not delete category and save changed to the database.");
+                };
+
+                _logger.LogInformation($"Delete Category request succeded. Service: Catalog Service, User: {_userId}, Family: {_familyName}, OperationId: {_operationId}");
                 await transaction.CommitAsync();
                 return NoContent();
             }
             catch (Exception ex)
             {
                 // Rollback the transaction on any exception
+                _logger.LogError($"Delete Category request failed: transaction errror. Service: Catalog Service, User: {_userId}, Family: {_familyName}, OperationId : {_operationId}");
                 await transaction.RollbackAsync();
                 return BadRequest("Could not delete category and save changed to the database.");
             }
@@ -315,6 +345,8 @@ namespace CatalogService.Controllers
         [HttpDelete("items/{sku}")]
         public async Task<ActionResult> DeleteItem(Guid sku)
         {
+            _logger.LogInformation($"Delete Item request received. Service: Catalog Service, User: {_userId}, Family: {_familyName}, OperationId: {_operationId}");
+
             using var transaction = await _repo.BeginTransactionAsync();
             try
             {
@@ -322,6 +354,7 @@ namespace CatalogService.Controllers
 
                 if (item == null)
                 {
+                    _logger.LogError($"Delete Item request failed: Item is not found. Service: Catalog Service, User: {_userId}, Family: {_familyName}, OperationId : {_operationId}");
                     return NotFound("Cannot find the item to delete or you are not allowed to deleted the item created by another user.");
                 }
 
@@ -329,21 +362,29 @@ namespace CatalogService.Controllers
 
                 ItemDto deletedItem = _mapper.Map<ItemDto>(item);
 
-                await _publishEndpoint.Publish(_mapper.Map<CatalogItemDeleted>(deletedItem));
+                await _publishEndpoint.Publish(_mapper.Map<CatalogItemDeleted>(deletedItem), context =>
+                {
+                    context.Headers.Set("OperationId", _operationId);
+                });
 
                 bool result = await _repo.SaveChangesAsync();
-                if (!result) return BadRequest("Could not delete item and save changed to the database.");
+                if (!result)
+                {
+                    _logger.LogError($"Delete Item request failed: cannot save to the db. Service: Catalog Service, User: {_userId}, Family: {_familyName}, OperationId : {_operationId}");
+                    return BadRequest("Could not delete item and save changed to the database.");
+                };
                 await transaction.CommitAsync();
+                _logger.LogInformation($"Delete Item request sucessfully handled. Service: Catalog Service, User: {_userId}, Family: {_familyName}, OperationId : {_operationId}");
                 return NoContent();
             }
             catch (Exception ex)
             {
                 await transaction.RollbackAsync();
+                _logger.LogError($"Delete Item request failed: transaction error. Service: Catalog Service, User: {_userId}, Family: {_familyName}, OperationId : {_operationId}");
                 return BadRequest("Problem with commiting transaction. Possibly another user tried to change the data.");
 
             }
         }
-
 
         [HttpGet("items/search")]
         public async Task<ActionResult<List<ItemDto>>> SearchItems([FromQuery] string query)

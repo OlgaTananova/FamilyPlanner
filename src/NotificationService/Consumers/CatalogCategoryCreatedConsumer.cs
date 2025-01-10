@@ -23,8 +23,8 @@ public class CatalogCategoryCreatedConsumer : IConsumer<CatalogCategoryCreated>
 
         // Extract the OperationId from the message headers
         string? operationId = context.Headers.Get<string>("OperationId");
-
-        // Create a new Activity or continue the existing one
+        _logger.LogInformation("Create Category message received. Service: Notification Service, UserId: {UserId}, Family: {Family}, CategoryName: {CategoryName}, OperationId: {OperationId}",
+    context.Message.OwnerId, context.Message.Family, context.Message.Name, operationId);
         var activity = new System.Diagnostics.Activity("ConsumeCatalogCategoryCreated");
 
         if (!string.IsNullOrEmpty(operationId))
@@ -32,21 +32,21 @@ public class CatalogCategoryCreatedConsumer : IConsumer<CatalogCategoryCreated>
             activity.SetParentId(operationId); // Set the parent OperationId
         }
 
-        // Start the activity
         activity.Start();
 
         try
         {
-            // Log the message with OperationId
-            _logger.LogInformation("Catalog category created message received. UserId: {UserId}, Family: {Family}, CategoryName: {CategoryName}, OperationId: {OperationId}",
-                context.Message.OwnerId, context.Message.Family, context.Message.Name, operationId);
-
             // Notify SignalR clients
             await _hubContext.Clients.Group(context.Message.Family).SendAsync("CatalogCategoryCreated", context.Message);
+            _logger.LogInformation("Create Category message is sent. Service: Notification Service, UserId: {UserId}, Family: {Family}, CategoryName: {CategoryName}, OperationId: {OperationId}",
+        context.Message.OwnerId, context.Message.Family, context.Message.Name, operationId);
+        }
+        catch
+        {
+            _logger.LogError($"Create Category message failed. Service: Notification Service, UserId: {context.Message.OwnerId}, Family: {context.Message.Family}, CategoryName: {context.Message.Name}, OperationId: {operationId}");
         }
         finally
         {
-            // Stop the activity after the operation is complete
             activity.Stop();
         }
     }

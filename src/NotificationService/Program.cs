@@ -6,14 +6,8 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Identity.Web;
 using NotificationService.Consumers;
 using NotificationService.Hubs;
-using ShoppingListService.Consumers;
 
 var builder = WebApplication.CreateBuilder(args);
-
-Env.Load();
-
-var rabbitmqUser = Environment.GetEnvironmentVariable("RABBIT_MQ_USER");
-var rabbitmqPassword = Environment.GetEnvironmentVariable("RABBIT_MQ_PASSWORD");
 
 // Add services to the container.
 
@@ -32,8 +26,6 @@ builder.Logging.AddApplicationInsights(
 
 builder.Services.AddMassTransit(x =>
 {
-
-
     x.AddConsumersFromNamespaceContaining<CatalogCategoryUpdatedConsumer>();
     x.AddConsumersFromNamespaceContaining<CatalogCategoryCreatedConsumer>();
     x.AddConsumersFromNamespaceContaining<CatalogCategoryDeletedConsumer>();
@@ -61,8 +53,8 @@ builder.Services.AddMassTransit(x =>
         });
         cfg.Host(builder.Configuration["RabbitMq:Host"], "/", h =>
         {
-            h.Username(rabbitmqUser!);
-            h.Password(rabbitmqPassword!);
+            h.Username(builder.Configuration["RabbitMq:User"]!);
+            h.Password(builder.Configuration["RabbitMq:Password"]!);
         });
 
         cfg.ConfigureEndpoints(context);
@@ -73,7 +65,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowSpecificOrigins", policy =>
     {
-        policy.WithOrigins("http://localhost:3000", "https://locally-talented-pipefish.ngrok-free.app"); // Allow only these origins
+        policy.WithOrigins(builder.Configuration.GetSection("ClientApps").Get<string[]>()!); // Allow only these origins
         policy.AllowAnyHeader();
         policy.WithMethods("GET", "POST");
         policy.AllowCredentials();

@@ -22,7 +22,6 @@ public class NotificationHub : Hub
         if (user?.Identity?.IsAuthenticated ?? false)
         {
             var familyName = user?.FindFirst("family")?.Value;
-            Console.WriteLine($"The family is  {familyName}");
 
             if (!string.IsNullOrEmpty(familyName))
             {

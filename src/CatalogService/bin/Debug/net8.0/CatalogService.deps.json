@@ -1652,6 +1652,7 @@
       },
       "Contracts/1.0.0": {
         "dependencies": {
+          "Microsoft.ApplicationInsights.AspNetCore": "2.22.0",
           "Microsoft.AspNetCore.Authentication": "2.2.0"
         },
         "runtime": {

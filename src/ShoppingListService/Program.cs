@@ -10,24 +10,6 @@ using ShoppingListService.Helpers;
 
 var builder = WebApplication.CreateBuilder(args);
 
-Env.Load();
-
-var rabbitmqUser = Environment.GetEnvironmentVariable("RABBIT_MQ_USER");
-var rabbitmqPassword = Environment.GetEnvironmentVariable("RABBIT_MQ_PASSWORD");
-
-
-// Add configuration sources
-builder.Configuration
-    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-    .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true)
-    .AddEnvironmentVariables();
-
-// Process placeholders in configuration
-var processedConfiguration = ConfigurationPlaceholderProcessor.ProcessPlaceholders(builder.Configuration);
-
-// Use processedConfiguration for your application
-var connectionString = processedConfiguration.GetConnectionString("DefaultConnection");
-
 
 // Add Telemetry and logging
 builder.Services.AddApplicationInsightsTelemetry();
@@ -47,7 +29,7 @@ builder.Services.AddControllers();
 // Database context
 builder.Services.AddDbContext<ShoppingListContext>(opt =>
 {
-    opt.UseNpgsql(connectionString);
+    opt.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
 });
 
 // RabbitMq Messager
@@ -76,8 +58,8 @@ builder.Services.AddMassTransit(x =>
         });
         cfg.Host(builder.Configuration["RabbitMq:Host"], "/", h =>
         {
-            h.Username(rabbitmqUser);
-            h.Password(rabbitmqPassword);
+            h.Username(builder.Configuration["RabbitMq:User"]);
+            h.Password(builder.Configuration["RabbitMq:Password"]);
         });
 
         cfg.ReceiveEndpoint("shoppinglist-catalog-item-created", e =>
@@ -114,7 +96,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowSpecificOrigins", policy =>
     {
-        policy.WithOrigins("http://localhost:3000", "https://locally-talented-pipefish.ngrok-free.app") // Allow only these origins
+        policy.WithOrigins(builder.Configuration.GetSection("ClientApps").Get<string[]>()) // Allow only these origins
               .AllowAnyHeader()            // Allow any headers
               .AllowAnyMethod()           // Allow any HTTP methods
               .AllowCredentials();

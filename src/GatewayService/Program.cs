@@ -8,8 +8,6 @@ using Yarp.ReverseProxy.Transforms;
 
 var builder = WebApplication.CreateBuilder(args);
 
-
-
 // Logging and Telemetry
 builder.Services.AddApplicationInsightsTelemetry();
 builder.Logging.AddApplicationInsights(
@@ -48,7 +46,7 @@ builder.Services.AddCors(options =>
         b.AllowAnyHeader()
         .AllowAnyMethod()
         .AllowCredentials()
-        .WithOrigins("http://localhost:3000");
+        .WithOrigins(builder.Configuration.GetSection("ClientApps").Get<string[]>()!);
     });
 });
 
