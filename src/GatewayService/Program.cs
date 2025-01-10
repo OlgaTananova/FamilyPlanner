@@ -2,22 +2,22 @@ using Microsoft.Identity.Web;
 using Yarp.ReverseProxy;
 using AspNetCoreRateLimit;
 using Microsoft.ApplicationInsights.Extensibility;
-using DotNetEnv;
+using System.Diagnostics;
+using Microsoft.AspNetCore.HttpOverrides;
+using Yarp.ReverseProxy.Transforms;
 
 var builder = WebApplication.CreateBuilder(args);
 
-Env.Load();
-var appInsightsConnectionString = Environment.GetEnvironmentVariable("APP_INSIGHTS_CONNECTION_STRING");
 
+
+// Logging and Telemetry
 builder.Services.AddApplicationInsightsTelemetry();
-
-// Configure logging to use Application Insights
 builder.Logging.AddApplicationInsights(
     configureTelemetryConfiguration: (config) =>
-        config.ConnectionString = appInsightsConnectionString,
+        { config.ConnectionString = builder.Configuration["ApplicationInsights:ConnectionString"]; },
     configureApplicationInsightsLoggerOptions: (options) =>
     {
-        options.IncludeScopes = true; // Enable scopes for structured logging
+        options.IncludeScopes = true;
     });
 
 // Add authentication
@@ -40,7 +40,7 @@ builder.Services.AddSingleton<IIpPolicyStore, MemoryCacheIpPolicyStore>();
 builder.Services.AddSingleton<IRateLimitCounterStore, MemoryCacheRateLimitCounterStore>();
 builder.Services.AddSingleton<IProcessingStrategy, AsyncKeyLockProcessingStrategy>();
 
-
+// Cors
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("customPolicy", b =>
@@ -55,7 +55,6 @@ builder.Services.AddCors(options =>
 // Add YARP reverse proxy
 builder.Services.AddReverseProxy()
     .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
-
 
 var app = builder.Build();
 

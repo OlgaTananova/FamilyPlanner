@@ -31,15 +31,34 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 // Add services to the container.
 
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+
 builder.Services.AddDbContext<CatalogDbContext>(opt =>
 {
     opt.UseNpgsql(connectionString);
 });
 
+// Add Telemetry
+builder.Services.AddApplicationInsightsTelemetry();
+
+// Configure built-in logging
+builder.Logging.ClearProviders(); // Optional: Clear default logging providers
+builder.Logging.AddConsole();     // Add console logging
+builder.Logging.AddFilter("Microsoft.EntityFrameworkCore.Database.Command", LogLevel.Warning);
+builder.Logging.AddApplicationInsights(configureTelemetryConfiguration: (config) =>
+{
+    config.ConnectionString = builder.Configuration["ApplicationInsights:ConnectionString"];
+}, options =>
+{
+    options.IncludeScopes = true;
+});
+
+builder.Services.AddHttpClient("CatalogService", client =>
+{
+    client.DefaultRequestHeaders.Add("Trace-ID", Guid.NewGuid().ToString());
+});
+
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
 builder.Services.AddScoped<ICatalogRepository, CatalogRepository>();
 builder.Services.AddCors(options =>
 {
@@ -118,8 +137,6 @@ var app = builder.Build();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
 }
 // Enable CORS
 app.UseCors("AllowSpecificOrigins");

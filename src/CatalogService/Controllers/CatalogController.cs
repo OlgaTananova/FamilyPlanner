@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using AutoMapper;
 using AutoMapper.Configuration.Annotations;
 using CatalogService.Data;
@@ -23,20 +24,28 @@ namespace CatalogService.Controllers
         private readonly string _familyName;
         private readonly string _userId;
         private readonly IPublishEndpoint _publishEndpoint;
+        private ILogger<CatalogController> _logger;
+        private IHttpContextAccessor _httpContext;
+        private readonly string _operationId;
 
         public CatalogController(CatalogDbContext context,
         IMapper mapper, ICatalogRepository repo,
         IHttpContextAccessor httpContextAccessor,
-        IPublishEndpoint publishEndpoint
+        IPublishEndpoint publishEndpoint,
+        ILogger<CatalogController> logger
         )
         {
             _context = context;
             _mapper = mapper;
             _repo = repo;
             _publishEndpoint = publishEndpoint;
+            _logger = logger;
+            _httpContext = httpContextAccessor;
+
             // Centralized family and user ID extraction
             _familyName = httpContextAccessor.HttpContext?.User.Claims.FirstOrDefault(c => c.Type == "family")?.Value;
             _userId = httpContextAccessor.HttpContext?.User.Claims.FirstOrDefault(c => c.Type == "userId")?.Value;
+            _operationId = httpContextAccessor.HttpContext?.Request.Headers.TraceParent;
 
             if (string.IsNullOrEmpty(_familyName) || string.IsNullOrEmpty(_userId))
             {
@@ -45,9 +54,10 @@ namespace CatalogService.Controllers
         }
 
         [HttpGet("categories")]
-        public async Task<ActionResult<List<CategoryDto>>> GetAllCategories()
+        public async Task<ActionResult<List<CategoryDto>>> GetAllCategoories()
         {
-
+            var operationId = _httpContext.HttpContext.Request.Headers["traceparent"];
+            _logger.LogInformation($"GET Categories request received in CatalogService. User: {_userId}, Family: {_familyName}, operationId {operationId}");
             return await _repo.GetAllCategoriesAsync(_familyName);
         }
 
@@ -55,12 +65,10 @@ namespace CatalogService.Controllers
         public async Task<ActionResult<CategoryDto>> GetCategoryBySku(Guid sku)
         {
             CategoryDto category = await _repo.GetCategoryBySkuAsync(sku, _familyName);
-
             if (category == null)
             {
                 return NotFound();
             }
-
             return Ok(category);
         }
 
@@ -89,11 +97,13 @@ namespace CatalogService.Controllers
         [HttpPost("categories")]
         public async Task<ActionResult<CategoryDto>> CreateCategory(CreateCategoryDto categoryDto)
         {
-
+            _logger.LogInformation($"Create Category request received in Catalog Service. User: {_userId}, Family: {_familyName}, Category: {categoryDto.Name}, OperationId : {_operationId}",
+            _userId, _familyName, categoryDto.Name);
             Category existingCategory = await _repo.GetCategoryEntityByName(categoryDto.Name, _familyName);
 
             if (existingCategory != null)
             {
+                _logger.LogWarning($"Category creation failed: Category with name {categoryDto.Name} already exists. User: {_userId}, Family: {_familyName}, OperationId : {_operationId}");
                 return BadRequest("The category with this name already exists.");
             }
 
@@ -106,22 +116,36 @@ namespace CatalogService.Controllers
 
             CategoryDto newCategory = _mapper.Map<CategoryDto>(category);
 
-            await _publishEndpoint.Publish(_mapper.Map<CatalogCategoryCreated>(newCategory));
+            await _publishEndpoint.Publish(_mapper.Map<CatalogCategoryCreated>(newCategory), context =>
+                {
+                    Console.WriteLine(_operationId);
+                    context.Headers.Set("OperationId", _operationId);
+
+                });
 
             var result = await _repo.SaveChangesAsync();
 
-            if (!result) return BadRequest("Could not save changes to the DB");
+            if (!result)
+            {
+                _logger.LogError("Failed to save new category {CategoryName} for Family: {FamilyName}, OperationId : {OperationId}", categoryDto.Name, _familyName, _operationId);
+                return BadRequest("Could not save changes to the DB");
 
+            };
+            _logger.LogInformation("Category {CategoryName} created successfully. User: {UserId}, Family: {FamilyName}, OperationId: {OperationId}", categoryDto.Name, _userId, _familyName, _operationId);
             return Ok(newCategory);
         }
 
         [HttpPost("items")]
         public async Task<ActionResult<ItemDto>> CreateItem(CreateItemDto itemDto)
         {
+            _logger.LogInformation($"Create Item request received in Catalog Service. User: {_userId}, Family: {_familyName}, Item: {itemDto.Name}, OperationId : {_operationId}");
+
             Item existingItem = await _repo.GetItemEntityByNameAsync(itemDto.Name, _familyName);
 
             if (existingItem != null)
             {
+                _logger.LogError($"Create Item request failed in Catalog Service. Item already exists. User: {_userId}, Family: {_familyName}, Item: {itemDto.Name}, OperationId : {_operationId}");
+
                 return BadRequest("The item with this name already exists.");
             }
 
@@ -129,6 +153,7 @@ namespace CatalogService.Controllers
 
             if (category == null)
             {
+                _logger.LogError($"Create Item request failed in Catalog Service. Item category is not found. User: {_userId}, Family: {_familyName}, Item: {itemDto.Name}, OperationId : {_operationId}");
                 return NotFound("Cannot find the category of the newly created item.");
             }
 
@@ -143,13 +168,23 @@ namespace CatalogService.Controllers
             // Send a created item to the rabbitmq
             var newItem = _mapper.Map<ItemDto>(item);
 
-            await _publishEndpoint.Publish(_mapper.Map<CatalogItemCreated>(newItem));
+            _logger.LogInformation($"Create Item message is sent to Notification Service. UserId: {_userId}, Family: {_familyName}, Item: {itemDto.Name}, OperationId : {_operationId}");
+
+            await _publishEndpoint.Publish(_mapper.Map<CatalogItemCreated>(newItem), context =>
+            {
+                context.Headers.Set("OperationId", _operationId);
+            });
 
 
             bool result = await _repo.SaveChangesAsync();
 
-            if (!result) return BadRequest("Could not save changes to the DB.");
+            if (!result)
+            {
+                _logger.LogError($"Create Item request failed in Catalog Service. Could not save to the database. User: {_userId}, Family: {_familyName}, Item: {itemDto.Name}, OperationId : {_operationId}");
+                return BadRequest("Could not save changes to the DB.");
+            }
 
+            _logger.LogInformation($"Create Item request sucessfully handled in Catalog Service. User: {_userId}, Family: {_familyName}, Item: {itemDto.Name}, OperationId : {_operationId}");
             return Ok(_mapper.Map<ItemDto>(item));
         }
 

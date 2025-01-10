@@ -18,8 +18,17 @@ var rabbitmqPassword = Environment.GetEnvironmentVariable("RABBIT_MQ_PASSWORD");
 // Add services to the container.
 
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-builder.Services.AddEndpointsApiExplorer();
+
+
+// Logging and Telemetry
+builder.Services.AddApplicationInsightsTelemetry();
+builder.Logging.AddApplicationInsights(
+    configureTelemetryConfiguration: (config) =>
+        { config.ConnectionString = builder.Configuration["ApplicationInsights:ConnectionString"]; },
+    configureApplicationInsightsLoggerOptions: (options) =>
+    {
+        options.IncludeScopes = true;
+    });
 
 builder.Services.AddMassTransit(x =>
 {

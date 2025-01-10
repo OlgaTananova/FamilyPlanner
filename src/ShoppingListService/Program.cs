@@ -28,21 +28,36 @@ var processedConfiguration = ConfigurationPlaceholderProcessor.ProcessPlaceholde
 // Use processedConfiguration for your application
 var connectionString = processedConfiguration.GetConnectionString("DefaultConnection");
 
-// Add services to the container.
+
+// Add Telemetry and logging
+builder.Services.AddApplicationInsightsTelemetry();
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
+builder.Logging.AddApplicationInsights(configureTelemetryConfiguration: (config) =>
+{
+    config.ConnectionString = builder.Configuration["ApplicationInsights:ConnectionString"];
+},
+configureApplicationInsightsLoggerOptions: (options) =>
+{
+    options.IncludeScopes = true; // Optional: Enable scopes for structured logging
+});
 
 builder.Services.AddControllers();
 
+// Database context
 builder.Services.AddDbContext<ShoppingListContext>(opt =>
 {
     opt.UseNpgsql(connectionString);
 });
+
+// RabbitMq Messager
 builder.Services.AddMassTransit(x =>
 {
     x.AddConsumersFromNamespaceContaining<CatalogItemCreatedConsumer>();
     x.AddConsumersFromNamespaceContaining<CatalogItemUpdatedConsumer>();
     x.AddConsumersFromNamespaceContaining<CatalogCategoryUpdatedConsumer>();
     x.AddConsumersFromNamespaceContaining<CatalogItemDeletedConsumer>();
-    
+
     x.AddEntityFrameworkOutbox<ShoppingListContext>(o =>
            {
                o.QueryDelay = TimeSpan.FromSeconds(10);
@@ -95,8 +110,6 @@ builder.Services.AddMassTransit(x =>
 });
 
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowSpecificOrigins", policy =>
@@ -145,8 +158,6 @@ var app = builder.Build();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
 }
 app.UseCors("AllowSpecificOrigins");
 app.UseAuthentication();

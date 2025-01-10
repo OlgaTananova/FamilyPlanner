@@ -69,7 +69,6 @@ C:\Users\Olga\OneDrive\Documents\.NET\FamilyPlanner\src\GatewayService\obj\Debug
 C:\Users\Olga\OneDrive\Documents\.NET\FamilyPlanner\src\GatewayService\obj\Debug\net8.0\ref\GatewayService.dll
 C:\Users\Olga\OneDrive\Documents\.NET\FamilyPlanner\src\GatewayService\bin\Debug\net8.0\AspNetCoreRateLimit.dll
 C:\Users\Olga\OneDrive\Documents\.NET\FamilyPlanner\src\GatewayService\bin\Debug\net8.0\Newtonsoft.Json.dll
-C:\Users\Olga\OneDrive\Documents\.NET\FamilyPlanner\src\GatewayService\bin\Debug\net8.0\DotNetEnv.dll
 C:\Users\Olga\OneDrive\Documents\.NET\FamilyPlanner\src\GatewayService\bin\Debug\net8.0\Microsoft.ApplicationInsights.dll
 C:\Users\Olga\OneDrive\Documents\.NET\FamilyPlanner\src\GatewayService\bin\Debug\net8.0\Microsoft.ApplicationInsights.AspNetCore.dll
 C:\Users\Olga\OneDrive\Documents\.NET\FamilyPlanner\src\GatewayService\bin\Debug\net8.0\Microsoft.AI.DependencyCollector.dll
@@ -79,7 +78,6 @@ C:\Users\Olga\OneDrive\Documents\.NET\FamilyPlanner\src\GatewayService\bin\Debug
 C:\Users\Olga\OneDrive\Documents\.NET\FamilyPlanner\src\GatewayService\bin\Debug\net8.0\Microsoft.AI.ServerTelemetryChannel.dll
 C:\Users\Olga\OneDrive\Documents\.NET\FamilyPlanner\src\GatewayService\bin\Debug\net8.0\Microsoft.Extensions.Logging.ApplicationInsights.dll
 C:\Users\Olga\OneDrive\Documents\.NET\FamilyPlanner\src\GatewayService\bin\Debug\net8.0\Microsoft.Win32.SystemEvents.dll
-C:\Users\Olga\OneDrive\Documents\.NET\FamilyPlanner\src\GatewayService\bin\Debug\net8.0\Sprache.dll
 C:\Users\Olga\OneDrive\Documents\.NET\FamilyPlanner\src\GatewayService\bin\Debug\net8.0\System.Configuration.ConfigurationManager.dll
 C:\Users\Olga\OneDrive\Documents\.NET\FamilyPlanner\src\GatewayService\bin\Debug\net8.0\System.Diagnostics.PerformanceCounter.dll
 C:\Users\Olga\OneDrive\Documents\.NET\FamilyPlanner\src\GatewayService\bin\Debug\net8.0\System.Drawing.Common.dll

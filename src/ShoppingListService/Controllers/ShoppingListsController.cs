@@ -22,12 +22,14 @@ namespace ShoppingListService.Controllers
         private readonly string _familyName;
         private readonly string _userId;
         private IPublishEndpoint _publisher;
-        public ShoppingListsController(ShoppingListContext context, IMapper mapper, IShoppingListService service, IHttpContextAccessor httpContextAccessor, IPublishEndpoint publishEndpoint)
+        private readonly ILogger<ShoppingListsController> _logger;
+        public ShoppingListsController(ShoppingListContext context, IMapper mapper, IShoppingListService service, IHttpContextAccessor httpContextAccessor, IPublishEndpoint publishEndpoint, ILogger<ShoppingListsController> logger)
         {
             _mapper = mapper;
             _context = context;
             _shoppingListService = service;
             _publisher = publishEndpoint;
+            _logger = logger;
             // Centralized family and user ID extraction
             _familyName = httpContextAccessor.HttpContext?.User.Claims.FirstOrDefault(c => c.Type == "family")?.Value;
             _userId = httpContextAccessor.HttpContext?.User.Claims.FirstOrDefault(c => c.Type == "userId")?.Value;
@@ -41,6 +43,7 @@ namespace ShoppingListService.Controllers
         [HttpGet("catalogitems")]
         public async Task<ActionResult<List<CatalogItemDto>>> GetCatalogItems()
         {
+            _logger.LogInformation($"GET Catalog Items request received. User: {_userId}, Family: {_familyName}");
             var result = await _shoppingListService.GetCatalogItemsAsync(_familyName);
 
             if (result.Count > 0)
@@ -328,7 +331,7 @@ namespace ShoppingListService.Controllers
                 }
                 var message = _mapper.Map<ShoppingListItemDeleted>(shoppingListItem);
                 _shoppingListService.DeleteShoppingListItem(shoppingListItem);
-                
+
                 await _publisher.Publish(message);
 
                 bool result = await _shoppingListService.SaveChangesAsync();

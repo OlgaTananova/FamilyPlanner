@@ -133,6 +133,10 @@
               "target": "Package",
               "version": "[8.3.3, )"
             },
+            "Microsoft.ApplicationInsights.AspNetCore": {
+              "target": "Package",
+              "version": "[2.22.0, )"
+            },
             "Microsoft.Identity.Web": {
               "target": "Package",
               "version": "[3.5.0, )"
