@@ -28,14 +28,13 @@ namespace CatalogService.Controllers
         private IHttpContextAccessor _httpContext;
         private readonly string _operationId;
 
-        public CatalogController(CatalogDbContext context,
+        public CatalogController(
         IMapper mapper, ICatalogRepository repo,
         IHttpContextAccessor httpContextAccessor,
         IPublishEndpoint publishEndpoint,
         ILogger<CatalogController> logger
         )
         {
-            _context = context;
             _mapper = mapper;
             _repo = repo;
             _publishEndpoint = publishEndpoint;
@@ -54,10 +53,9 @@ namespace CatalogService.Controllers
         }
 
         [HttpGet("categories")]
-        public async Task<ActionResult<List<CategoryDto>>> GetAllCategoories()
+        public async Task<ActionResult<List<CategoryDto>>> GetAllCategories()
         {
-            var operationId = _httpContext.HttpContext.Request.Headers["traceparent"];
-            return await _repo.GetAllCategoriesAsync(_familyName);
+            return Ok(await _repo.GetAllCategoriesAsync(_familyName));
         }
 
         [HttpGet("categories/{sku}")]
