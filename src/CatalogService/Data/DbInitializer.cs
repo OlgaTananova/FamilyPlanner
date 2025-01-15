@@ -14,10 +14,11 @@ public static class DbInitializer
     {
         using var scope = app.Services.CreateScope();
         await SeedData(scope.ServiceProvider.GetService<CatalogDbContext>());
+        await AddCategoryNamesToItems(scope.ServiceProvider.GetService<CatalogDbContext>());
         AddSearchingFunction(scope.ServiceProvider.GetService<CatalogDbContext>());
     }
 
-    private static async Task AddCaterotyNamesToItems(CatalogDbContext context)
+    private static async Task AddCategoryNamesToItems(CatalogDbContext context)
     {
         var items = context.Items.Include(i => i.Category).ToList();
         foreach (var item in items)

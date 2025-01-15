@@ -3,6 +3,7 @@ using System.Security.Claims;
 using CatalogService.Data;
 using CatalogService.IntegrationTests.Utils;
 using MassTransit;
+using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -16,7 +17,8 @@ namespace CatalogService.IntegrationTests.Fixtures;
 
 public class CustomWebAppFactory : WebApplicationFactory<Program>, IAsyncLifetime
 {
-    private PostgreSqlContainer _posgresSqlContainer = new PostgreSqlBuilder().Build();
+    private PostgreSqlContainer _posgresSqlContainer = new PostgreSqlBuilder()
+     .WithDatabase("test_catalog_db").Build();
     public async Task InitializeAsync()
     {
         await _posgresSqlContainer.StartAsync();
@@ -25,13 +27,17 @@ public class CustomWebAppFactory : WebApplicationFactory<Program>, IAsyncLifetim
     // Create testing version of the application from Program class
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
+
         builder.ConfigureTestServices(services =>
         {
 
             services.RemoveDbContext<CatalogDbContext>();
             services.AddDbContext<CatalogDbContext>(options =>
             {
-                options.UseNpgsql(_posgresSqlContainer.GetConnectionString());
+                var connectionString = _posgresSqlContainer.GetConnectionString();
+
+                Console.WriteLine($"Using test database connection string: {connectionString}");
+                options.UseNpgsql(connectionString);
             });
             // Replace the message broker
             services.AddMassTransitTestHarness();
@@ -44,6 +50,9 @@ public class CustomWebAppFactory : WebApplicationFactory<Program>, IAsyncLifetim
                 {
                     opt.BearerValueType = FakeJwtBearerBearerValueType.Jwt;
                 });
+
+            // Disable Application Insights telemetry
+            services.RemoveTelemetry();
         });
     }
 

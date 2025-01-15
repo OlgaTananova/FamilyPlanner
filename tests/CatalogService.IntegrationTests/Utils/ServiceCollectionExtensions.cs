@@ -1,9 +1,12 @@
 using System;
 using System.Security.Claims;
 using CatalogService.Data;
+using Microsoft.ApplicationInsights;
+using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Npgsql.Replication;
 
 namespace CatalogService.IntegrationTests.Utils;
 
@@ -27,7 +30,21 @@ public static class ServiceCollectionExtensions
         var scopedServices = scope.ServiceProvider;
         var db = scopedServices.GetRequiredService<CatalogDbContext>();
         db.Database.Migrate();
-        DbHelper.InitDbForTests(db);
+        // Ensure the database is seeded only once
+        if (!db.Categories.Any())
+        {
+            DbHelper.InitDbForTests(db);
+        }
+    }
+    public static void RemoveTelemetry(this IServiceCollection services)
+    {
+        // Disable Application Insights telemetry
+        var serviceProvider = services.BuildServiceProvider();
+        var telemetryConfiguration = serviceProvider.GetService<TelemetryConfiguration>();
+        if (telemetryConfiguration != null)
+        {
+            telemetryConfiguration.DisableTelemetry = true;
+        }
     }
 
     public static void RemoveClaimTransformation(this IServiceCollection services)
