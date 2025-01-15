@@ -53,7 +53,9 @@ public class MappingProfiles : Profile
 
         CreateMap<Item, UpdatedItem>()
             .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id))
-            .ForMember(dest => dest.CategoryId, opt => opt.MapFrom(src => src.CategoryId));
+            .ForMember(dest => dest.CategoryId, opt => opt.MapFrom(src => src.CategoryId))
+            .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Name))
+            .ForMember(dest => dest.CategoryName, opt => opt.MapFrom(src => src.CategoryName));
 
         CreateMap<ItemDto, CatalogItemDeleted>();
 

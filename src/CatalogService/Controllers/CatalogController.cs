@@ -1,4 +1,6 @@
 using System.Diagnostics;
+using System.Net.Http.Json;
+using System.Text.Json.Serialization;
 using AutoMapper;
 using AutoMapper.Configuration.Annotations;
 using CatalogService.Data;
@@ -103,7 +105,8 @@ namespace CatalogService.Controllers
                 _logger.LogError($"Create Category request failed: Cannot save changes to db. Service: Catalog Service, User: {_userId}, Family: {_familyName}, OperationId : {_operationId}");
                 return BadRequest("Could not save changes to the DB");
 
-            };
+            }
+            ;
             _logger.LogInformation($"Create Category request succeded:Category {category.Name} created successfully. Service: Catalog Service, User: {_userId}, Family: {_familyName}, OperationId: {_operationId}");
             return Ok(newCategory);
         }
@@ -193,7 +196,8 @@ namespace CatalogService.Controllers
                 {
                     _logger.LogError($"Delete Category request failed: cannot save changes to the db. Service: Catalog Service, User: {_userId}, Family: {_familyName}, OperationId : {_operationId}");
                     return BadRequest("Could not delete category and save changed to the database.");
-                };
+                }
+                ;
 
                 _logger.LogInformation($"Delete Category request succeded. Service: Catalog Service, User: {_userId}, Family: {_familyName}, OperationId: {_operationId}");
                 await transaction.CommitAsync();
@@ -234,8 +238,6 @@ namespace CatalogService.Controllers
 
             return Ok(item);
         }
-
-        [HttpPut("items/{sku}")]
 
         [HttpPost("items")]
         public async Task<ActionResult<ItemDto>> CreateItem(CreateItemDto itemDto)
@@ -289,6 +291,8 @@ namespace CatalogService.Controllers
             _logger.LogInformation($"Create Item request sucessfully handled. Service: Catalog Service, User: {_userId}, Family: {_familyName}, Item: {itemDto.Name}, OperationId : {_operationId}");
             return Ok(_mapper.Map<ItemDto>(item));
         }
+
+        [HttpPut("items/{sku}")]
         public async Task<ActionResult<CatalogItemUpdated>> UpdateItem(Guid sku, UpdateItemDto itemDto)
         {
             _logger.LogInformation($"Update Item request received. Service: Catalog Service, User: {_userId}, Family: {_familyName}, Item: {itemDto.Name}, OperationId: {_operationId}");
@@ -331,8 +335,6 @@ namespace CatalogService.Controllers
                 }
 
                 await transaction.CommitAsync();
-                _logger.LogInformation($"Update Item request sucessfully handled. Service: Catalog Service, User: {_userId}, Family: {_familyName}, Item: {itemDto.Name}, OperationId : {_operationId}");
-
                 return Ok(catalogItemUpdated);
             }
             catch (Exception ex)
@@ -374,7 +376,8 @@ namespace CatalogService.Controllers
                 {
                     _logger.LogError($"Delete Item request failed: cannot save to the db. Service: Catalog Service, User: {_userId}, Family: {_familyName}, OperationId : {_operationId}");
                     return BadRequest("Could not delete item and save changed to the database.");
-                };
+                }
+                ;
                 await transaction.CommitAsync();
                 _logger.LogInformation($"Delete Item request sucessfully handled. Service: Catalog Service, User: {_userId}, Family: {_familyName}, OperationId : {_operationId}");
                 return NoContent();

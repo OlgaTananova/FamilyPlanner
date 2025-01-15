@@ -104,14 +104,12 @@ public class CatalogRepository : ICatalogRepository
     {
         if (item.CategorySKU != itemDto.CategorySKU)
         {
-            // Update CategorySKU and explicitly attach the new category
-            item.CategorySKU = itemDto.CategorySKU;
-
             Category newCategory = await _context.Categories.FirstOrDefaultAsync(x => x.SKU == itemDto.CategorySKU);
             if (newCategory != null)
             {
                 _context.Entry(newCategory).State = EntityState.Unchanged; // Attach new category
-                item.Category = newCategory;
+                item.Category = newCategory; 
+                item.CategorySKU = itemDto.CategorySKU;
                 item.CategoryName = newCategory.Name;
             }
         }
@@ -124,6 +122,9 @@ public class CatalogRepository : ICatalogRepository
 
         // Explicitly mark Item as modified
         _context.Entry(item).State = EntityState.Modified;
+
+        // Debug log for verification
+        Console.WriteLine($"Updated Item: {item.Name}, CategorySKU: {item.CategorySKU}, CategoryName: {item.CategoryName}");
     }
 
     public async Task UpdateCategoryAsync(Category category, UpdateCategoryDto categoryDto)

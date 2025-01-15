@@ -53,6 +53,10 @@ public class CustomWebAppFactory : WebApplicationFactory<Program>, IAsyncLifetim
 
             // Disable Application Insights telemetry
             services.RemoveTelemetry();
+
+            // Disable Application Insights telemetry
+            services.RemoveTelemetry();
+
         });
     }
 

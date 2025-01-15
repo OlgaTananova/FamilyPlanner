@@ -19,4 +19,4 @@ public class UpdatedItem
     public Guid CategoryId { get; set; }
     public Guid CategorySKU { get; set; }
     public string CategoryName { get; set; }
-}
+    }

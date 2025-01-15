@@ -10,10 +10,8 @@ public static class DbHelper
     private static readonly string _family = "test-family";
     public static void InitDbForTests(CatalogDbContext context)
     {
-        Console.WriteLine($"Before seeding: {context.Categories.Count()} categories.");
         context.Categories.AddRange(GetCategoriesForTest());
         context.SaveChanges();
-        Console.WriteLine($"After seeding: {context.Categories.Count()} categories.");
     }
     public static void ReinitDbForTests(CatalogDbContext context)
     {
@@ -21,11 +19,9 @@ public static class DbHelper
         context.Items.RemoveRange(context.Items);
         context.Categories.RemoveRange(context.Categories);
         context.SaveChanges();
-        Console.WriteLine("Database cleared.");
 
         // Reinitialize the database
         InitDbForTests(context);
-        Console.WriteLine($"Database reset: {context.Categories.Count()} categories.");
 
     }
 
@@ -59,6 +55,7 @@ public static class DbHelper
     },
     new() {
         Id = Guid.Parse("ac23ec89-92f5-4299-9872-7dacc7c966bd"),
+        SKU=Guid.Parse("ac23ec89-92f5-4299-9872-7dacc7c966bd"),
         Name = "Bakery",
         OwnerId = _ownerId,
         Family=_family,

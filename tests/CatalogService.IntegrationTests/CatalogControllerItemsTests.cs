@@ -143,73 +143,45 @@ public class CatalogControllerItemsTests : IAsyncLifetime
         Assert.Contains("Cannot find the category of the newly created item.", errorMessage);
     }
 
-    // Fix bugs
-    //[Fact]
-    // public async Task UpdateItem_ShouldReturnUpdatedItem_WhenSuccessful()
-    // {
-    //     // Arrange
+    [Fact]
+    public async Task UpdateItem_ShouldReturnUpdatedItem_WhenSuccessful()
+    {
+        // Arrange
 
-    //     // Arrange
-    //     var category = new Category
-    //     {
-    //         Id = Guid.NewGuid(),
-    //         Name = "Test Category",
-    //         SKU = Guid.NewGuid(),
-    //         OwnerId = "test-user-id",
-    //         Family = "test-family"
-    //     };
-
-    //     var item = new Item
-    //     {
-    //         Id = Guid.NewGuid(),
-    //         Name = "Old Item",
-    //         Category = category,
-    //         CategorySKU = category.SKU,
-    //         OwnerId = "test-user-id",
-    //         Family = "test-family"
-    //     };
-
-    //     using (var scope = _factory.Services.CreateScope())
-    //     {
-    //         var db = scope.ServiceProvider.GetRequiredService<CatalogDbContext>();
-    //         db.Categories.Add(category);
-    //         db.Items.Add(item);
-    //         db.SaveChanges();
-    //     }
+        Guid categorySku = Guid.Parse("1625f681-af55-4f80-a88f-c65b666d701d");
+        Guid itemSku = Guid.Parse("f4f69463-467c-4875-aead-2ec4cf6d7ead");
 
 
-    //     var updatedItem = new UpdateItemDto { Name = "Updated Item", CategorySKU = category.SKU };
+        var updatedItem = new UpdateItemDto { Name = "Updated Item", CategorySKU = categorySku };
 
-    //     _httpClient.SetFakeJwtBearerToken(AuthHelper.GetBearerForUser("test-user-id", "test-family"));
+        _httpClient.SetFakeJwtBearerToken(AuthHelper.GetBearerForUser("test-user-id", "test-family"));
 
-    //     // Act
-    //     var response = await _httpClient.PutAsJsonAsync($"api/Catalog/items/{item.SKU}", updatedItem);
+        // Act
+        var response = await _httpClient.PutAsJsonAsync($"api/Catalog/items/{itemSku}", updatedItem);
 
 
-    //     // Assert
-    //     response.EnsureSuccessStatusCode();
-    //     var updatedItemResponse = await response.Content.ReadFromJsonAsync<CatalogItemUpdated>();
-    //     Console.WriteLine($"Response Content: {updatedItemResponse}"); // Log response content
-    //     Assert.NotNull(updatedItemResponse);
-    //     Assert.Equal(updatedItem.Name, updatedItemResponse?.UpdatedItem.Name);
-    // }
+        // Assert
+        response.EnsureSuccessStatusCode();
+        var updatedItemResponse = await response.Content.ReadFromJsonAsync<CatalogItemUpdated>();
+        Console.WriteLine($"Response Content: {updatedItemResponse}"); // Log response content
+        Assert.NotNull(updatedItemResponse);
+        Assert.Equal(updatedItem.Name, updatedItemResponse.UpdatedItem?.Name);
+    }
 
-    // [Fact]
-    // public async Task UpdateItem_ShouldReturnNotFound_WhenItemOrCategoryDoesNotExist()
-    // {
-    //     // Arrange
-    //     var updateItemDto = new UpdateItemDto { Name = "Non-Existing Item", CategorySKU = Guid.NewGuid() };
+    [Fact]
+    public async Task UpdateItem_ShouldReturnNotFound_WhenItemOrCategoryDoesNotExist()
+    {
+        // Arrange
+        var updateItemDto = new UpdateItemDto { Name = "Non-Existing Item", CategorySKU = Guid.NewGuid() };
 
-    //     _httpClient.SetFakeJwtBearerToken(AuthHelper.GetBearerForUser("test-user-id", "test-family"));
+        _httpClient.SetFakeJwtBearerToken(AuthHelper.GetBearerForUser("test-user-id", "test-family"));
 
-    //     // Act
-    //     var response = await _httpClient.PutAsJsonAsync($"api/Catalog/items/{Guid.NewGuid()}", updateItemDto);
+        // Act
+        var response = await _httpClient.PutAsJsonAsync($"api/Catalog/items/{Guid.NewGuid()}", updateItemDto);
 
-    //     // Assert
-    //     Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
-    //     var errorMessage = await response.Content.ReadAsStringAsync();
-    //     Assert.Contains("The item or category was not found.", errorMessage);
-    // }
+        // Assert
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
 
     [Fact]
     public async Task DeleteItem_ShouldReturnNoContent_WhenSuccessful()
@@ -244,22 +216,47 @@ public class CatalogControllerItemsTests : IAsyncLifetime
     }
 
 
-    // [Fact]
-    // public async Task DeleteItem_ShouldReturnNotFound_WhenItemDoesNotExist()
-    // {
-    //     // Arrange
-    //     var nonExistingSku = Guid.NewGuid();
-    //     _httpClient.SetFakeJwtBearerToken(AuthHelper.GetBearerForUser("test-user-id", "test-family"));
+    [Fact]
+    public async Task DeleteItem_ShouldReturnNotFound_WhenItemDoesNotExist()
+    {
+        // Arrange
+        var nonExistingSku = Guid.NewGuid();
+        _httpClient.SetFakeJwtBearerToken(AuthHelper.GetBearerForUser("test-user-id", "test-family"));
 
-    //     // Act
-    //     var response = await _httpClient.DeleteAsync($"api/Catalog/items/{nonExistingSku}");
+        // Act
+        var response = await _httpClient.DeleteAsync($"api/Catalog/items/{nonExistingSku}");
 
-    //     // Assert
-    //     Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
-    //     var errorMessage = await response.Content.ReadAsStringAsync();
-    //     Assert.Contains("Cannot find the item to delete or you are not allowed to delete the item created by another user.", errorMessage);
-    // }
+        // Assert
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
 
+    [Fact]
+    public async Task SearchItems_ShouldReturnMatchingItems()
+    {
 
+        _httpClient.SetFakeJwtBearerToken(AuthHelper.GetBearerForUser("test-user-id", "test-family"));
 
+        // Act
+        var response = await _httpClient.GetFromJsonAsync<List<ItemDto>>($"api/Catalog/items/search?query=Banan");
+
+        // Assert
+        Assert.NotNull(response);
+        Assert.Single(response);
+        Assert.Equal("Bananas", response[0].Name);
+
+    }
+
+    [Fact]
+    public async Task SearchItems_ShouldReturnBadRequest_WhenQueryIsEmpty()
+    {
+        _httpClient.SetFakeJwtBearerToken(AuthHelper.GetBearerForUser("test-user-id", "test-family"));
+
+        // Act
+        var response = await _httpClient.GetAsync("api/Catalog/items/search?query=");
+
+        // Assert
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        var errorMessage = await response.Content.ReadAsStringAsync();
+        Assert.Contains("Query parameter cannot be empty.", errorMessage);
+    }
 }

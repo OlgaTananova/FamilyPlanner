@@ -2,10 +2,13 @@ using System;
 using System.Security.Claims;
 using CatalogService.Data;
 using Microsoft.ApplicationInsights;
+using Microsoft.ApplicationInsights.Channel;
 using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Logging;
 using Npgsql.Replication;
 
 namespace CatalogService.IntegrationTests.Utils;
@@ -38,13 +41,23 @@ public static class ServiceCollectionExtensions
     }
     public static void RemoveTelemetry(this IServiceCollection services)
     {
-        // Disable Application Insights telemetry
-        var serviceProvider = services.BuildServiceProvider();
-        var telemetryConfiguration = serviceProvider.GetService<TelemetryConfiguration>();
-        if (telemetryConfiguration != null)
+        // Remove Application Insights services
+        var telemetryDescriptors = services.Where(
+            s => s.ServiceType.FullName?.StartsWith("Microsoft.ApplicationInsights") == true).ToList();
+
+        foreach (var descriptor in telemetryDescriptors)
         {
-            telemetryConfiguration.DisableTelemetry = true;
+            services.Remove(descriptor);
         }
+
+        // Remove TelemetryChannel to stop data transmission
+        services.RemoveAll<ITelemetryChannel>();
+
+        // Replace ILogger with a no-op logger to avoid sending logs
+        services.AddLogging(loggingBuilder =>
+        {
+            loggingBuilder.ClearProviders();
+        });
     }
 
     public static void RemoveClaimTransformation(this IServiceCollection services)

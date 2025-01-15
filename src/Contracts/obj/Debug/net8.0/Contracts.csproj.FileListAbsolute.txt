@@ -1,6 +1,7 @@
 C:\Users\Olga\OneDrive\Documents\.NET\FamilyPlanner\src\Contracts\bin\Debug\net8.0\Contracts.deps.json
 C:\Users\Olga\OneDrive\Documents\.NET\FamilyPlanner\src\Contracts\bin\Debug\net8.0\Contracts.dll
 C:\Users\Olga\OneDrive\Documents\.NET\FamilyPlanner\src\Contracts\bin\Debug\net8.0\Contracts.pdb
+C:\Users\Olga\OneDrive\Documents\.NET\FamilyPlanner\src\Contracts\obj\Debug\net8.0\Contracts.csproj.AssemblyReference.cache
 C:\Users\Olga\OneDrive\Documents\.NET\FamilyPlanner\src\Contracts\obj\Debug\net8.0\Contracts.GeneratedMSBuildEditorConfig.editorconfig
 C:\Users\Olga\OneDrive\Documents\.NET\FamilyPlanner\src\Contracts\obj\Debug\net8.0\Contracts.AssemblyInfoInputs.cache
 C:\Users\Olga\OneDrive\Documents\.NET\FamilyPlanner\src\Contracts\obj\Debug\net8.0\Contracts.AssemblyInfo.cs
@@ -10,4 +11,3 @@ C:\Users\Olga\OneDrive\Documents\.NET\FamilyPlanner\src\Contracts\obj\Debug\net8
 C:\Users\Olga\OneDrive\Documents\.NET\FamilyPlanner\src\Contracts\obj\Debug\net8.0\refint\Contracts.dll
 C:\Users\Olga\OneDrive\Documents\.NET\FamilyPlanner\src\Contracts\obj\Debug\net8.0\Contracts.pdb
 C:\Users\Olga\OneDrive\Documents\.NET\FamilyPlanner\src\Contracts\obj\Debug\net8.0\ref\Contracts.dll
-C:\Users\Olga\OneDrive\Documents\.NET\FamilyPlanner\src\Contracts\obj\Debug\net8.0\Contracts.csproj.AssemblyReference.cache
