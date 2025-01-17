@@ -9,6 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VisualStudio.TestPlatform.TestHost;
 using ShoppingListService.Consumers;
 using ShoppingListService.Data;
+using ShoppingListService.Helpers;
 using ShoppingListService.IntegrationTests.Utils;
 using Testcontainers.PostgreSql;
 using WebMotions.Fake.Authentication.JwtBearer;
@@ -30,7 +31,7 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
 
         builder.ConfigureTestServices(services =>
         {
-
+            services.AddAutoMapper(typeof(MappingProfile));
             services.RemoveDbContext<ShoppingListContext>();
             services.AddDbContext<ShoppingListContext>(options =>
             {
@@ -42,6 +43,7 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
             services.AddMassTransitTestHarness(options =>
             {
                 options.AddConsumer<CatalogItemCreatedConsumer>();
+                options.AddConsumer<CatalogCategoryUpdatedConsumer>();
             });
 
             // Add Migration to the testing database

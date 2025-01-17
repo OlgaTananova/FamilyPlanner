@@ -52,12 +52,16 @@ public static class ServiceCollectionExtensions
 
         // Remove TelemetryChannel to stop data transmission
         services.RemoveAll<ITelemetryChannel>();
+        services.RemoveAll(typeof(ITelemetryInitializer));
 
-        // Replace ILogger with a no-op logger to avoid sending logs
-        services.AddLogging(loggingBuilder =>
+        // Clear Logging Providers
+
+        services.AddLogging(loggingbuilder =>
         {
-            loggingBuilder.ClearProviders();
+            loggingbuilder.ClearProviders();
+            loggingbuilder.AddConsole();
         });
+
     }
 
     public static void RemoveClaimTransformation(this IServiceCollection services)

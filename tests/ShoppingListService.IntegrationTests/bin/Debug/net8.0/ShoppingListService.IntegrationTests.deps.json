@@ -30,7 +30,7 @@
     "keyFile": "",
     "emitEntryPoint": true,
     "xmlDoc": false,
-    "debugType": "portable"
+    "debugType": "Portable"
   },
   "targets": {
     ".NETCoreApp,Version=v8.0": {

@@ -12,14 +12,21 @@ public class CatalogCategoryUpdatedConsumer : IConsumer<CatalogCategoryUpdated>
 {
     private readonly IMapper _mapper;
     private readonly ShoppingListContext _context;
-    public CatalogCategoryUpdatedConsumer(IMapper mapper, ShoppingListContext context)
+    private readonly ILogger<CatalogCategoryUpdatedConsumer> _logger;
+    public CatalogCategoryUpdatedConsumer(IMapper mapper, ShoppingListContext context, ILogger<CatalogCategoryUpdatedConsumer> logger)
     {
         _mapper = mapper;
         _context = context;
+        _logger = logger;
     }
 
     public async Task Consume(ConsumeContext<CatalogCategoryUpdated> context)
     {
+        // Extract the OperationId from the message headers
+        string operationId = context.Headers.Get<string>("OperationId") ?? "Unknown operation Id";
+        string SKU = context.Message.Sku.ToString() ?? "Unknown sku";
+
+        _logger.LogInformation($"CatalogCategoryUpdated message received. Category SKU: {SKU}, OperationId: {operationId}");
         try
         {
             var validator = new CatalogCategoryUpdateValidator();
@@ -27,14 +34,12 @@ public class CatalogCategoryUpdatedConsumer : IConsumer<CatalogCategoryUpdated>
 
             if (!result.IsValid)
             {
-                foreach (var error in result.Errors)
-                {
-                    Console.WriteLine($"Validation error: {error.ErrorMessage}");
-                }
+                _logger.LogError($"CatalogCategoryUpdated message: validation failed. Category SKU: {SKU}, Errors: {string.Join(", ", result.Errors.Select(e => e.ErrorMessage))}");
+
                 throw new ArgumentException("Invalid CatalogCategoryUpdated message received.");
             }
 
-            Console.WriteLine("--> Consuming catalog category updated " + context.Message.Sku);
+            _logger.LogInformation($"CatalogCategoryUpdated message: message is being consumed. Category SKU: {SKU}");
 
             // Begin a transaction
             using var transaction = await _context.Database.BeginTransactionAsync();
@@ -55,7 +60,7 @@ public class CatalogCategoryUpdatedConsumer : IConsumer<CatalogCategoryUpdated>
             }
             else
             {
-                Console.WriteLine($"No catalog items found for category SKU: {context.Message.Sku}");
+                _logger.LogWarning($"CatalogCategoryUpdated message: no item found in the category to be updated. Category SKU: {SKU}, OperationId: {operationId}");
                 await transaction.RollbackAsync();
                 return;
             }
@@ -74,11 +79,12 @@ public class CatalogCategoryUpdatedConsumer : IConsumer<CatalogCategoryUpdated>
             // Save changes to the database
             await _context.SaveChangesAsync();
             await transaction.CommitAsync();
-            Console.WriteLine($"--> Successfully updated category name for SKU: {context.Message.Sku}");
+            _logger.LogInformation($"CatalogCategoryUpdated message: catalog category updated successfully. Category SKU: {SKU}, OperationId: {operationId}");
+
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error: {ex.Message}");
+            _logger.LogError($"CatalogCategoryUpdated message: error occured while processing the message. Category SKU: {SKU}, OperationId: {operationId}, Error: {ex.Message}.");
         }
     }
 }
