@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("CatalogService.IntegrationTests")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+cd0abeebb57b820c790080ba2e3353042392f434")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+d9126d8e4decebe6119906e6c1783ca84521da42")]
 [assembly: System.Reflection.AssemblyProductAttribute("CatalogService.IntegrationTests")]
 [assembly: System.Reflection.AssemblyTitleAttribute("CatalogService.IntegrationTests")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

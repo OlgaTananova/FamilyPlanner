@@ -1,5 +1,3 @@
-using Contracts.Catalog;
-using DotNetEnv;
 using MassTransit;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -97,6 +95,8 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
-app.MapHub<NotificationHub>("/notifications").RequireAuthorization();
+app.MapHub<NotificationHub>("notifications").RequireAuthorization();
 
 app.Run();
+
+public partial class Program { }
