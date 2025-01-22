@@ -12,7 +12,7 @@ public static class AuthHelper
     {
 
 
-        // Define token claims
+        //Define token claims
         var claims = new List<Claim>
         {
             new Claim("userId", userId),
@@ -34,24 +34,5 @@ public static class AuthHelper
         var token = tokenHandler.CreateToken(tokenDescriptor);
         return tokenHandler.WriteToken(token);
 
-        // Define the token key and credentials
-        // var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("YourSuperSecretKey1234567891011444422876"));
-        // var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-
-        // // Create the token
-        // var tokenDescriptor = new SecurityTokenDescriptor
-        // {
-        //     Subject = new ClaimsIdentity(claims),
-        //     Expires = DateTime.UtcNow.AddHours(1),
-        //     Issuer = "TestIssuer",
-        //     Audience = "TestAudience",
-        //     SigningCredentials = credentials
-        // };
-
-        // var tokenHandler = new JwtSecurityTokenHandler();
-        // var token = tokenHandler.CreateToken(tokenDescriptor);
-
-        // // Return the serialized token
-        // return tokenHandler.WriteToken(token);
     }
 }

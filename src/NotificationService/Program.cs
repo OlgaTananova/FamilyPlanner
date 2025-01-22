@@ -69,13 +69,15 @@ builder.Services.AddCors(options =>
         policy.AllowCredentials();
     });
 });
+if (!builder.Environment.IsEnvironment("Testing"))
+{
+    builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+        .AddMicrosoftIdentityWebApi(options =>
+        {
+            builder.Configuration.Bind("AzureAdB2C", options);
+        }, options => builder.Configuration.Bind("AzureAdB2C", options));
 
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddMicrosoftIdentityWebApi(options =>
-    {
-        builder.Configuration.Bind("AzureAdB2C", options);
-    }, options => builder.Configuration.Bind("AzureAdB2C", options));
-
+}
 
 builder.Services.AddScoped<IClaimsTransformation, CustomClaimsTransformation>();
 builder.Services.AddAuthorization();

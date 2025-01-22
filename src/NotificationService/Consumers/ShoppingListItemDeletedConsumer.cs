@@ -46,5 +46,6 @@ public class ShoppingListItemDeletedConsumer : IConsumer<ShoppingListItemDeleted
             activity.Stop();
         }
     }
+
 }
 
