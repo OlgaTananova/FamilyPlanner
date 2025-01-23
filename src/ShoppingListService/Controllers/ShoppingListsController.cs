@@ -266,7 +266,6 @@ namespace ShoppingListService.Controllers
             return Ok(shoppingListDto);
         }
 
-
         // Update the item in the shopping list
         [HttpPut("{id}/items/{itemId}")]
         public async Task<ActionResult<ShoppingListDto>> UpdateShoppingListItem(Guid id, Guid itemId, UpdateShoppingListItemDto updateShoppingListItemDto)

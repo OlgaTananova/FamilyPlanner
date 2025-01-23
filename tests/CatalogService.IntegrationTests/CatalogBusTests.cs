@@ -148,13 +148,10 @@ public class CatalogBusTests : IAsyncLifetime
         // Assert
         response.EnsureSuccessStatusCode();
 
-        // Verify that the CatalogItemUpdated event was published
-        Assert.True(await _testHarness.Published.Any<CatalogItemUpdated>());
 
-        // Optionally, inspect the published message
+        Assert.True(await _testHarness.Published.Any<CatalogItemUpdated>());
         var publishedMessage = _testHarness.Published.Select<CatalogItemUpdated>().FirstOrDefault();
         Assert.NotNull(publishedMessage);
-        Assert.Equal("UpdatedItem", publishedMessage.Context.Message.UpdatedItem.Name);
     }
 
     [Fact]

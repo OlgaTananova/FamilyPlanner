@@ -36,7 +36,6 @@ public class CustomWebAppFactory : WebApplicationFactory<Program>, IAsyncLifetim
             {
                 var connectionString = _posgresSqlContainer.GetConnectionString();
 
-                Console.WriteLine($"Using test database connection string: {connectionString}");
                 options.UseNpgsql(connectionString);
             });
             // Replace the message broker
