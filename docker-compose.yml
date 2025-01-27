@@ -1,4 +1,4 @@
-version: "3.8"
+version: "3.9"
 services:
   postgres-catalog:
     image: postgres
@@ -29,7 +29,36 @@ services:
       environment:
         - RABBITMQ_DEFAULT_USER=${RABBIT_MQ_USER}
         - RABBITMQ_DEFAULT_PASS=${RABBIT_MQ_PASSWORD}
-
+  catalog-svc:
+      image: olgatan/catalog-svc:latest
+      build: 
+        context: .
+        dockerfile: src/CatalogService/Dockerfile
+      environment:
+        - ASPNETCORE_ENVIRONMENT=Development
+        - ASPNETCORE_URLS=http://+:80
+        - RabbitMq__Host=rabbitmq
+        - ConnectionStrings__DefaultConnection=${CATALOG_POSTGRES_CONNECTION_STRING} 
+      ports:
+        - 7001:80  
+      depends_on:
+        - postgres-catalog
+        - rabbitmq  
+  shoppinglist-svc:
+      image: olgatan/shoppinglist-svc:latest
+      build: 
+        context: .
+        dockerfile: src/ShoppingListService/Dockerfile
+      environment:
+        - ASPNETCORE_ENVIRONMENT=Development
+        - ASPNETCORE_URLS=http://+:80
+        - RabbitMq__Host=rabbitmq
+        - ConnectionStrings__DefaultConnection=${SHOPPING_POSTGRES_CONNECTION_STRING} 
+      ports:
+        - 7002:80  
+      depends_on:
+        - postgres-shopping
+        - rabbitmq        
 
 volumes:
   pgdata-catalog:

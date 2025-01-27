@@ -8,6 +8,7 @@ using CatalogService.DTOs;
 using CatalogService.Entities;
 using Contracts.Catalog;
 using MassTransit;
+using MassTransit.Testing;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -405,7 +406,7 @@ namespace CatalogService.Controllers
 
             return Ok(catalogItemDtos);
         }
-    }
 
-    #endregion
+        #endregion
+    }
 }

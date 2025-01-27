@@ -39,6 +39,7 @@ builder.Services.AddMassTransit(x =>
     x.AddConsumersFromNamespaceContaining<CatalogItemUpdatedConsumer>();
     x.AddConsumersFromNamespaceContaining<CatalogCategoryUpdatedConsumer>();
     x.AddConsumersFromNamespaceContaining<CatalogItemDeletedConsumer>();
+    x.AddConsumersFromNamespaceContaining<CatalogItemSeededConsumer>();
 
     x.AddEntityFrameworkOutbox<ShoppingListContext>(o =>
            {
@@ -85,6 +86,12 @@ builder.Services.AddMassTransit(x =>
             // if the db is down the massage bus will retry to deliver the message 5 times with an interval of 5 sec
             e.UseMessageRetry(r => r.Interval(5, 5));
             e.ConfigureConsumer<CatalogItemDeletedConsumer>(context);
+        });
+        cfg.ReceiveEndpoint("shoppinglist-catalog-item-seeded", e =>
+        {
+            // if the db is down the massage bus will retry to deliver the message 5 times with an interval of 5 sec
+            e.UseMessageRetry(r => r.Interval(5, 5));
+            e.ConfigureConsumer<CatalogItemSeededConsumer>(context);
         });
 
         cfg.ConfigureEndpoints(context);
@@ -149,12 +156,13 @@ app.MapControllers();
 
 try
 {
-    DbInitializer.InitDb(app);
+    DbInitializer.AddSearchingFunction(app);
 }
-catch (Exception e)
+catch (Exception ex)
 {
-    Console.WriteLine($"There is an error at db initialization. Message: {e.Message}");
+    Console.WriteLine(ex.Message);
 }
+
 app.Run();
 
 public partial class Program { }

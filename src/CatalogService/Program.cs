@@ -1,5 +1,7 @@
+using AutoMapper;
 using CatalogService.Data;
 using Contracts.Authentication;
+using Contracts.Catalog;
 using MassTransit;
 using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.AspNetCore.Authentication;
@@ -41,10 +43,9 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowSpecificOrigins", policy =>
     {
-        //Console.WriteLine(builder.Configuration["ClientApps"][0]);
         policy.WithOrigins(builder.Configuration.GetSection("ClientApps").Get<string[]>()) // Allow only these origins
-              .AllowAnyHeader()            // Allow any headers
-              .AllowAnyMethod();           // Allow any HTTP methods
+              .AllowAnyHeader()
+              .AllowAnyMethod();
     });
 });
 
@@ -124,16 +125,35 @@ app.MapControllers();
 
 try
 {
-    DbInitializer.InitDb(app);
+    await DbInitializer.InitDb(app);
 }
 catch (Exception e)
 {
     Console.WriteLine($"There is an error at db initialization. Message: {e.Message}");
 }
 
+try
+{
+    app.Lifetime.ApplicationStarted.Register(async () =>
+{
+    using var scope = app.Services.CreateScope();
+    var publishEndpoint = scope.ServiceProvider.GetRequiredService<IPublishEndpoint>();
+    var mapper = scope.ServiceProvider.GetRequiredService<IMapper>();
+    var context = scope.ServiceProvider.GetRequiredService<CatalogDbContext>();
+
+    await SendData.SendDataToShoppingListService(context, mapper, publishEndpoint);
+});
+}
+catch (Exception e)
+{
+    Console.WriteLine($"There is an error at sending data to ShoppingListService. Message: {e.Message}");
+}
+
+
 app.Run();
 
 
-public partial class Program {
-    
+public partial class Program
+{
+
 }

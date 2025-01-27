@@ -50,6 +50,20 @@ public class MappingProfiles : Profile
             .ForMember(dest => dest.Category, opt => opt.Ignore()); // Category is linked through CategoryId
 
         CreateMap<ItemDto, CatalogItemCreated>();
+        CreateMap<Item, CatalogItemCreated>()
+            .ForMember(dest => dest.CategoryName, opt => opt.MapFrom(src => src.Category.Name))
+            .ForMember(dest => dest.CategorySKU, opt => opt.MapFrom(src => src.Category.SKU));
+
+
+        CreateMap<List<Item>, CatalogItemSeeded>()
+        .ForMember(dest => dest.Items, opt => opt.MapFrom(src => src));
+
+        CreateMap<List<ItemDto>, CatalogItemSeeded>()
+        .ForMember(dest => dest.Items, opt => opt.MapFrom(src => src));
+
+        CreateMap<Item, SeededItem>()
+            .ForMember(dest => dest.CategoryName, opt => opt.MapFrom(src => src.CategoryName))
+            .ForMember(dest => dest.CategorySKU, opt => opt.MapFrom(src => src.CategorySKU));
 
         CreateMap<Item, UpdatedItem>()
             .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id))

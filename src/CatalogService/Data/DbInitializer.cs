@@ -1,8 +1,13 @@
 using System;
 using System.Security.Cryptography;
+using AutoMapper;
 using CatalogService.Data.Migrations;
+using CatalogService.DTOs;
 using CatalogService.Entities;
+using Contracts.Catalog;
+using MassTransit;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Identity.Client;
 
 namespace CatalogService.Data;
 
@@ -10,12 +15,32 @@ public static class DbInitializer
 {
     private static readonly string _ownerId = "63e6299d-567c-49fc-a0e4-4d53e7ca1dd5";
     private static readonly string _family = "Smith";
-    public static async void InitDb(WebApplication app)
+    public static async Task InitDb(WebApplication app)
     {
         using var scope = app.Services.CreateScope();
-        await SeedData(scope.ServiceProvider.GetService<CatalogDbContext>());
-        await AddCategoryNamesToItems(scope.ServiceProvider.GetService<CatalogDbContext>());
-        AddSearchingFunction(scope.ServiceProvider.GetService<CatalogDbContext>());
+        var context = scope.ServiceProvider.GetRequiredService<CatalogDbContext>();
+        var publishEndpoint = scope.ServiceProvider.GetRequiredService<IPublishEndpoint>();
+        var mapper = scope.ServiceProvider.GetRequiredService<IMapper>();
+
+        try
+        {
+            bool isNewDatabase = await SeedData(context);
+
+            if (isNewDatabase)
+            {
+                await AddCategoryNamesToItems(context);
+                AddSearchingFunction(context);
+                Console.WriteLine("Database initialized.");
+            }
+            else
+            {
+                Console.WriteLine("Database already exists. Skipping initialization.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error during database initialization: {Message}", ex.Message);
+        }
     }
 
     private static async Task AddCategoryNamesToItems(CatalogDbContext context)
@@ -38,14 +63,14 @@ public static class DbInitializer
         context.Database.ExecuteSqlRaw("CREATE EXTENSION IF NOT EXISTS pg_trgm;");
     }
 
-    private static async Task SeedData(CatalogDbContext context)
+    private static async Task<bool> SeedData(CatalogDbContext context)
     {
         context.Database.Migrate();
 
         if (context.Categories.Any())
         {
             Console.WriteLine("The database already exists.");
-            return;
+            return false;
         }
         var categories = new List<Category>
 {
@@ -130,6 +155,7 @@ public static class DbInitializer
         context.AddRange(categories);
 
         await context.SaveChangesAsync();
+        return true;
 
     }
 }
