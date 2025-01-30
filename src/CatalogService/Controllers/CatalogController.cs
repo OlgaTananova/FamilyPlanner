@@ -407,6 +407,11 @@ namespace CatalogService.Controllers
             return Ok(catalogItemDtos);
         }
 
+        [HttpGet("items/error")]
+        public ActionResult GetError()
+        {
+            throw new Exception("This is a test exception");
+        }
         #endregion
     }
 }

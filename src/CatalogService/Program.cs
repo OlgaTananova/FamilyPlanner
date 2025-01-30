@@ -1,11 +1,13 @@
 using AutoMapper;
 using CatalogService.Data;
+using CatalogService.RequestHelpers;
 using Contracts.Authentication;
 using Contracts.Catalog;
 using MassTransit;
 using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Identity.Web;
 using Microsoft.IdentityModel.Logging;
@@ -37,6 +39,8 @@ builder.Logging.AddApplicationInsights(configureTelemetryConfiguration: (config)
 });
 
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+builder.Services.AddProblemDetails();
+builder.Services.AddExceptionHandler<GlobalErrorHandler>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddScoped<ICatalogRepository, CatalogRepository>();
 builder.Services.AddCors(options =>
@@ -117,6 +121,7 @@ if (app.Environment.IsDevelopment())
 {
 }
 // Enable CORS
+app.UseExceptionHandler(o => { });
 app.UseCors("AllowSpecificOrigins");
 app.UseAuthentication();
 app.UseAuthorization();
@@ -141,7 +146,11 @@ try
     var mapper = scope.ServiceProvider.GetRequiredService<IMapper>();
     var context = scope.ServiceProvider.GetRequiredService<CatalogDbContext>();
 
-    await SendData.SendDataToShoppingListService(context, mapper, publishEndpoint);
+    if (DbInitializer.isNewDatabase)
+    {
+        await SendData.SendDataToShoppingListService(context, mapper, publishEndpoint);
+    }
+
 });
 }
 catch (Exception e)

@@ -15,6 +15,8 @@ public static class DbInitializer
 {
     private static readonly string _ownerId = "63e6299d-567c-49fc-a0e4-4d53e7ca1dd5";
     private static readonly string _family = "Smith";
+
+    public static bool isNewDatabase;
     public static async Task InitDb(WebApplication app)
     {
         using var scope = app.Services.CreateScope();
@@ -24,7 +26,7 @@ public static class DbInitializer
 
         try
         {
-            bool isNewDatabase = await SeedData(context);
+            isNewDatabase = await SeedData(context);
 
             if (isNewDatabase)
             {
