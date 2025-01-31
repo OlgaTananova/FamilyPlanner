@@ -7181,11 +7181,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\Olga\\OneDrive\\Documents\\.NET\\FamilyPlanner\\src\\CatalogService\\CatalogService.csproj",
+      "projectUniqueName": "C:\\Users\\Olga\\Documents\\.NET\\FamilyPlanner\\src\\CatalogService\\CatalogService.csproj",
       "projectName": "CatalogService",
-      "projectPath": "C:\\Users\\Olga\\OneDrive\\Documents\\.NET\\FamilyPlanner\\src\\CatalogService\\CatalogService.csproj",
+      "projectPath": "C:\\Users\\Olga\\Documents\\.NET\\FamilyPlanner\\src\\CatalogService\\CatalogService.csproj",
       "packagesPath": "C:\\Users\\Olga\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\Olga\\OneDrive\\Documents\\.NET\\FamilyPlanner\\src\\CatalogService\\obj\\",
+      "outputPath": "C:\\Users\\Olga\\Documents\\.NET\\FamilyPlanner\\src\\CatalogService\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -7207,8 +7207,8 @@
         "net8.0": {
           "targetAlias": "net8.0",
           "projectReferences": {
-            "C:\\Users\\Olga\\OneDrive\\Documents\\.NET\\FamilyPlanner\\src\\Contracts\\Contracts.csproj": {
-              "projectPath": "C:\\Users\\Olga\\OneDrive\\Documents\\.NET\\FamilyPlanner\\src\\Contracts\\Contracts.csproj"
+            "C:\\Users\\Olga\\Documents\\.NET\\FamilyPlanner\\src\\Contracts\\Contracts.csproj": {
+              "projectPath": "C:\\Users\\Olga\\Documents\\.NET\\FamilyPlanner\\src\\Contracts\\Contracts.csproj"
             }
           }
         }

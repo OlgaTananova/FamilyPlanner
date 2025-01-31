@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Identity.Web;
 using NotificationService.Consumers;
+using NotificationService.Helpers;
 using NotificationService.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -58,6 +59,7 @@ builder.Services.AddMassTransit(x =>
         cfg.ConfigureEndpoints(context);
     });
 });
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
 builder.Services.AddCors(options =>
 {
@@ -90,7 +92,7 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
 }
-
+app.UseExceptionHandler(o => { });
 app.UseCors("AllowSpecificOrigins");
 
 app.UseAuthentication();

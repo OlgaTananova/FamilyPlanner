@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "IfdU5p+luBQ=",
+  "dgSpecHash": "OdOnhzCRq70=",
   "success": true,
-  "projectFilePath": "C:\\Users\\Olga\\OneDrive\\Documents\\.NET\\FamilyPlanner\\src\\Contracts\\Contracts.csproj",
+  "projectFilePath": "C:\\Users\\Olga\\Documents\\.NET\\FamilyPlanner\\src\\Contracts\\Contracts.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\Olga\\.nuget\\packages\\microsoft.applicationinsights\\2.22.0\\microsoft.applicationinsights.2.22.0.nupkg.sha512",
     "C:\\Users\\Olga\\.nuget\\packages\\microsoft.applicationinsights.aspnetcore\\2.22.0\\microsoft.applicationinsights.aspnetcore.2.22.0.nupkg.sha512",

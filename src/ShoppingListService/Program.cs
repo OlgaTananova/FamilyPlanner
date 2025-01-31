@@ -31,6 +31,7 @@ builder.Services.AddDbContext<ShoppingListContext>(opt =>
 {
     opt.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
 });
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
 // RabbitMq Messager
 builder.Services.AddMassTransit(x =>
@@ -148,6 +149,7 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
 }
+app.UseExceptionHandler(o => { });
 app.UseCors("AllowSpecificOrigins");
 app.UseAuthentication();
 app.UseAuthorization();

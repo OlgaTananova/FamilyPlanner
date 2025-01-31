@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "5MHZ8/XzTsA=",
+  "dgSpecHash": "3Mq84V+tdjA=",
   "success": true,
-  "projectFilePath": "C:\\Users\\Olga\\OneDrive\\Documents\\.NET\\FamilyPlanner\\tests\\CatalogService.IntegrationTests\\CatalogService.IntegrationTests.csproj",
+  "projectFilePath": "C:\\Users\\Olga\\Documents\\.NET\\FamilyPlanner\\tests\\CatalogService.IntegrationTests\\CatalogService.IntegrationTests.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\Olga\\.nuget\\packages\\automapper\\13.0.1\\automapper.13.0.1.nupkg.sha512",
     "C:\\Users\\Olga\\.nuget\\packages\\azure.core\\1.38.0\\azure.core.1.38.0.nupkg.sha512",

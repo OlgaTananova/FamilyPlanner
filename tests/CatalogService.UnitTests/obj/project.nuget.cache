@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "kY3BhDciIj4=",
+  "dgSpecHash": "kdkEf8B9geE=",
   "success": true,
-  "projectFilePath": "C:\\Users\\Olga\\OneDrive\\Documents\\.NET\\FamilyPlanner\\tests\\CatalogService.UnitTests\\CatalogService.UnitTests.csproj",
+  "projectFilePath": "C:\\Users\\Olga\\Documents\\.NET\\FamilyPlanner\\tests\\CatalogService.UnitTests\\CatalogService.UnitTests.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\Olga\\.nuget\\packages\\autofixture\\5.0.0-preview0011\\autofixture.5.0.0-preview0011.nupkg.sha512",
     "C:\\Users\\Olga\\.nuget\\packages\\automapper\\13.0.1\\automapper.13.0.1.nupkg.sha512",

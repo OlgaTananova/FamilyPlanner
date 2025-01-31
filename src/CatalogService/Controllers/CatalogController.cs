@@ -6,6 +6,7 @@ using AutoMapper.Configuration.Annotations;
 using CatalogService.Data;
 using CatalogService.DTOs;
 using CatalogService.Entities;
+using CatalogService.RequestHelpers;
 using Contracts.Catalog;
 using MassTransit;
 using MassTransit.Testing;
@@ -68,7 +69,13 @@ namespace CatalogService.Controllers
             CategoryDto category = await _repo.GetCategoryBySkuAsync(sku, _familyName);
             if (category == null)
             {
-                return NotFound();
+                var problemDetails = ProblemDetailsFactoryHelper.CreateProblemDetails(
+                    _httpContext.HttpContext,
+                    StatusCodes.Status404NotFound,
+                    "Category not found",
+                    $"The category with SKU {sku} was not found.");
+
+                return NotFound(problemDetails);
             }
             return Ok(category);
         }
@@ -81,6 +88,7 @@ namespace CatalogService.Controllers
             if (existingCategory != null)
             {
                 _logger.LogError($"Create Category request failed: Category with name {categoryDto.Name} already exists. Service: Catalog Service, User: {_userId}, Family: {_familyName}, OperationId : {_operationId}");
+                
                 return BadRequest("The category with this name already exists.");
             }
 
@@ -408,10 +416,11 @@ namespace CatalogService.Controllers
         }
 
         [HttpGet("items/error")]
-        public ActionResult GetError()
+        public async Task<ActionResult> GetError()
         {
-            throw new Exception("This is a test exception");
+            throw new UnauthorizedAccessException("This is a an authorized access exception.");
         }
+
         #endregion
     }
 }

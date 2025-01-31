@@ -1,3 +1,5 @@
+using System.Net;
+using System.Text.Json;
 using AutoMapper;
 using CatalogService.Data;
 using CatalogService.RequestHelpers;
@@ -6,8 +8,11 @@ using Contracts.Catalog;
 using MassTransit;
 using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Identity.Web;
 using Microsoft.IdentityModel.Logging;
@@ -39,8 +44,8 @@ builder.Logging.AddApplicationInsights(configureTelemetryConfiguration: (config)
 });
 
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
-builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<GlobalErrorHandler>();
+builder.Services.AddProblemDetails();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddScoped<ICatalogRepository, CatalogRepository>();
 builder.Services.AddCors(options =>
@@ -83,7 +88,7 @@ builder.Services.AddMassTransit(x =>
 });
 
 // Configure authentication with Azure AD B2C
-builder.Services.AddAuthentication("Bearer")
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddMicrosoftIdentityWebApi(options =>
     {
         builder.Configuration.Bind("AzureAdB2C", options);

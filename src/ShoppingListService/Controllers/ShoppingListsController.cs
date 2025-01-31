@@ -111,7 +111,8 @@ namespace ShoppingListService.Controllers
                 _logger.LogError($"Create Shopping List request failed: Cannot save data to db. Service: Shopping List Service, User: {_userId}, Family: {_familyName}, OperationId : {_operationId}");
                 return BadRequest("Could not save changes to the DB");
 
-            };
+            }
+            ;
 
             _logger.LogInformation($"Create Shopping List request finished. Service: Shopping List Service. User: {_userId}, Family: {_familyName}, OperationId : {_operationId}");
             return CreatedAtAction(nameof(GetShoppingList), new
