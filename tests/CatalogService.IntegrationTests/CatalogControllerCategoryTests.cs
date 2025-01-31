@@ -114,7 +114,7 @@ public class CatalogControllerCategoryTests : IAsyncLifetime
         // Assert
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         var errorMessage = await response.Content.ReadAsStringAsync();
-        Assert.Contains("The category with this name already exists.", errorMessage);
+        Assert.Contains("already exists", errorMessage);
     }
 
     [Fact]
@@ -153,7 +153,7 @@ public class CatalogControllerCategoryTests : IAsyncLifetime
         // Assert
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
         var errorMessage = await response.Content.ReadAsStringAsync();
-        Assert.Contains("The category was not found", errorMessage);
+        Assert.Contains("not found", errorMessage);
     }
 
     [Fact]
@@ -170,7 +170,7 @@ public class CatalogControllerCategoryTests : IAsyncLifetime
         // Assert
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
         var errorMessage = await response.Content.ReadAsStringAsync();
-        Assert.Contains("Cannot find the category to delete.", errorMessage);
+        Assert.Contains("not found", errorMessage);
     }
 
     [Fact]
@@ -188,7 +188,7 @@ public class CatalogControllerCategoryTests : IAsyncLifetime
         // Assert
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         var errorMessage = await response.Content.ReadAsStringAsync();
-        Assert.Contains("Cannot delete non empty category.", errorMessage);
+        Assert.Contains("not empty", errorMessage);
     }
 
 

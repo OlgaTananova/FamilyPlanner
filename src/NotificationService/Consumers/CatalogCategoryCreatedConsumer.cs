@@ -23,6 +23,11 @@ public class CatalogCategoryCreatedConsumer : IConsumer<CatalogCategoryCreated>
 
         // Extract the OperationId from the message headers
         string? operationId = context.Headers.Get<string>("OperationId");
+        string? traceId = context.Headers.Get<string>("traceId");
+        string? requestId = context.Headers.Get<string>("requestId");
+
+        Console.WriteLine($"OperationId: {operationId}, TraceId: {traceId}, RequestId: {requestId}");
+
         _logger.LogInformation("Create Category message received. Service: Notification Service, UserId: {UserId}, Family: {Family}, CategoryName: {CategoryName}, OperationId: {OperationId}",
     context.Message.OwnerId, context.Message.Family, context.Message.Name, operationId);
         var activity = new System.Diagnostics.Activity("ConsumeCatalogCategoryCreated");

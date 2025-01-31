@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Net.Http.Json;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using AutoMapper;
 using AutoMapper.Configuration.Annotations;
@@ -12,7 +13,9 @@ using MassTransit;
 using MassTransit.Testing;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 
 namespace CatalogService.Controllers
@@ -30,12 +33,14 @@ namespace CatalogService.Controllers
         private ILogger<CatalogController> _logger;
         private IHttpContextAccessor _httpContext;
         private readonly string _operationId;
+        private ProblemDetailsFactory _problemDetailsFactory;
 
         public CatalogController(
         IMapper mapper, ICatalogRepository repo,
         IHttpContextAccessor httpContextAccessor,
         IPublishEndpoint publishEndpoint,
-        ILogger<CatalogController> logger
+        ILogger<CatalogController> logger,
+        ProblemDetailsFactory problemDetailsFactory
         )
         {
             _mapper = mapper;
@@ -43,11 +48,12 @@ namespace CatalogService.Controllers
             _publishEndpoint = publishEndpoint;
             _logger = logger;
             _httpContext = httpContextAccessor;
+            _problemDetailsFactory = problemDetailsFactory;
 
             // Centralized family and user ID extraction
             _familyName = httpContextAccessor.HttpContext?.User.Claims.FirstOrDefault(c => c.Type == "family")?.Value;
             _userId = httpContextAccessor.HttpContext?.User.Claims.FirstOrDefault(c => c.Type == "userId")?.Value;
-            _operationId = httpContextAccessor.HttpContext?.Request.Headers.TraceParent;
+            _operationId = httpContextAccessor.HttpContext.Features.Get<IHttpActivityFeature>()?.Activity.TraceId.ToString();
 
             if (string.IsNullOrEmpty(_familyName) || string.IsNullOrEmpty(_userId))
             {
@@ -73,23 +79,44 @@ namespace CatalogService.Controllers
                     _httpContext.HttpContext,
                     StatusCodes.Status404NotFound,
                     "Category not found",
-                    $"The category with SKU {sku} was not found.");
+                    $"The category with SKU {sku} was not found.",
+                    _problemDetailsFactory);
 
                 return NotFound(problemDetails);
             }
             return Ok(category);
         }
+
         [HttpPost("categories")]
-        public async Task<ActionResult<CategoryDto>> CreateCategory(CreateCategoryDto categoryDto)
+        public async Task<ActionResult<CategoryDto>> CreateCategory(
+            CreateCategoryDto categoryDto)
         {
-            _logger.LogInformation($"Create Category request received. Service: Catalog Service. User: {_userId}, Family: {_familyName}, Category: {categoryDto.Name}, OperationId : {_operationId}");
+
+            StructuredLogger.LogInformation(_logger, HttpContext, "Create Category request received.", _userId, _familyName,
+                 new Dictionary<string, object>
+                    {
+                        { "category", categoryDto.Name }
+                    });
             Category existingCategory = await _repo.GetCategoryEntityByName(categoryDto.Name, _familyName);
 
             if (existingCategory != null)
             {
-                _logger.LogError($"Create Category request failed: Category with name {categoryDto.Name} already exists. Service: Catalog Service, User: {_userId}, Family: {_familyName}, OperationId : {_operationId}");
-                
-                return BadRequest("The category with this name already exists.");
+                StructuredLogger.LogWarning(_logger, HttpContext,
+                "Create Category request failed: Category already exists.",
+                _userId,
+                _familyName,
+                new Dictionary<string, object>
+                {
+                    { "category", categoryDto.Name },
+                });
+                var problemDetails = ProblemDetailsFactoryHelper.CreateProblemDetails(
+                HttpContext,
+                StatusCodes.Status400BadRequest,
+                "Category Already Exists",
+                $"A category with the name '{categoryDto.Name}' already exists.",
+                _problemDetailsFactory
+            );
+                return BadRequest(problemDetails);
             }
 
             var category = _mapper.Map<Category>(categoryDto);
@@ -104,6 +131,8 @@ namespace CatalogService.Controllers
             await _publishEndpoint.Publish(_mapper.Map<CatalogCategoryCreated>(newCategory), context =>
                 {
                     context.Headers.Set("OperationId", _operationId);
+                    context.Headers.Set("traceId", _operationId);
+                    context.Headers.Set("requestId", _httpContext.HttpContext.TraceIdentifier);
 
                 });
 
@@ -111,19 +140,47 @@ namespace CatalogService.Controllers
 
             if (!result)
             {
-                _logger.LogError($"Create Category request failed: Cannot save changes to db. Service: Catalog Service, User: {_userId}, Family: {_familyName}, OperationId : {_operationId}");
-                return BadRequest("Could not save changes to the DB");
+                StructuredLogger.LogError(_logger, HttpContext,
+                "Create Category request failed: Database save error. Try again later.",
+                _userId,
+                _familyName,
+                new Dictionary<string, object>
+                {
+                    { "category", categoryDto.Name },
+                });
+
+                var problemDetails = ProblemDetailsFactoryHelper.CreateProblemDetails(
+                    HttpContext,
+                    StatusCodes.Status400BadRequest,
+                    "Database Error",
+                    "Could not save changes to the database.",
+                    _problemDetailsFactory
+                );
+                return BadRequest(problemDetails);
 
             }
-            ;
-            _logger.LogInformation($"Create Category request succeded:Category {category.Name} created successfully. Service: Catalog Service, User: {_userId}, Family: {_familyName}, OperationId: {_operationId}");
+            StructuredLogger.LogInformation(_logger, HttpContext,
+            "Create Category request succeeded.",
+            _userId,
+            _familyName,
+            new Dictionary<string, object>
+            {
+                { "category", category.Name },
+            });
             return Ok(newCategory);
         }
 
         [HttpPut("categories/{sku}")]
         public async Task<ActionResult<CategoryDto>> UpdateCategory(Guid sku, UpdateCategoryDto categoryDto)
         {
-            _logger.LogInformation($"Update Category request received. Service: Catalog Service. User: {_userId}, Family: {_familyName}, Category: {categoryDto.Name}, OperationId : {_operationId}");
+            StructuredLogger.LogInformation(_logger, HttpContext,
+                "Update Category request received.",
+                _userId,
+                _familyName,
+                new Dictionary<string, object>
+            {
+                { "category", categoryDto.Name },
+            });
 
             using var transaction = await _repo.BeginTransactionAsync();
             try
@@ -132,8 +189,23 @@ namespace CatalogService.Controllers
 
                 if (category == null)
                 {
-                    _logger.LogError($"Update Category request failed: Category with name {categoryDto.Name} was not found. Service: Catalog Service, User: {_userId}, Family: {_familyName}, Category: {categoryDto.Name}, OperationId : {_operationId}");
-                    return NotFound("The category was not found or you are not allowed to update the category created by another user.");
+                    StructuredLogger.LogWarning(_logger, HttpContext,
+                    "Update Category request failed: Category not found.",
+                    _userId,
+                    _familyName,
+                    new Dictionary<string, object>
+                        {
+                            { "category", categoryDto.Name },
+                        });
+
+                    var problemDetails = ProblemDetailsFactoryHelper.CreateProblemDetails(
+                        HttpContext,
+                        StatusCodes.Status404NotFound,
+                        "Category Not Found",
+                        $"The category with SKU {sku} was not found or you are not allowed to update it.",
+                        _problemDetailsFactory
+                    );
+                    return NotFound(problemDetails);
                 }
 
                 await _repo.UpdateCategoryAsync(category, categoryDto);
@@ -143,19 +215,43 @@ namespace CatalogService.Controllers
                 await _publishEndpoint.Publish(_mapper.Map<CatalogCategoryUpdated>(updatedCategory), context =>
                         {
                             context.Headers.Set("OperationId", _operationId);
+                            context.Headers.Set("traceId", _operationId);
+                            context.Headers.Set("requestId", _httpContext.HttpContext.TraceIdentifier);
                         });
 
                 bool result = await _repo.SaveChangesAsync();
 
                 if (!result)
                 {
-                    _logger.LogError($"Update Category request failed: Cannot save changes to db. Service: Catalog Service, User: {_userId}, Family: {_familyName}, Category: {categoryDto.Name}, OperationId : {_operationId}");
+                    StructuredLogger.LogError(_logger, HttpContext,
+                        "Update Category request failed: Database save error.",
+                        _userId,
+                        _familyName,
+                        new Dictionary<string, object>
+                        {
+                                { "category", categoryDto.Name },
+                        });
 
-                    return BadRequest("Problem with updating the category.");
+                    var problemDetails = ProblemDetailsFactoryHelper.CreateProblemDetails(
+                        HttpContext,
+                        StatusCodes.Status400BadRequest,
+                        "Database Error",
+                        "Could not save changes to the database while updating the category.",
+                        _problemDetailsFactory
+                    );
+                    return BadRequest(problemDetails);
                 }
 
                 await transaction.CommitAsync();
-                _logger.LogInformation($"Update Category request succeded:Category {category.Name} created successfully. Service: Catalog Service, User: {_userId}, Family: {_familyName}, Category: {categoryDto.Name}, OperationId: {_operationId}");
+                StructuredLogger.LogInformation(_logger, HttpContext,
+                    "Update Category request succeeded.",
+                    _userId,
+                    _familyName,
+                    new Dictionary<string, object>
+                    {
+                        { "category", category.Name },
+                    });
+
                 return Ok(updatedCategory);
 
             }
@@ -163,8 +259,26 @@ namespace CatalogService.Controllers
             {
                 // Rollback the transaction on any exception
                 await transaction.RollbackAsync();
-                _logger.LogError($"Update Category request failed: transaction problem {ex.Message}. Service: Catalog Service, User: {_userId}, Family: {_familyName}, Category: {categoryDto.Name}, OperationId : {_operationId}");
-                return BadRequest("Problem with updating the category.");
+                StructuredLogger.LogCritical(_logger, HttpContext,
+                    "Unhandled exception during Update Category request.",
+                    _userId,
+                    _familyName,
+                    new Dictionary<string, object>
+                    {
+                        { "exception", ex.Message },
+                        { "operationId", _operationId },
+                        { "stackTrace", ex.StackTrace ?? "No StackTrace" }
+                    });
+
+                var problemDetails = ProblemDetailsFactoryHelper.CreateProblemDetails(
+                    HttpContext,
+                    StatusCodes.Status400BadRequest,
+                    "Internal Server Error",
+                    "An unexpected error occurred while updating the category. Try again later.",
+                    _problemDetailsFactory
+                );
+
+                return BadRequest(problemDetails);
             }
 
         }
@@ -175,19 +289,61 @@ namespace CatalogService.Controllers
             using var transaction = await _repo.BeginTransactionAsync();
             try
             {
-                _logger.LogInformation($"Delete Category request received. Service: Catalog Service. User: {_userId}, Family: {_familyName}, OperationId : {_operationId}");
+                StructuredLogger.LogInformation(_logger, HttpContext,
+                "Delete Category request received.",
+                _userId,
+                _familyName,
+                new Dictionary<string, object>
+                {
+                        { "sku", sku },
+                });
 
                 Category category = await _repo.GetCategoryEntityBySku(sku, _familyName);
 
                 if (category == null)
                 {
-                    _logger.LogError($"Delete Category request failed: Category with sku {sku} not found. Service: Catalog Service, User: {_userId}, Family: {_familyName}, OperationId : {_operationId}");
-                    return NotFound("Cannot find the category to delete.");
+                    StructuredLogger.LogWarning(_logger, HttpContext,
+                    "Delete Category request failed: Category not found.",
+                    _userId,
+                    _familyName,
+                    new Dictionary<string, object>
+                    {
+                            { "sku", sku },
+                    });
+
+                    var problemDetails = ProblemDetailsFactoryHelper.CreateProblemDetails(
+                        HttpContext,
+                        StatusCodes.Status404NotFound,
+                        "Category Not Found",
+                        $"The category with SKU {sku} was not found.",
+                        _problemDetailsFactory
+                    );
+
+                    return NotFound(problemDetails);
                 }
                 if (category.Items.Any())
                 {
-                    _logger.LogWarning($"Delete Category request failed: Category with name {category.Name} is not empty. Service: Catalog Service, User: {_userId}, Family: {_familyName}, OperationId : {_operationId}");
-                    return BadRequest("Cannot delete non empty category.");
+                    StructuredLogger.LogWarning(_logger, HttpContext,
+                    "Delete Category request failed: Category is not empty.",
+                    _userId,
+                    _familyName,
+                    new Dictionary<string, object>
+                    {
+                        { "sku", sku },
+                        { "category", category.Name },
+                        { "operationId", _operationId },
+                        { "family", _familyName }
+                    });
+
+                    var problemDetails = ProblemDetailsFactoryHelper.CreateProblemDetails(
+                        HttpContext,
+                        StatusCodes.Status400BadRequest,
+                        "Category Not Empty",
+                        $"The category '{category.Name}' is not empty and cannot be deleted.",
+                        _problemDetailsFactory
+                    );
+
+                    return BadRequest(problemDetails);
                 }
 
                 category.IsDeleted = true;
@@ -197,27 +353,67 @@ namespace CatalogService.Controllers
                 await _publishEndpoint.Publish(_mapper.Map<CatalogCategoryDeleted>(deletedCategory), context =>
                 {
                     context.Headers.Set("OperationId", _operationId);
+                    context.Headers.Set("traceId", _operationId);
+                    context.Headers.Set("requestId", _httpContext.HttpContext.TraceIdentifier);
 
                 });
 
                 bool result = await _repo.SaveChangesAsync();
                 if (!result)
                 {
-                    _logger.LogError($"Delete Category request failed: cannot save changes to the db. Service: Catalog Service, User: {_userId}, Family: {_familyName}, OperationId : {_operationId}");
-                    return BadRequest("Could not delete category and save changed to the database.");
-                }
-                ;
+                    StructuredLogger.LogError(_logger, HttpContext,
+                    _userId,
+                    _familyName,
+                    "Delete Category request failed: Database save error.",
+                        new Dictionary<string, object>
+                        {
+                            { "sku", sku },
+                        });
 
-                _logger.LogInformation($"Delete Category request succeded. Service: Catalog Service, User: {_userId}, Family: {_familyName}, OperationId: {_operationId}");
+                    var problemDetails = ProblemDetailsFactoryHelper.CreateProblemDetails(
+                        HttpContext,
+                        StatusCodes.Status400BadRequest,
+                        "Database Error",
+                        "Could not save the deletion to the database.",
+                        _problemDetailsFactory
+                    );
+                    return BadRequest(problemDetails);
+                };
                 await transaction.CommitAsync();
+                StructuredLogger.LogInformation(_logger, HttpContext,
+                    "Delete Category request succeeded.",
+                    _userId,
+                    _familyName,
+                    new Dictionary<string, object>
+                    {
+                        { "sku", sku }
+                    });
                 return NoContent();
             }
             catch (Exception ex)
             {
                 // Rollback the transaction on any exception
-                _logger.LogError($"Delete Category request failed: transaction errror {ex.Message}. Service: Catalog Service, User: {_userId}, Family: {_familyName}, OperationId : {_operationId}");
                 await transaction.RollbackAsync();
-                return BadRequest("Could not delete category and save changed to the database.");
+                StructuredLogger.LogCritical(_logger, HttpContext,
+                    "Unhandled exception during Delete Category request.",
+                    _userId,
+                    _familyName,
+                    new Dictionary<string, object>
+                    {
+                            { "sku", sku },
+                            { "exception", ex.Message },
+                            { "operationId", _operationId },
+                            { "stackTrace", ex.StackTrace ?? "No StackTrace" }
+                    });
+
+                var problemDetails = ProblemDetailsFactoryHelper.CreateProblemDetails(
+                    HttpContext,
+                    StatusCodes.Status400BadRequest,
+                    "Internal Server Error",
+                    "An unexpected error occurred while deleting the category. Try again later.",
+                    _problemDetailsFactory
+                );
+                return BadRequest(problemDetails);
             }
 
         }
@@ -358,7 +554,14 @@ namespace CatalogService.Controllers
         [HttpDelete("items/{sku}")]
         public async Task<ActionResult> DeleteItem(Guid sku)
         {
-            _logger.LogInformation($"Delete Item request received. Service: Catalog Service, User: {_userId}, Family: {_familyName}, OperationId: {_operationId}");
+            StructuredLogger.LogInformation(_logger, HttpContext,
+                "Delete Item request received.",
+                _userId,
+                _familyName,
+                new Dictionary<string, object>
+                    {
+                        { "sku", sku },
+                    });
 
             using var transaction = await _repo.BeginTransactionAsync();
             try
@@ -367,8 +570,23 @@ namespace CatalogService.Controllers
 
                 if (item == null)
                 {
-                    _logger.LogError($"Delete Item request failed: Item is not found. Service: Catalog Service, User: {_userId}, Family: {_familyName}, OperationId : {_operationId}");
-                    return NotFound("Cannot find the item to delete or you are not allowed to deleted the item created by another user.");
+                    StructuredLogger.LogWarning(_logger, HttpContext,
+                    "Delete Item request failed: Item not found.",
+                    _userId,
+                    _familyName,
+                    new Dictionary<string, object>
+                        {
+                            { "sku", sku },
+                        });
+
+                    var problemDetails = ProblemDetailsFactoryHelper.CreateProblemDetails(
+                        HttpContext,
+                        StatusCodes.Status404NotFound,
+                        "Item Not Found",
+                        $"The item with SKU {sku} was not found.",
+                        _problemDetailsFactory
+                    );
+                    return NotFound(problemDetails);
                 }
 
                 item.IsDeleted = true;
@@ -378,24 +596,69 @@ namespace CatalogService.Controllers
                 await _publishEndpoint.Publish(_mapper.Map<CatalogItemDeleted>(deletedItem), context =>
                 {
                     context.Headers.Set("OperationId", _operationId);
+                    context.Headers.Set("traceId", _operationId);
+                    context.Headers.Set("requestId", _httpContext.HttpContext.TraceIdentifier);
                 });
 
                 bool result = await _repo.SaveChangesAsync();
                 if (!result)
                 {
-                    _logger.LogError($"Delete Item request failed: cannot save to the db. Service: Catalog Service, User: {_userId}, Family: {_familyName}, OperationId : {_operationId}");
-                    return BadRequest("Could not delete item and save changed to the database.");
+                    StructuredLogger.LogError(_logger, HttpContext,
+                        "Delete Item request failed: Database save error.",
+                        _userId,
+                        _familyName,
+                        new Dictionary<string, object>
+                            {
+                                { "sku", sku },
+                            });
+
+                    var problemDetails = ProblemDetailsFactoryHelper.CreateProblemDetails(
+                        HttpContext,
+                        StatusCodes.Status400BadRequest,
+                        "Database Error",
+                        "Could not save the deletion to the database. Try again later.",
+                        _problemDetailsFactory
+                    );
+                    return BadRequest(problemDetails);
                 }
                 ;
+
                 await transaction.CommitAsync();
-                _logger.LogInformation($"Delete Item request sucessfully handled. Service: Catalog Service, User: {_userId}, Family: {_familyName}, OperationId : {_operationId}");
+
+                StructuredLogger.LogInformation(_logger, HttpContext,
+                    "Delete Item request succeeded.",
+                    _userId,
+                    _familyName,
+                    new Dictionary<string, object>
+                    {
+                        { "sku", sku },
+                    });
                 return NoContent();
             }
             catch (Exception ex)
             {
                 await transaction.RollbackAsync();
-                _logger.LogError($"Delete Item request failed: transaction error {ex.Message}. Service: Catalog Service, User: {_userId}, Family: {_familyName}, OperationId : {_operationId}");
-                return BadRequest("Problem with commiting transaction. Possibly another user tried to change the data.");
+                StructuredLogger.LogCritical(_logger, HttpContext,
+                    "Unhandled exception during Delete Category request.",
+                    _userId,
+                    _familyName,
+                    new Dictionary<string, object>
+                    {
+                        { "sku", sku },
+                        { "exception", ex.Message },
+                        { "operationId", _operationId },
+                        { "stackTrace", ex.StackTrace ?? "No StackTrace" }
+                    });
+
+                var problemDetails = ProblemDetailsFactoryHelper.CreateProblemDetails(
+                    HttpContext,
+                    StatusCodes.Status400BadRequest,
+                    "Internal Server Error",
+                    "An unexpected error occurred while deleting the category.",
+                    _problemDetailsFactory
+                );
+
+                return BadRequest(problemDetails);
 
             }
         }
@@ -415,6 +678,7 @@ namespace CatalogService.Controllers
             return Ok(catalogItemDtos);
         }
 
+        // Delete later
         [HttpGet("items/error")]
         public async Task<ActionResult> GetError()
         {

@@ -11,6 +11,7 @@ export default async function fetchApi<T>(
 
     if (!serviceUrl || !accessToken) {
         console.error("API URL or Access Token is not available.");
+        toast.error("API URL or Access Token is not available. Please login again.");
         return null;
     }
 
@@ -25,23 +26,46 @@ export default async function fetchApi<T>(
 
         if (!response.ok) {
             const contentType = response.headers.get("Content-Type");
-            // Try to parse the response as JSON if it's JSON
-            if (contentType && contentType.includes("application/json")) {
-                const errorResponse = await response.json();
-                const errorMessage = errorResponse?.message || "An error occurred.";
-                throw new Error(errorMessage);
+
+            let errorResponse;
+            try {
+                errorResponse = await response.json();
+            } catch (jsonError) {
+                errorResponse = null;
             }
 
-            // Otherwise, treat it as plain text
-            const errorText = await response.text();
-            throw new Error(errorText || "An error occurred.");
+            if (errorResponse) {
+                if (errorResponse?.title && errorResponse?.detail) {
+                    // Handling ProblemDetails format
+                    const errorTitle = errorResponse.title;
+                    const errorDetail = errorResponse.detail;
+                    const traceId = errorResponse.traceId ? `Trace ID: ${errorResponse.traceId}` : "";
+
+                    const fullErrorMessage = `${errorTitle} - ${errorDetail}`.trim();
+
+                    toast.error(fullErrorMessage);
+                    console.error("Fetch API Error:", fullErrorMessage);
+                    return null;
+                } else if (errorResponse?.message) {
+                    // Handling message format    
+                    toast.error(errorResponse.message);
+                    console.error("Fetch API Error:", errorResponse.message);
+                    return null;
+                }
+            } else {
+                // Handling other errors
+                const errorText = await response.text();
+                toast.error(errorText || "An error occurred.");
+                console.error("Fetch API Error:", errorText);
+                return null;
+            }
         }
 
         // Handle 204 No Content
         if (response.status === 204) {
             return null; // No content to return
         }
-
+        // Return the OK response as JSON
         return (await response.json()) as T;
     } catch (error: any) {
         const errorMessage = error?.message || "An unexpected error occurred.";

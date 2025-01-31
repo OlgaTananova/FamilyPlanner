@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Net;
 using System.Text.Json;
 using AutoMapper;
@@ -11,6 +12,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.EntityFrameworkCore;
@@ -45,14 +47,23 @@ builder.Logging.AddApplicationInsights(configureTelemetryConfiguration: (config)
 
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 builder.Services.AddExceptionHandler<GlobalErrorHandler>();
-builder.Services.AddProblemDetails();
+builder.Services.AddProblemDetails(options => options.CustomizeProblemDetails = context =>
+    {
+        context.ProblemDetails.Instance =
+            $"{context.HttpContext.Request.Method} {context.HttpContext.Request.Path}";
+
+        context.ProblemDetails.Extensions.TryAdd("requestId", context.HttpContext.TraceIdentifier);
+        #nullable enable
+        Activity? activity = context.HttpContext.Features.Get<IHttpActivityFeature>()?.Activity;
+        context.ProblemDetails.Extensions.TryAdd("traceId", activity?.Id);
+    });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddScoped<ICatalogRepository, CatalogRepository>();
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowSpecificOrigins", policy =>
     {
-        policy.WithOrigins(builder.Configuration.GetSection("ClientApps").Get<string[]>()) // Allow only these origins
+        policy.WithOrigins(builder.Configuration.GetSection("ClientApps").Get<string[]>()!) // Allow only these origins
               .AllowAnyHeader()
               .AllowAnyMethod();
     });
@@ -127,6 +138,7 @@ if (app.Environment.IsDevelopment())
 }
 // Enable CORS
 app.UseExceptionHandler(o => { });
+app.UseStatusCodePages();
 app.UseCors("AllowSpecificOrigins");
 app.UseAuthentication();
 app.UseAuthorization();

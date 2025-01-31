@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
 
 namespace CatalogService.RequestHelpers
 {
@@ -9,24 +10,17 @@ namespace CatalogService.RequestHelpers
             HttpContext httpContext,
             int statusCode,
             string title,
-            string detail)
+            string detail,
+            ProblemDetailsFactory problemDetailsFactory)
         {
-
-            string traceId = httpContext.Request.Headers["traceparent"].ToString();
-            if (string.IsNullOrEmpty(traceId))
-            {
-                traceId = httpContext.TraceIdentifier;
-            }
-
-            var problemDetails = new ProblemDetails
-            {
-                Status = statusCode,
-                Title = title,
-                Detail = detail,
-                Instance = httpContext.Request.Path
-            };
-
-            problemDetails.Extensions["traceId"] = traceId;
+            
+            var problemDetails = problemDetailsFactory.CreateProblemDetails(
+                httpContext,
+                statusCode: statusCode,
+                title: title,
+                detail: detail,
+                instance: $"{httpContext.Request.Method} {httpContext.Request.Path}"
+            );
 
             return problemDetails;
         }
