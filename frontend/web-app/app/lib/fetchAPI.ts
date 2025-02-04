@@ -5,7 +5,8 @@ import toast from "react-hot-toast";
 export default async function fetchApi<T>(
     serviceUrl: string,
     endpoint: string,
-    options: RequestInit
+    options: RequestInit,
+    maxRetries: number = 3
 ): Promise<T | null> {
     const accessToken = getAccessToken();
 
@@ -15,62 +16,59 @@ export default async function fetchApi<T>(
         return null;
     }
 
-    try {
-        const response = await fetch(`${serviceUrl}${endpoint}`, {
-            ...options,
-            headers: {
-                ...options.headers,
-                Authorization: `Bearer ${accessToken}`,
-            },
-        });
+    const backoffDelay = (retryCount: number) => Math.pow(2, retryCount) * 1000;
 
-        if (!response.ok) {
-            const contentType = response.headers.get("Content-Type");
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+        try {
+            const response = await fetch(`${serviceUrl}${endpoint}`, {
+                ...options,
+                headers: {
+                    ...options.headers,
+                    Authorization: `Bearer ${accessToken}`,
+                },
+            });
 
-            let errorResponse;
-            try {
-                errorResponse = await response.json();
-            } catch (jsonError) {
-                errorResponse = null;
+            if (response.ok) {
+                return response.status === 204 ? null : (await response.json()) as T;
+            } else {
+                if ([500, 502, 503, 504].includes(response.status) && attempt < maxRetries) {
+                    const delay = backoffDelay(attempt);
+                    console.warn(`Retrying API call in ${delay}ms...`);
+                    await new Promise(res => setTimeout(res, delay));
+                    continue;
+                }
+                const clonedResponse = response.clone(); // Clone response to allow multiple reads
+
+                let errorResponse;
+                try {
+                    errorResponse = await clonedResponse.json(); // Try to parse as JSON
+                } catch {
+                    errorResponse = null;
+                }
+
+                const errorMessage =
+                    errorResponse?.title && errorResponse?.detail
+                        ? `${errorResponse.title} - ${errorResponse.detail}`
+                        : errorResponse?.message || "An error occurred.";
+
+                toast.error(`Network error: ${errorMessage}. Please try again.`);
+                console.error(`Fetch API Error (Attempt ${attempt + 1}/${maxRetries}):`, errorMessage);
+
+                return null; // If not a retryable error, exit
             }
 
-            if (errorResponse) {
-                if (errorResponse?.title && errorResponse?.detail) {
-                    // Handling ProblemDetails format
-                    const errorTitle = errorResponse.title;
-                    const errorDetail = errorResponse.detail;
-                    const traceId = errorResponse.traceId ? `Trace ID: ${errorResponse.traceId}` : "";
-
-                    const fullErrorMessage = `${errorTitle} - ${errorDetail}`.trim();
-
-                    toast.error(fullErrorMessage);
-                    console.error("Fetch API Error:", fullErrorMessage);
-                    return null;
-                } else if (errorResponse?.message) {
-                    // Handling message format    
-                    toast.error(errorResponse.message);
-                    console.error("Fetch API Error:", errorResponse.message);
-                    return null;
-                }
+        } catch (error: any) {
+            console.error(`Fetch API Attempt ${attempt + 1}/${maxRetries} Failed:`, error.message);
+            if (attempt < maxRetries) {
+                const delay = backoffDelay(attempt);
+                console.warn(`Retrying API call in ${delay}ms...`);
+                await new Promise(res => setTimeout(res, delay));
             } else {
-                // Handling other errors
-                const errorText = await response.text();
-                toast.error(errorText || "An error occurred.");
-                console.error("Fetch API Error:", errorText);
+                toast.error("Network error: Please check your internet connection.");
                 return null;
             }
         }
-
-        // Handle 204 No Content
-        if (response.status === 204) {
-            return null; // No content to return
-        }
-        // Return the OK response as JSON
-        return (await response.json()) as T;
-    } catch (error: any) {
-        const errorMessage = error?.message || "An unexpected error occurred.";
-        toast.error("There is an error while getting the data from the server.");
-        console.error("Fetch API Error:", errorMessage);
-        return null;
     }
+
+    return null; // Return null if all retries failed
 }

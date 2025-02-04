@@ -1,9 +1,13 @@
+using System.Net.Http;
 using AutoMapper;
+using CatalogService.RequestHelpers;
 using Contracts.ShoppingLists;
 using MassTransit;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
 using ShoppingListService.Data;
 using ShoppingListService.DTOs;
 using ShoppingListService.Entities;
@@ -24,17 +28,21 @@ namespace ShoppingListService.Controllers
         private IPublishEndpoint _publisher;
         private readonly ILogger<ShoppingListsController> _logger;
         private readonly string _operationId;
-        public ShoppingListsController(ShoppingListContext context, IMapper mapper, IShoppingListService service, IHttpContextAccessor httpContextAccessor, IPublishEndpoint publishEndpoint, ILogger<ShoppingListsController> logger)
+        private ProblemDetailsFactory _problemDetailsFactory;
+        private readonly IHttpContextAccessor _httpContext;
+        public ShoppingListsController(ShoppingListContext context, IMapper mapper, IShoppingListService service, IHttpContextAccessor httpContextAccessor, IPublishEndpoint publishEndpoint, ILogger<ShoppingListsController> logger, ProblemDetailsFactory problemDetailsFactory)
         {
             _mapper = mapper;
             _context = context;
             _shoppingListService = service;
             _publisher = publishEndpoint;
+            _httpContext = httpContextAccessor;
             _logger = logger;
+            _problemDetailsFactory = problemDetailsFactory;
             // Centralized family and user ID extraction
             _familyName = httpContextAccessor.HttpContext?.User.Claims.FirstOrDefault(c => c.Type == "family")?.Value;
             _userId = httpContextAccessor.HttpContext?.User.Claims.FirstOrDefault(c => c.Type == "userId")?.Value;
-            _operationId = httpContextAccessor.HttpContext?.Request.Headers.TraceParent;
+            _operationId = httpContextAccessor.HttpContext.Features.Get<IHttpActivityFeature>()?.Activity.TraceId.ToString();
 
             if (string.IsNullOrEmpty(_familyName) || string.IsNullOrEmpty(_userId))
             {
@@ -59,8 +67,14 @@ namespace ShoppingListService.Controllers
         [HttpPost]
         public async Task<ActionResult<ShoppingListDto>> CreateShoppingList(CreateShoppingListDto shoppingListDto)
         {
-            _logger.LogInformation($"Create Shopping List request received. Service: Shopping List Service. User: {_userId}, Family: {_familyName}, OperationId : {_operationId}");
-
+            StructuredLogger.LogInformation(_logger, HttpContext,
+            "Create Shopping List request received.",
+            _userId,
+            _familyName,
+            new Dictionary<string, object>
+            {
+                { "operationId", _operationId },
+            });
             // Create a new shopping list with default properties
             var shoppingList = new ShoppingList
             {
@@ -74,8 +88,23 @@ namespace ShoppingListService.Controllers
                 var validationResult = validator.Validate(shoppingListDto);
                 if (!validationResult.IsValid)
                 {
-                    _logger.LogError($"Create Shopping List request failed: Invalid Data. Service: Shopping List Service, User: {_userId}, Family: {_familyName}, OperationId : {_operationId}");
-                    BadRequest(validationResult.Errors.Select(e => e.ErrorMessage));
+                    StructuredLogger.LogWarning(_logger, HttpContext,
+                    "Create Shopping List request failed: Invalid data.",
+                    _userId,
+                    _familyName,
+                    new Dictionary<string, object>
+                    {
+                        { "validationErrors", validationResult.Errors.Select(e => e.ErrorMessage) }
+                    });
+
+                    var problemDetails = ProblemDetailsFactoryHelper.CreateProblemDetails(
+                        HttpContext,
+                        StatusCodes.Status400BadRequest,
+                        "Invalid data.",
+                        "One or more validation errors occurred.",
+                        _problemDetailsFactory);
+
+                    BadRequest(problemDetails);
                 }
                 shoppingList.Heading = shoppingListDto.Heading ?? shoppingList.Heading;
                 // Find catalog items by SKUs
@@ -85,8 +114,22 @@ namespace ShoppingListService.Controllers
 
                     if (catalogItems == null || catalogItems.Count == 0)
                     {
-                        _logger.LogError($"Create Shopping List request failed: No items found with SKUs. Service: Shopping List Service, User: {_userId}, Family: {_familyName}, OperationId : {_operationId}");
-                        return BadRequest("No catalog items found for the provided SKUs.");
+                        StructuredLogger.LogWarning(_logger, HttpContext,
+                        "Create Shopping List request failed: No items found with provided SKUs.",
+                        _userId,
+                        _familyName,
+                        new Dictionary<string, object>
+                        {
+                            { "skus", shoppingListDto.SKUs }
+                        });
+
+                        var problemDetails = ProblemDetailsFactoryHelper.CreateProblemDetails(
+                            HttpContext,
+                            StatusCodes.Status400BadRequest,
+                            "Invalid SKUs",
+                            "No catalog items found for the provided SKUs.",
+                            _problemDetailsFactory);
+                        return BadRequest(problemDetails);
                     }
 
                     var shoppingListItems = _mapper.Map<List<ShoppingListItem>>(catalogItems);
@@ -102,19 +145,36 @@ namespace ShoppingListService.Controllers
             await _publisher.Publish(_mapper.Map<ShoppingListCreated>(newShoppingList), context =>
             {
                 context.Headers.Set("OperationId", _operationId);
+                context.Headers.Set("traceId", _operationId);
+                context.Headers.Set("requestId", _httpContext.HttpContext.TraceIdentifier);
             });
 
             bool result = await _shoppingListService.SaveChangesAsync();
 
             if (!result)
             {
-                _logger.LogError($"Create Shopping List request failed: Cannot save data to db. Service: Shopping List Service, User: {_userId}, Family: {_familyName}, OperationId : {_operationId}");
-                return BadRequest("Could not save changes to the DB");
+                StructuredLogger.LogError(_logger, HttpContext,
+                "Create Shopping List request failed: Database save error.",
+                _userId,
+                _familyName,
+                new Dictionary<string, object> { });
 
-            }
-            ;
-
-            _logger.LogInformation($"Create Shopping List request finished. Service: Shopping List Service. User: {_userId}, Family: {_familyName}, OperationId : {_operationId}");
+                var problemDetails = ProblemDetailsFactoryHelper.CreateProblemDetails(
+                    HttpContext,
+                    StatusCodes.Status400BadRequest,
+                    "Database Error",
+                    "Could not save changes to the database while creating the shopping list.",
+                    _problemDetailsFactory);
+                return BadRequest(problemDetails);
+            };
+            StructuredLogger.LogInformation(_logger, HttpContext,
+                "Create Shopping List request succeeded.",
+                _userId,
+                _familyName,
+                new Dictionary<string, object>
+                {
+                    { "shoppingListId", shoppingList.Id }
+                });
             return CreatedAtAction(nameof(GetShoppingList), new
             {
                 shoppingList.Id

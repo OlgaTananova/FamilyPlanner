@@ -1,4 +1,5 @@
 using System;
+using Microsoft.EntityFrameworkCore;
 using ShoppingListService.Data;
 using ShoppingListService.Entities;
 
@@ -11,6 +12,7 @@ public class DbHelper
 
     public static void InitDbForTests(ShoppingListContext context)
     {
+        context.Database.ExecuteSqlRaw("CREATE EXTENSION IF NOT EXISTS pg_trgm;");
         context.CatalogItems.AddRange(GetCatalogItemsForTests());
         context.SaveChanges();
     }

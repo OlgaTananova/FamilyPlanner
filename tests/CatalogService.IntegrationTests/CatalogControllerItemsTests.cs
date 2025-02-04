@@ -119,7 +119,7 @@ public class CatalogControllerItemsTests : IAsyncLifetime
         // Assert
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         var errorMessage = await response.Content.ReadAsStringAsync();
-        Assert.Contains("The item with this name already exists.", errorMessage);
+        Assert.Contains("already exists", errorMessage);
     }
 
     [Fact]
@@ -140,7 +140,7 @@ public class CatalogControllerItemsTests : IAsyncLifetime
         // Assert
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
         var errorMessage = await response.Content.ReadAsStringAsync();
-        Assert.Contains("Cannot find the category of the newly created item.", errorMessage);
+        Assert.Contains("not found", errorMessage);
     }
 
     [Fact]

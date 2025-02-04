@@ -1,6 +1,7 @@
 using System;
 using CatalogService.Data;
 using CatalogService.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace CatalogService.IntegrationTests.Utils;
 
@@ -10,6 +11,8 @@ public static class DbHelper
     private static readonly string _family = "test-family";
     public static void InitDbForTests(CatalogDbContext context)
     {
+         // Execute the raw SQL to create the extension
+        context.Database.ExecuteSqlRaw("CREATE EXTENSION IF NOT EXISTS pg_trgm;");
         context.Categories.AddRange(GetCategoriesForTest());
         context.SaveChanges();
     }

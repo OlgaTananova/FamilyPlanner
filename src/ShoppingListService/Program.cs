@@ -1,7 +1,7 @@
-using Contracts.Catalog;
-using DotNetEnv;
+using System.Diagnostics;
 using MassTransit;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Identity.Web;
 using ShoppingListService.Consumers;
@@ -32,6 +32,16 @@ builder.Services.AddDbContext<ShoppingListContext>(opt =>
     opt.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
 });
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+builder.Services.AddProblemDetails(options => options.CustomizeProblemDetails = context =>
+    {
+        context.ProblemDetails.Instance =
+            $"{context.HttpContext.Request.Method} {context.HttpContext.Request.Path}";
+
+        context.ProblemDetails.Extensions.TryAdd("requestId", context.HttpContext.TraceIdentifier);
+#nullable enable
+        Activity? activity = context.HttpContext.Features.Get<IHttpActivityFeature>()?.Activity;
+        context.ProblemDetails.Extensions.TryAdd("traceId", activity?.Id);
+    });
 
 // RabbitMq Messager
 builder.Services.AddMassTransit(x =>
@@ -60,8 +70,8 @@ builder.Services.AddMassTransit(x =>
         });
         cfg.Host(builder.Configuration["RabbitMq:Host"], "/", h =>
         {
-            h.Username(builder.Configuration["RabbitMq:User"]);
-            h.Password(builder.Configuration["RabbitMq:Password"]);
+            h.Username(builder.Configuration["RabbitMq:User"]!);
+            h.Password(builder.Configuration["RabbitMq:Password"]!);
         });
 
         cfg.ReceiveEndpoint("shoppinglist-catalog-item-created", e =>
@@ -104,9 +114,9 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowSpecificOrigins", policy =>
     {
-        policy.WithOrigins(builder.Configuration.GetSection("ClientApps").Get<string[]>()) // Allow only these origins
-              .AllowAnyHeader()            // Allow any headers
-              .AllowAnyMethod()           // Allow any HTTP methods
+        policy.WithOrigins(builder.Configuration.GetSection("ClientApps").Get<string[]>()!) // Allow only these origins
+              .AllowAnyHeader()
+              .AllowAnyMethod()
               .AllowCredentials();
     });
 });
@@ -150,6 +160,7 @@ if (app.Environment.IsDevelopment())
 {
 }
 app.UseExceptionHandler(o => { });
+app.UseStatusCodePages(); // Activate problem details middleware
 app.UseCors("AllowSpecificOrigins");
 app.UseAuthentication();
 app.UseAuthorization();

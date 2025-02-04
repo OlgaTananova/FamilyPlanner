@@ -9,6 +9,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { addShoppingList, deleteShoppingListFromStore, deleteShoppingListItemFromStore, updateCatalogCategory, updateCatalogItem, updateShoppingListInStore } from "../redux/shoppingListSlice";
 import { RootState } from "../redux/store";
 import { addCategory, addItem, Category, removeCategoryFromStore, removeItemFromStore, updateCategoryInStore, updateItemInStore } from "../redux/catalogSlice";
+import toast from "react-hot-toast";
 
 interface SignalRContextType {
     connection: signalR.HubConnection | null;
@@ -52,8 +53,21 @@ export const SignalRProvider: React.FC<SignalRProviderProps> = ({ hubUrl, childr
                         Authorization: `Bearer ${token.accessToken}`,
                     }
                 })
-                .withAutomaticReconnect()
+                .withAutomaticReconnect([0, 2000, 5000, 10000])
                 .build();
+            newConnection.onreconnecting(() => {
+                console.warn("SignalR reconnecting...");
+            });
+            newConnection.onreconnected(() => {
+                console.log("SignalR reconnected successfully!");
+                setIsConnected(true);
+            });
+            newConnection.onclose(() => {
+                console.error("SignalR connection closed. Please try to refresh the page.");
+                toast.error("Real-time notification service is disconnected. Please try to refresh the page.");
+                setIsConnected(false);
+            });
+
 
             await newConnection.start();
             console.log("SignalR connected!");
@@ -117,26 +131,21 @@ export const SignalRProvider: React.FC<SignalRProviderProps> = ({ hubUrl, childr
                 dispatch(addShoppingList(shoppingList));
             });
             connection.on("ShoppingListDeleted", (shoppingList: { id: string, family: string, ownerId: string }) => {
-                console.log(shoppingList);
                 dispatch(deleteShoppingListFromStore(shoppingList.id))
             });
             connection.on("ShoppingListUpdated", (shoppingList) => {
-                console.log(shoppingList);
                 dispatch(updateShoppingListInStore(shoppingList));
             });
 
             connection.on("ShoppingListItemUpdated", (updatedShoppingList) => {
-                console.log(updatedShoppingList);
                 dispatch(updateShoppingListInStore(updatedShoppingList));
             });
 
             connection.on("ShoppingListItemsAdded", (updatedShoppingList) => {
-                console.log(updatedShoppingList);
                 dispatch(updateShoppingListInStore(updatedShoppingList));
             });
-            connection.on("ShoppingListItemDeleted", (data: {shoppingListId: string, itemId: string, ownerId: string, family: string}) => {
-                console.log(data);
-                dispatch(deleteShoppingListItemFromStore({shoppingListId: data.shoppingListId, itemId: data.itemId}));
+            connection.on("ShoppingListItemDeleted", (data: { shoppingListId: string, itemId: string, ownerId: string, family: string }) => {
+                dispatch(deleteShoppingListItemFromStore({ shoppingListId: data.shoppingListId, itemId: data.itemId }));
             });
 
             return () => {
