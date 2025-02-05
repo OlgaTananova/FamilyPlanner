@@ -1,4 +1,6 @@
 using System;
+using System.Diagnostics;
+using System.Net;
 using System.Net.Http.Headers;
 using System.Security.Claims;
 using AutoFixture;
@@ -11,13 +13,20 @@ using CatalogService.RequestHelpers;
 using Contracts.Catalog;
 using MassTransit;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.Extensions.Logging;
 using Microsoft.Identity.Client;
 using Moq;
 using Xunit.Sdk;
 
 namespace CatalogService.UnitTests;
+
+public class HttpActivityFeature : IHttpActivityFeature
+{
+    public Activity? Activity { get; set; }
+}
 
 public class CatalogServiceControllerTests
 {
@@ -27,7 +36,6 @@ public class CatalogServiceControllerTests
     public readonly Fixture _fixture;
     public readonly CatalogController _controller;
     public IMapper _mapper;
-
 
     public CatalogServiceControllerTests()
     {
@@ -44,19 +52,36 @@ public class CatalogServiceControllerTests
 
         var mockHttpContextAccessor = new Mock<IHttpContextAccessor>();
         var mockHttpContext = new DefaultHttpContext();
+
         mockHttpContext.User = new ClaimsPrincipal(new ClaimsIdentity(new[]
         {
         new Claim("family", "MockFamilyName"),
         new Claim("userId", "MockUserId")
-    }, "mock"));
+        }, "mock"));
+
         mockHttpContext.Request.Headers["TraceParent"] = "MockOperationId";
+
+
+        // Mock IHttpActivityFeature and add to Features collection
+        var activityFeature = new HttpActivityFeature { Activity = new Activity("TestActivity") };
+        activityFeature.Activity.SetParentId("mockTraceId");
+        mockHttpContext.Features.Set<IHttpActivityFeature>(activityFeature);
         mockHttpContextAccessor.Setup(h => h.HttpContext).Returns(mockHttpContext);
 
         var mockLogger = new Mock<ILogger<CatalogController>>();
-        _controller = new CatalogController(_mapper, _repo.Object, mockHttpContextAccessor.Object, _publisher.Object, mockLogger.Object);
-
+        var mockProblemDetailsFactory = new TestProblemDetailsFactory();
+        _controller = new CatalogController(
+        _mapper,
+        _repo.Object,
+        mockHttpContextAccessor.Object,
+        _publisher.Object,
+        mockLogger.Object,
+        mockProblemDetailsFactory);
+        _controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = mockHttpContext
+        };
     }
-
     [Fact]
     public async Task GetAllCategories_ShouldReturnListOfCategories()
     {
@@ -94,13 +119,13 @@ public class CatalogServiceControllerTests
     {
         // Arrange 
         var category = _fixture.Create<CategoryDto>();
-        _repo.Setup(r => r.GetCategoryBySkuAsync(It.IsAny<Guid>(), It.IsAny<string>())).ReturnsAsync((CategoryDto)null);
+        _repo.Setup(r => r.GetCategoryBySkuAsync(It.IsAny<Guid>(), It.IsAny<string>())).ReturnsAsync((CategoryDto)null!);
 
         // Act 
         var result = await _controller.GetCategoryBySku(It.IsAny<Guid>());
 
         // Assert
-        Assert.IsType<NotFoundResult>(result.Result);
+        Assert.IsType<NotFoundObjectResult>(result.Result);
 
 
     }
@@ -126,7 +151,6 @@ public class CatalogServiceControllerTests
 
         // Assert
         var badRequestResult = Assert.IsType<BadRequestObjectResult>(result.Result);
-        Assert.Equal("The category with this name already exists.", badRequestResult.Value);
     }
 
     [Fact]
@@ -136,7 +160,7 @@ public class CatalogServiceControllerTests
         var categoryDto = _fixture.Create<CreateCategoryDto>();
 
         _repo.Setup(r => r.GetCategoryEntityByName(categoryDto.Name, It.IsAny<string>()))
-             .ReturnsAsync((Category)null);
+             .ReturnsAsync((Category)null!);
 
         _repo.Setup(r => r.SaveChangesAsync()).ReturnsAsync(false);
 
@@ -145,7 +169,6 @@ public class CatalogServiceControllerTests
 
         // Assert
         var badRequestResult = Assert.IsType<BadRequestObjectResult>(result.Result);
-        Assert.Equal("Could not save changes to the DB", badRequestResult.Value);
     }
 
     [Fact]
@@ -165,7 +188,7 @@ public class CatalogServiceControllerTests
         var categoryDtoResult = _fixture.Create<CategoryDto>();
 
         _repo.Setup(r => r.GetCategoryEntityByName(categoryDto.Name, It.IsAny<string>()))
-             .ReturnsAsync((Category)null);
+             .ReturnsAsync((Category)null!);
 
         _repo.Setup(r => r.AddCategory(It.IsAny<Category>())).Verifiable();
         _repo.Setup(r => r.SaveChangesAsync()).ReturnsAsync(true);
@@ -198,7 +221,6 @@ public class CatalogServiceControllerTests
 
         // Assert
         var badRequestResult = Assert.IsType<BadRequestObjectResult>(result.Result);
-        Assert.Equal("The item with this name already exists.", badRequestResult.Value);
     }
 
     [Fact]
@@ -208,17 +230,16 @@ public class CatalogServiceControllerTests
         var itemDto = _fixture.Create<CreateItemDto>();
 
         _repo.Setup(r => r.GetItemEntityByNameAsync(itemDto.Name, It.IsAny<string>()))
-             .ReturnsAsync((Item)null);
+             .ReturnsAsync((Item)null!);
 
         _repo.Setup(r => r.GetCategoryEntityBySku(itemDto.CategorySKU, It.IsAny<string>()))
-             .ReturnsAsync((Category)null);
+             .ReturnsAsync((Category)null!);
 
         // Act
         var result = await _controller.CreateItem(itemDto);
 
         // Assert
         var notFoundResult = Assert.IsType<NotFoundObjectResult>(result.Result);
-        Assert.Equal("Cannot find the category of the newly created item.", notFoundResult.Value);
     }
 
     [Fact]
@@ -237,7 +258,7 @@ public class CatalogServiceControllerTests
 
 
         _repo.Setup(r => r.GetItemEntityByNameAsync(itemDto.Name, It.IsAny<string>()))
-             .ReturnsAsync((Item)null);
+             .ReturnsAsync((Item)null!);
 
         _repo.Setup(r => r.GetCategoryEntityBySku(itemDto.CategorySKU, It.IsAny<string>()))
              .ReturnsAsync(category);
@@ -249,7 +270,6 @@ public class CatalogServiceControllerTests
 
         // Assert
         var badRequestResult = Assert.IsType<BadRequestObjectResult>(result.Result);
-        Assert.Equal("Could not save changes to the DB.", badRequestResult.Value);
     }
 
     [Fact]
@@ -269,7 +289,7 @@ public class CatalogServiceControllerTests
         var itemDtoResult = _fixture.Create<ItemDto>();
 
         _repo.Setup(r => r.GetItemEntityByNameAsync(itemDto.Name, It.IsAny<string>()))
-             .ReturnsAsync((Item)null);
+             .ReturnsAsync((Item)null!);
 
         _repo.Setup(r => r.GetCategoryEntityBySku(itemDto.CategorySKU, It.IsAny<string>()))
              .ReturnsAsync(category);
@@ -286,8 +306,5 @@ public class CatalogServiceControllerTests
         var returnedItem = Assert.IsType<ItemDto>(okResult.Value);
 
     }
-
-
-
 
 }

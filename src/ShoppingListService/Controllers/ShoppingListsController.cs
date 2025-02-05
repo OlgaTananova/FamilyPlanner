@@ -166,7 +166,8 @@ namespace ShoppingListService.Controllers
                     "Could not save changes to the database while creating the shopping list.",
                     _problemDetailsFactory);
                 return BadRequest(problemDetails);
-            };
+            }
+            ;
             StructuredLogger.LogInformation(_logger, HttpContext,
                 "Create Shopping List request succeeded.",
                 _userId,
@@ -206,7 +207,14 @@ namespace ShoppingListService.Controllers
 
             if (list == null)
             {
-                return NotFound("Cannot find the requested shopping list");
+                var problemDetails = ProblemDetailsFactoryHelper.CreateProblemDetails(
+                    HttpContext,
+                    StatusCodes.Status404NotFound,
+                    "Shopping List Not Found",
+                    $"The shopping list with ID {id} was not found.",
+                    _problemDetailsFactory
+                );
+                return NotFound(problemDetails);
             }
             return Ok(_mapper.Map<ShoppingListDto>(list));
         }
@@ -215,19 +223,41 @@ namespace ShoppingListService.Controllers
         [HttpPut("{id}")]
         public async Task<ActionResult<ShoppingListDto>> UpdateShoppingList(Guid id, UpdateShoppingListDto shoppingListDto)
         {
-            _logger.LogInformation($"Update Shopping List request received. Service: Shopping List Service. User: {_userId}, Family: {_familyName}, OperationId : {_operationId}");
-
+            StructuredLogger.LogInformation(_logger, HttpContext,
+            "Update Shopping List request received.",
+            _userId,
+            _familyName,
+            new Dictionary<string, object>
+            {
+                { "shoppingListId", id },
+                { "operationId", _operationId }
+            });
             // Validate the incoming DTO
             var validator = new UpdateShoppingListDtoValidator();
             var validationResult = validator.Validate(shoppingListDto);
 
             if (!validationResult.IsValid)
             {
-                _logger.LogError($"Update Shopping List request failed: Invalid Data. Service: Shopping List Service, User: {_userId}, Family: {_familyName}, OperationId : {_operationId}");
-                return BadRequest(validationResult.Errors.Select(e => e.ErrorMessage));
-            }
+                StructuredLogger.LogWarning(_logger, HttpContext,
+                "Update Shopping List request failed: Invalid data.",
+                _userId,
+                _familyName,
+                new Dictionary<string, object>
+                {
+                    { "shoppingListId", id },
+                    { "operationId", _operationId },
+                    { "validationErrors", validationResult.Errors.Select(e => e.ErrorMessage) }
+                });
 
-            using var transaction = await _shoppingListService.BeginTransactionAsync();
+                var problemDetails = ProblemDetailsFactoryHelper.CreateProblemDetails(
+                    HttpContext,
+                    StatusCodes.Status400BadRequest,
+                    "Invalid Data",
+                    "One or more validation errors occurred.",
+                    _problemDetailsFactory
+                );
+                return BadRequest(problemDetails);
+            }
 
             try
             {
@@ -235,8 +265,23 @@ namespace ShoppingListService.Controllers
 
                 if (shoppingList == null)
                 {
-                    _logger.LogError($"Update Shopping List request failed: Shopping List not found. Service: Shopping List Service, User: {_userId}, Family: {_familyName}, OperationId : {_operationId}");
-                    return NotFound($"Cannot find the shopping list with id {id}");
+                    StructuredLogger.LogWarning(_logger, HttpContext,
+                    "Update Shopping List request failed: Shopping List not found.",
+                    _userId,
+                    _familyName,
+                    new Dictionary<string, object>
+                    {
+                        { "shoppingListId", id }
+                    });
+
+                    var problemDetails = ProblemDetailsFactoryHelper.CreateProblemDetails(
+                        HttpContext,
+                        StatusCodes.Status404NotFound,
+                        "Shopping List Not Found",
+                        $"Cannot find the shopping list with ID {id}.",
+                        _problemDetailsFactory
+                    );
+                    return NotFound(problemDetails);
                 }
                 await _shoppingListService.UpdateShoppingList(shoppingList, shoppingListDto);
 
@@ -245,27 +290,66 @@ namespace ShoppingListService.Controllers
                 await _publisher.Publish(_mapper.Map<ShoppingListUpdated>(updatedShoppingList), context =>
                 {
                     context.Headers.Set("OperationId", _operationId);
+                    context.Headers.Set("traceId", _operationId);
+                    context.Headers.Set("requestId", _httpContext.HttpContext.TraceIdentifier);
                 });
 
                 bool result = await _shoppingListService.SaveChangesAsync();
 
                 if (!result)
                 {
-                    await transaction.RollbackAsync();
-                    _logger.LogError($"Update Shopping List request failed: Could not save data to db. Service: Shopping List Service, User: {_userId}, Family: {_familyName}, OperationId : {_operationId}");
+                    StructuredLogger.LogError(_logger, HttpContext,
+                    "Update Shopping List request failed: Database save error.",
+                    _userId,
+                    _familyName,
+                    new Dictionary<string, object>
+                    {
+                        { "shoppingListId", id }
+                    });
 
-                    return BadRequest("Cannot save changes to the database.");
+                    var problemDetails = ProblemDetailsFactoryHelper.CreateProblemDetails(
+                        HttpContext,
+                        StatusCodes.Status400BadRequest,
+                        "Database Error",
+                        "Could not save changes to the database while updating the shopping list.",
+                        _problemDetailsFactory
+                    );
+
+                    return BadRequest(problemDetails);
                 }
-                await transaction.CommitAsync();
+                StructuredLogger.LogInformation(_logger, HttpContext,
+                "Update Shopping List request succeeded.",
+                _userId,
+                _familyName,
+                new Dictionary<string, object>
+                {
+                    { "shoppingListId", id }
+                });
 
-                _logger.LogInformation($"Update Shopping List request finished. Service: Shopping List Service. User: {_userId}, Family: {_familyName}, OperationId : {_operationId}");
                 return Ok(updatedShoppingList);
             }
             catch (Exception ex)
             {
-                await transaction.RollbackAsync();
-                _logger.LogError($"Update Shopping List request failed: Error: {ex.Message}  Service: Shopping List Service, User: {_userId}, Family: {_familyName}, OperationId : {_operationId}");
-                return BadRequest("Could not commit the transaction to update the shopping list.");
+                StructuredLogger.LogError(_logger, HttpContext,
+                "Unhandled exception during Update Shopping List request.",
+                _userId,
+                _familyName,
+                new Dictionary<string, object>
+                {
+                    { "shoppingListId", id },
+                    { "exception", ex.Message },
+                    { "operationId", _operationId },
+                    { "stackTrace", ex.StackTrace ?? "No StackTrace" }
+                });
+
+                var problemDetails = ProblemDetailsFactoryHelper.CreateProblemDetails(
+                    HttpContext,
+                    StatusCodes.Status400BadRequest,
+                    "Internal Server Error",
+                    "An unexpected error occurred while updating the shopping list.",
+                    _problemDetailsFactory
+                    );
+                return BadRequest(problemDetails);
             }
 
         }
@@ -274,75 +358,199 @@ namespace ShoppingListService.Controllers
         [HttpPost("{id}/items")]
         public async Task<ActionResult<ShoppingListDto>> CreateShoppingListItem(Guid id, CreateShoppingListItemDto items)
         {
-            _logger.LogInformation($"Create Shopping List Item request received. Service: Shopping List Service. User: {_userId}, Family: {_familyName}, OperationId : {_operationId}");
-
-            ShoppingList shoppingList = await _shoppingListService.GetShoppingListById(id, _familyName);
-
-            if (shoppingList == null)
+            StructuredLogger.LogInformation(_logger, HttpContext,
+            "Create Shopping List Item request received.",
+            _userId, _familyName,
+            new Dictionary<string, object>
             {
-                _logger.LogError($"Create Shopping List Item request failed: Shopping List not found. Service: Shopping List Service, User: {_userId}, Family: {_familyName}, OperationId : {_operationId}");
-                return NotFound($"Cannot find the shopping list with id {id} to add a new item");
-            }
-
-            List<CatalogItem> catalogItems = new List<CatalogItem>();
-            foreach (var sku in items.SKUs)
-            {
-                var catalogItem = await _shoppingListService.GetCatalogItemBySKU(sku, _familyName);
-                if (catalogItem == null)
-                {
-                    _logger.LogError($"Create Shopping List Item request failed: One of Items not found. Service: Shopping List Service, User: {_userId}, Family: {_familyName}, OperationId : {_operationId}");
-                    return NotFound($"Cannot find the catalog item with SKU {sku}");
-                }
-                catalogItems.Add(catalogItem);
-            }
-            if (catalogItems.Count == 0)
-            {
-                _logger.LogError($"Create Shopping List Item request failed: One of Items is not found. Service: Shopping List Service, User: {_userId}, Family: {_familyName}, OperationId : {_operationId}");
-                return BadRequest("No catalog items found for the provided SKUs.");
-            }
-            foreach (var catalogItem in catalogItems)
-            {
-                ShoppingListItem shoppingListItem = _mapper.Map<ShoppingListItem>(catalogItem);
-                shoppingListItem.ShoppingListId = id;
-
-                _shoppingListService.AddShoppingListItem(shoppingListItem);
-            }
-            // Map the updated shopping list to the DTO
-            var shoppingListDto = _mapper.Map<ShoppingListDto>(shoppingList);
-
-            // Publish the message to the message broker    
-            await _publisher.Publish(_mapper.Map<ShoppingListItemsAdded>(shoppingListDto), context =>
-            {
-                context.Headers.Set("OperationId", _operationId);
+                { "shoppingListId", id }
             });
-
-            bool result = await _shoppingListService.SaveChangesAsync();
-            if (!result)
+            try
             {
-                _logger.LogError($"Create Shopping List Item request failed: Cannot save data to db. Service: Shopping List Service, User: {_userId}, Family: {_familyName}, OperationId : {_operationId}");
-                return BadRequest("Could not save changes to the DB");
-            }
+                ShoppingList shoppingList = await _shoppingListService.GetShoppingListById(id, _familyName);
 
-            _logger.LogInformation($"Create Shopping List Item request finished. Service: Shopping List Service. User: {_userId}, Family: {_familyName}, OperationId : {_operationId}");
-            return Ok(shoppingListDto);
+                if (shoppingList == null)
+                {
+                    StructuredLogger.LogWarning(_logger, HttpContext,
+                    "Create Shopping List Item request failed: Shopping List not found.",
+                    _userId,
+                    _familyName,
+                    new Dictionary<string, object>
+                    {
+                    { "shoppingListId", id }
+                    });
+
+                    var problemDetails = ProblemDetailsFactoryHelper.CreateProblemDetails(
+                        HttpContext,
+                        StatusCodes.Status404NotFound,
+                        "Shopping List Not Found",
+                        $"Cannot find the shopping list with ID {id} to add a new item.",
+                        _problemDetailsFactory
+                    );
+                    return NotFound(problemDetails);
+                }
+
+                List<CatalogItem> catalogItems = new List<CatalogItem>();
+                foreach (var sku in items.SKUs)
+                {
+                    var catalogItem = await _shoppingListService.GetCatalogItemBySKU(sku, _familyName);
+                    if (catalogItem == null)
+                    {
+                        StructuredLogger.LogWarning(_logger, HttpContext,
+                        "Create Shopping List Item request failed: Some catalog items not found.",
+                        _userId,
+                        _operationId,
+                        new Dictionary<string, object>
+                        {
+                        { "shoppingListId", id }
+                        });
+
+                        var problemDetails = ProblemDetailsFactoryHelper.CreateProblemDetails(
+                            HttpContext,
+                            StatusCodes.Status404NotFound,
+                            "Catalog Items Not Found",
+                            "Some catalog items could not be found.",
+                            _problemDetailsFactory
+                            );
+                        return NotFound(problemDetails);
+                    }
+                    catalogItems.Add(catalogItem);
+                }
+                if (catalogItems.Count == 0)
+                {
+                    StructuredLogger.LogError(_logger, HttpContext,
+                    "Create Shopping List Item request failed: No valid catalog items found.",
+                    _userId,
+                    _familyName,
+                    new Dictionary<string, object>
+                    {
+                    { "shoppingListId", id }
+                    });
+
+                    var problemDetails = ProblemDetailsFactoryHelper.CreateProblemDetails(
+                        HttpContext,
+                        StatusCodes.Status400BadRequest,
+                        "Invalid SKUs",
+                        "No catalog items found for the provided SKUs.",
+                        _problemDetailsFactory
+                    );
+
+                    return BadRequest(problemDetails);
+                }
+                foreach (var catalogItem in catalogItems)
+                {
+                    ShoppingListItem shoppingListItem = _mapper.Map<ShoppingListItem>(catalogItem);
+                    shoppingListItem.ShoppingListId = id;
+
+                    _shoppingListService.AddShoppingListItem(shoppingListItem);
+                }
+                // Map the updated shopping list to the DTO
+                var shoppingListDto = _mapper.Map<ShoppingListDto>(shoppingList);
+
+                // Publish the message to the message broker    
+                await _publisher.Publish(_mapper.Map<ShoppingListItemsAdded>(shoppingListDto), context =>
+                {
+                    context.Headers.Set("OperationId", _operationId);
+                    context.Headers.Set("traceId", _operationId);
+                    context.Headers.Set("requestId", _httpContext.HttpContext.TraceIdentifier);
+                });
+
+                bool result = await _shoppingListService.SaveChangesAsync();
+                if (!result)
+                {
+                    StructuredLogger.LogError(_logger, HttpContext,
+                    "Create Shopping List Item request failed: Database save error.",
+                    _userId,
+                    _operationId,
+                    new Dictionary<string, object>
+                    {
+                    { "shoppingListId", id }
+                    });
+
+                    var problemDetails = ProblemDetailsFactoryHelper.CreateProblemDetails(
+                        HttpContext,
+                        StatusCodes.Status400BadRequest,
+                        "Database Error",
+                        "Could not save changes to the database while adding items to the shopping list.",
+                        _problemDetailsFactory
+                    );
+                    return BadRequest(problemDetails);
+                }
+
+                StructuredLogger.LogInformation(_logger, HttpContext,
+                "Create Shopping List Item request succeeded.",
+                _userId,
+                _familyName,
+                new Dictionary<string, object>
+                {
+                { "shoppingListId", id }
+                });
+                return Ok(shoppingListDto);
+            }
+            catch (Exception ex)
+            {
+                StructuredLogger.LogError(_logger, HttpContext,
+                "Unhandled exception during Create Shopping List Item request.",
+                _userId,
+                _familyName,
+                new Dictionary<string, object>
+                {
+                    { "shoppingListId", id },
+                    { "exception", ex.Message },
+                    { "operationId", _operationId },
+                    { "stackTrace", ex.StackTrace ?? "No StackTrace" }
+                });
+
+                var problemDetails = ProblemDetailsFactoryHelper.CreateProblemDetails(
+                    HttpContext,
+                    StatusCodes.Status500InternalServerError,
+                    "Internal Server Error",
+                    "An unexpected error occurred while adding items to the shopping list.",
+                    _problemDetailsFactory
+                );
+
+                return StatusCode(StatusCodes.Status500InternalServerError, problemDetails);
+            }
         }
 
         // Update the item in the shopping list
         [HttpPut("{id}/items/{itemId}")]
         public async Task<ActionResult<ShoppingListDto>> UpdateShoppingListItem(Guid id, Guid itemId, UpdateShoppingListItemDto updateShoppingListItemDto)
         {
-            _logger.LogInformation($"Update Shopping List Item request received. Service: Shopping List Service. User: {_userId}, Family: {_familyName}, OperationId : {_operationId}");
-
+            StructuredLogger.LogInformation(_logger, HttpContext,
+            "Update Shopping List Item request received.",
+            _userId,
+            _familyName,
+            new Dictionary<string, object>
+            {
+                { "shoppingListId", id },
+                { "itemId", itemId }
+            });
             // Validate the DTO using FluentValidation
             var validator = new UpdateShoppingListItemDtoValidator();
             var validationResult = validator.Validate(updateShoppingListItemDto);
 
             if (!validationResult.IsValid)
             {
-                _logger.LogError($"Update Shopping List Item request failed: Validation Error. Service: Shopping List Service, User: {_userId}, Family: {_familyName}, OperationId : {_operationId}");
-                return BadRequest(validationResult.Errors.Select(e => e.ErrorMessage));
+                StructuredLogger.LogWarning(_logger, HttpContext,
+                "Update Shopping List Item request failed: Validation Error.",
+                _userId, _familyName,
+                new Dictionary<string, object>
+                {
+                    { "shoppingListId", id },
+                    { "itemId", itemId },
+                    { "validationErrors", validationResult.Errors.Select(e => e.ErrorMessage) }
+                });
+
+                var problemDetails = ProblemDetailsFactoryHelper.CreateProblemDetails(
+                    HttpContext,
+                    StatusCodes.Status400BadRequest,
+                    "Invalid Data",
+                    "One or more validation errors occurred.",
+                    _problemDetailsFactory
+                  );
+                return BadRequest(problemDetails);
             }
-            using var transaction = await _shoppingListService.BeginTransactionAsync();
 
             try
             {
@@ -351,8 +559,24 @@ namespace ShoppingListService.Controllers
 
                 if (shoppingListItem == null || updatedShoppingList == null)
                 {
-                    _logger.LogError($"Update Shopping List Item request failed: Shopping List is not found. Service: Shopping List Service, User: {_userId}, Family: {_familyName}, OperationId : {_operationId}");
-                    return NotFound($"Cannot find the item with id {itemId} within the shopping list with id {id}.");
+                    StructuredLogger.LogWarning(_logger, HttpContext,
+                    "Update Shopping List Item request failed: Shopping List or Item not found.",
+                    _userId,
+                    _familyName,
+                    new Dictionary<string, object>
+                    {
+                        { "shoppingListId", id },
+                        { "itemId", itemId },
+                    });
+
+                    var problemDetails = ProblemDetailsFactoryHelper.CreateProblemDetails(
+                        HttpContext,
+                        StatusCodes.Status404NotFound,
+                        "Shopping List or Item not found",
+                        $"Cannot find the shopping list with ID {id} or the item with ID {itemId}.",
+                        _problemDetailsFactory
+                    );
+                    return NotFound(problemDetails);
                 }
 
                 _shoppingListService.UpdateShoppingListItem(shoppingListItem, updateShoppingListItemDto);
@@ -363,24 +587,67 @@ namespace ShoppingListService.Controllers
                 await _publisher.Publish(_mapper.Map<ShoppingListItemUpdated>(shoppingListDto), context =>
                 {
                     context.Headers.Set("OperationId", _operationId);
+                    context.Headers.Set("traceId", _operationId);
+                    context.Headers.Set("requestId", _httpContext.HttpContext.TraceIdentifier);
                 });
 
                 bool result = await _shoppingListService.SaveChangesAsync();
 
                 if (!result)
                 {
-                    _logger.LogError($"Update Shopping List Item request failed: Cannot save data to db. Service: Shopping List Service, User: {_userId}, Family: {_familyName}, OperationId : {_operationId}");
-                    return BadRequest("Could not save changes to the DB");
+                    StructuredLogger.LogError(_logger, HttpContext,
+                    _userId,
+                    _familyName,
+                    "Update Shopping List Item request failed: Database save error.",
+                    new Dictionary<string, object>
+                    {
+                        { "shoppingListId", id },
+                        { "itemId", itemId },
+                    });
+
+                    var problemDetails = ProblemDetailsFactoryHelper.CreateProblemDetails(
+                        HttpContext,
+                        StatusCodes.Status400BadRequest,
+                        "Database Error",
+                        "Could not save changes to the database while updating the shopping list item.",
+                        _problemDetailsFactory
+                    );
+                    return BadRequest(problemDetails);
                 }
-                await transaction.CommitAsync();
-                _logger.LogInformation($"Update Shopping List Item request finished. Service: Shopping List Service. User: {_userId}, Family: {_familyName}, OperationId : {_operationId}");
+                StructuredLogger.LogInformation(_logger, HttpContext,
+                "Update Shopping List Item request succeeded.",
+                _userId,
+                _familyName,
+                new Dictionary<string, object>
+                {
+                    { "shoppingListId", id },
+                    { "itemId", itemId },
+                });
                 return Ok(shoppingListDto);
             }
             catch (Exception ex)
             {
-                await transaction.RollbackAsync();
-                _logger.LogError($"Update Shopping List Item request failed. Error: {ex.Message} Service: Shopping List Service. User: {_userId}, Family: {_familyName}, OperationId : {_operationId}");
-                return BadRequest("Could not commit the transaction to update the shopping list item.");
+                StructuredLogger.LogError(_logger, HttpContext,
+                "Unhandled exception during Update Shopping List Item request.",
+                _userId,
+                _familyName,
+                new Dictionary<string, object>
+                {
+                    { "shoppingListId", id },
+                    { "itemId", itemId },
+                    { "exception", ex.Message },
+                    { "operationId", _operationId },
+                    { "stackTrace", ex.StackTrace ?? "No StackTrace" }
+                });
+
+                var problemDetails = ProblemDetailsFactoryHelper.CreateProblemDetails(
+                    HttpContext,
+                    StatusCodes.Status500InternalServerError,
+                    "Internal Server Error",
+                    "An unexpected error occurred while updating the shopping list item.",
+                    _problemDetailsFactory
+                );
+                return BadRequest(problemDetails);
             }
         }
 
@@ -388,17 +655,37 @@ namespace ShoppingListService.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteShoppingList(Guid id)
         {
-            _logger.LogInformation($"Delete Shopping List request received. Service: Shopping List Service. User: {_userId}, Family: {_familyName}, OperationId : {_operationId}");
-
-            using var transaction = await _shoppingListService.BeginTransactionAsync();
+            StructuredLogger.LogInformation(_logger, HttpContext,
+            "Delete Shopping List request received.",
+            _userId,
+            _familyName,
+            new Dictionary<string, object>
+            {
+                { "shoppingListId", id }
+            });
 
             try
             {
                 ShoppingList shoppingList = await _shoppingListService.GetShoppingListById(id, _familyName);
                 if (shoppingList == null)
                 {
-                    _logger.LogError($"Delete Shopping List request failed: Shopping list is not found. Service: Shopping List Service, User: {_userId}, Family: {_familyName}, OperationId : {_operationId}");
-                    return NotFound($"Cannot find the shopping list with id {id} to add a new item");
+                    StructuredLogger.LogWarning(_logger, HttpContext,
+                    "Delete Shopping List request failed: Shopping List not found.",
+                    _userId,
+                    _familyName,
+                    new Dictionary<string, object>
+                    {
+                        { "shoppingListId", id },
+                    });
+
+                    var problemDetails = ProblemDetailsFactoryHelper.CreateProblemDetails(
+                        HttpContext,
+                        StatusCodes.Status404NotFound,
+                        "Shopping List Not Found",
+                        $"Cannot find the shopping list with ID {id} to delete.",
+                        _problemDetailsFactory
+                    );
+                    return NotFound(problemDetails);
                 }
                 _shoppingListService.DeleteShoppingList(shoppingList);
 
@@ -406,26 +693,63 @@ namespace ShoppingListService.Controllers
                 await _publisher.Publish(_mapper.Map<ShoppingListDeleted>(shoppingList), context =>
                 {
                     context.Headers.Set("OperationId", _operationId);
+                    context.Headers.Set("traceId", _operationId);
+                    context.Headers.Set("requestId", _httpContext.HttpContext.TraceIdentifier);
                 });
 
                 bool result = await _shoppingListService.SaveChangesAsync();
                 if (!result)
                 {
-                    await transaction.RollbackAsync();
-                    _logger.LogError($"Delete Shopping List request failed: Cannot save data to db. Service: Shopping List Service, User: {_userId}, Family: {_familyName}, OperationId : {_operationId}");
-                    return BadRequest("Could not save changes to the DB");
-                }
-                await transaction.CommitAsync();
-                _logger.LogInformation($"Delete Shopping List request finished. Service: Shopping List Service. User: {_userId}, Family: {_familyName}, OperationId : {_operationId}");
+                    StructuredLogger.LogError(_logger, HttpContext,
+                    "Delete Shopping List request failed: Database save error.",
+                    _userId,
+                    _familyName,
+                    new Dictionary<string, object>
+                    {
+                        { "shoppingListId", id }
+                    });
 
+                    var problemDetails = ProblemDetailsFactoryHelper.CreateProblemDetails(
+                        HttpContext,
+                        StatusCodes.Status400BadRequest,
+                        "Database Error",
+                        "Could not save changes to the database while deleting the shopping list.",
+                        _problemDetailsFactory
+                    );
+                    return BadRequest(problemDetails);
+                }
+
+                StructuredLogger.LogInformation(_logger, HttpContext,
+                "Delete Shopping List request succeeded.",
+                _userId, _familyName,
+                new Dictionary<string, object>
+                {
+                    { "shoppingListId", id }
+                });
                 return NoContent();
             }
             catch (Exception ex)
             {
-                await transaction.RollbackAsync();
-                _logger.LogError($"Delete Shopping List request failed: Error: {ex.Message}. Service: Shopping List Service, User: {_userId}, Family: {_familyName}, OperationId : {_operationId}");
 
-                return BadRequest("Could not commint the transaction");
+                StructuredLogger.LogError(_logger, HttpContext,
+                "Unhandled exception during Delete Shopping List request.",
+                _userId, _familyName,
+                new Dictionary<string, object>
+                {
+                    { "shoppingListId", id },
+                    { "exception", ex.Message },
+                    { "operationId", _operationId },
+                    { "stackTrace", ex.StackTrace ?? "No StackTrace" }
+                });
+
+                var problemDetails = ProblemDetailsFactoryHelper.CreateProblemDetails(
+                    HttpContext,
+                    StatusCodes.Status400BadRequest,
+                    "Internal Server Error",
+                    "An unexpected error occurred while deleting the shopping list.",
+                    _problemDetailsFactory
+                );
+                return BadRequest(problemDetails);
             }
         }
 
@@ -433,17 +757,40 @@ namespace ShoppingListService.Controllers
         [HttpDelete("{id}/items/{itemId}")]
         public async Task<ActionResult> DeleteShoppingListItem(Guid id, Guid itemId)
         {
-            _logger.LogInformation($"Delete Shopping List Item request received. Service: Shopping List Service. User: {_userId}, Family: {_familyName}, OperationId : {_operationId}");
 
-            using var transaction = await _shoppingListService.BeginTransactionAsync();
+            StructuredLogger.LogInformation(_logger, HttpContext,
+            "Delete Shopping List Item request received.",
+            _userId,
+            _familyName,
+            new Dictionary<string, object>
+            {
+                    { "shoppingListId", id },
+                    { "itemId", itemId }
+            });
             try
             {
                 ShoppingListItem shoppingListItem = await _shoppingListService.GetShoppingListItemById(itemId, id, _familyName);
                 ShoppingList shoppingList = await _shoppingListService.GetShoppingListById(id, _familyName);
-                if (shoppingListItem == null)
+                if (shoppingListItem == null || shoppingListItem == null)
                 {
-                    _logger.LogError($"Delete Shopping List Item request failed: Shopping list is not found. Service: Shopping List Service, User: {_userId}, Family: {_familyName}, OperationId : {_operationId}");
-                    return NotFound($"Cannot find the item with id {itemId} within the shopping list with id {id}.");
+                    StructuredLogger.LogWarning(_logger, HttpContext,
+                    "Delete Shopping List Item request failed: Shopping List or Item not found.",
+                    _userId,
+                    _familyName,
+                    new Dictionary<string, object>
+                    {
+                        { "shoppingListId", id },
+                        { "itemId", itemId },
+                    });
+
+                    var problemDetails = ProblemDetailsFactoryHelper.CreateProblemDetails(
+                        HttpContext,
+                        StatusCodes.Status404NotFound,
+                        "Shopping List or Item not found",
+                        $"Cannot find the shopping list with ID {id} or the item with ID {itemId}.",
+                        _problemDetailsFactory
+                    );
+                    return NotFound(problemDetails);
                 }
                 var message = _mapper.Map<ShoppingListItemDeleted>(shoppingListItem);
                 _shoppingListService.DeleteShoppingListItem(shoppingListItem);
@@ -451,28 +798,66 @@ namespace ShoppingListService.Controllers
                 await _publisher.Publish(message, context =>
                 {
                     context.Headers.Set("OperationId", _operationId);
+                    context.Headers.Set("traceId", _operationId);
+                    context.Headers.Set("requestId", _httpContext.HttpContext.TraceIdentifier);
                 });
 
                 bool result = await _shoppingListService.SaveChangesAsync();
 
-
                 if (!result)
                 {
-                    await transaction.RollbackAsync();
-                    _logger.LogError($"Delete Shopping List Item request failed: Cannot save changes to db. Service: Shopping List Service, User: {_userId}, Family: {_familyName}, OperationId : {_operationId}");
-                    return BadRequest("Could not save changes to the DB");
+                    StructuredLogger.LogError(_logger, HttpContext,
+                    "Delete Shopping List Item request failed: Database save error.",
+                    _userId,
+                    _familyName,
+                    new Dictionary<string, object>
+                    {
+                        { "shoppingListId", id },
+                        { "itemId", itemId },
+                    });
+
+                    var problemDetails = ProblemDetailsFactoryHelper.CreateProblemDetails(
+                        HttpContext,
+                        StatusCodes.Status400BadRequest,
+                        "Database Error",
+                        "Could not save changes to the database while deleting the shopping list item.",
+                        _problemDetailsFactory
+                    );
+                    return BadRequest(problemDetails);
                 }
-
-                await transaction.CommitAsync();
-                _logger.LogInformation($"Delete Shopping List Item request finished. Service: Shopping List Service. User: {_userId}, Family: {_familyName}, OperationId : {_operationId}");
-
+                StructuredLogger.LogInformation(_logger, HttpContext,
+                "Delete Shopping List Item request succeeded.",
+                _userId, _familyName,
+                new Dictionary<string, object>
+                {
+                    { "shoppingListId", id },
+                    { "itemId", itemId }
+                });
                 return NoContent();
             }
             catch (Exception ex)
             {
-                await transaction.RollbackAsync();
-                _logger.LogError($"Delete Shopping List Item request failed: Error: {ex.Message}, Service: Shopping List Service, User: {_userId}, Family: {_familyName}, OperationId : {_operationId}");
-                return BadRequest("Could not commit the transaction to delete the shopping list item.");
+                StructuredLogger.LogError(_logger, HttpContext,
+                "Unhandled exception during Delete Shopping List Item request.",
+                _userId, _familyName,
+                new Dictionary<string, object>
+                {
+                    { "shoppingListId", id },
+                    { "itemId", itemId },
+                    { "exception", ex.Message },
+                    { "operationId", _operationId },
+                    { "stackTrace", ex.StackTrace ?? "No StackTrace" }
+                });
+
+                var problemDetails = ProblemDetailsFactoryHelper.CreateProblemDetails(
+                    HttpContext,
+                    StatusCodes.Status400BadRequest,
+                    "Internal Server Error",
+                    "An unexpected error occurred while deleting the shopping list item.",
+                    _problemDetailsFactory
+                );
+
+                return BadRequest(problemDetails);
             }
         }
 
@@ -495,7 +880,19 @@ namespace ShoppingListService.Controllers
         {
             if (string.IsNullOrWhiteSpace(query))
             {
-                return BadRequest("Query parameter cannot be empty.");
+                StructuredLogger.LogWarning(_logger, HttpContext,
+                "Search Catalog Items request failed: Query parameter is empty.",
+                _userId, _familyName,
+                new Dictionary<string, object> { });
+
+                var problemDetails = ProblemDetailsFactoryHelper.CreateProblemDetails(
+                    HttpContext,
+                    StatusCodes.Status400BadRequest,
+                    "Invalid Query",
+                    "Query parameter cannot be empty.",
+                    _problemDetailsFactory
+                );
+                return BadRequest(problemDetails);
             }
 
             var catalogItems = await _shoppingListService.AutocompleteCatalogItemsAsync(query, _familyName);

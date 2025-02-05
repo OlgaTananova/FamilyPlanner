@@ -174,13 +174,13 @@ namespace CatalogService.Controllers
 		public async Task<ActionResult<CategoryDto>> UpdateCategory(Guid sku, UpdateCategoryDto categoryDto)
 		{
 			StructuredLogger.LogInformation(_logger, HttpContext,
-					"Update Category request received.",
-					_userId,
-					_familyName,
-					new Dictionary<string, object>
-			{
-								{ "category", categoryDto.Name },
-			});
+				"Update Category request received.",
+				_userId,
+				_familyName,
+				new Dictionary<string, object>
+				{
+					{ "category", categoryDto.Name },
+				});
 
 			using var transaction = await _repo.BeginTransactionAsync();
 			try

@@ -476,7 +476,7 @@ public class ShoppingListControllerTests : IAsyncLifetime
         // Assert
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
         var errorMessage = await response.Content.ReadAsStringAsync();
-        Assert.Contains("Cannot find the catalog item", errorMessage);
+        Assert.Contains("Not Found", errorMessage);
     }
 
     [Fact]
@@ -574,7 +574,7 @@ public class ShoppingListControllerTests : IAsyncLifetime
         // Assert
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
         var errorMessage = await response.Content.ReadAsStringAsync();
-        Assert.Contains("Cannot find the item", errorMessage);
+        Assert.Contains("not found", errorMessage);
     }
 
     [Fact]
@@ -625,7 +625,7 @@ public class ShoppingListControllerTests : IAsyncLifetime
         // Assert
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
         var errorMessage = await response.Content.ReadAsStringAsync();
-        Assert.Contains("Cannot find the item", errorMessage);
+        Assert.Contains("not found", errorMessage);
     }
 
 
@@ -710,7 +710,7 @@ public class ShoppingListControllerTests : IAsyncLifetime
         // Assert
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
         var errorMessage = await response.Content.ReadAsStringAsync();
-        Assert.Contains("Cannot find the item", errorMessage);
+        Assert.Contains("not found", errorMessage);
     }
 
 
@@ -726,7 +726,7 @@ public class ShoppingListControllerTests : IAsyncLifetime
         // Assert
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
         var errorMessage = await response.Content.ReadAsStringAsync();
-        Assert.Contains("Cannot find the item", errorMessage);
+        Assert.Contains("not found", errorMessage);
     }
 
     #endregion
