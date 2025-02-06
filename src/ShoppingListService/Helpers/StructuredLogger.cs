@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Http.Features;
 namespace CatalogService.RequestHelpers
 {
+    #nullable enable
     public static class StructuredLogger
     {
         public static void LogInformation(

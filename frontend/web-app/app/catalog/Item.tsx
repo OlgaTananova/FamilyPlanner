@@ -1,13 +1,10 @@
-import { MdOutlineAddShoppingCart } from "react-icons/md";
-import { FaRegEdit } from "react-icons/fa";
-import EditItemModal from "./EditItemModal";
-import { useState } from "react";
-import { RootState } from "../redux/store";
-import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
-import { useAuth } from "../hooks/useAuth";
-import { addShoppingListItems } from "../lib/fetchShoppingLists";
+import { FaRegEdit } from "react-icons/fa";
+import { MdOutlineAddShoppingCart } from "react-icons/md";
+import { useDispatch, useSelector } from "react-redux";
+import { useShoppingListApi } from "../hooks/useShoppingListApi";
 import { updateShoppingListInStore } from "../redux/shoppingListSlice";
+import { RootState } from "../redux/store";
 
 interface ItemProps {
     name: string;
@@ -21,15 +18,14 @@ interface ItemProps {
 
 export default function ItemComponent({ name, id, categorySKU, sku, setEditedItem, setIsEditItemModalOpen, showEditItemButton }: ItemProps) {
     const shoppingList = useSelector((state: RootState) => state.shoppinglists.currentShoppingList);
-    const { acquireToken } = useAuth();
     const dispatch = useDispatch();
-
+    const { addShoppingListItems } = useShoppingListApi();
+    
     const handleAddItemToShoppingList = async () => {
         if (!shoppingList?.id) {
             toast.error("No shopping list selected");
             return;
         }
-        await acquireToken();
         const updatedShoppingList = await addShoppingListItems(shoppingList?.id, { skus: [sku] });
 
         if (updatedShoppingList) {

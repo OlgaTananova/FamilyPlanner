@@ -1,17 +1,18 @@
 'use client'
 import React, { useEffect } from "react";
-import { useInitializeUser } from "../hooks/useInitializeUser";
 import { useAuth } from "../hooks/useAuth";
 import { useDispatch } from "react-redux";
-import { fetchShoppingListData, getFrequentyBoughtItems } from "../lib/fetchShoppingLists";
+import { useShoppingListApi } from "../hooks/useShoppingListApi";
 import { getFrequentItems, setCurrentShoppingList, setShoppingLists } from "../redux/shoppingListSlice";
-import { fetchCatalogData } from "../lib/fetchCatalog";
+import { useCatalogApi } from "../hooks/useCatalogApi";
 import { setCategories } from "../redux/catalogSlice";
+import { setUser } from "../redux/userSlice";
 
 export default function AppInitializer({ children }: { children: React.ReactNode }) {
-    useInitializeUser();
     const { acquireToken, isAuthenticated } = useAuth();
     const dispatch = useDispatch()
+    const { fetchShoppingListData, getFrequentyBoughtItems } = useShoppingListApi();
+    const { fetchCatalogData } = useCatalogApi();
 
     // Fetch Catalog Data and Shopping list data
     useEffect(() => {
@@ -20,8 +21,22 @@ export default function AppInitializer({ children }: { children: React.ReactNode
         }
         async function fetchData() {
 
-            // make sure there is a valid token in the storage
-            await acquireToken();
+            // retrieve the valid token
+            const token = await acquireToken();
+
+            // set the user 
+            const claims = token?.idTokenClaims;
+            if (claims) {
+
+                const user = {
+                    givenName: claims?.given_name || "",
+                    family: claims?.extension_Family || "",
+                    role: claims?.extension_Role || "",
+                    email: claims?.emails[0] || "",
+                };
+                dispatch(setUser(user));
+            }
+
             // Fetch categories
             const fetchedCategories = await fetchCatalogData();
 
@@ -43,7 +58,7 @@ export default function AppInitializer({ children }: { children: React.ReactNode
         }
         fetchData();
 
-    }, [isAuthenticated, acquireToken, dispatch]);
+    }, [isAuthenticated]);
 
     return <>{children}</>;
 }

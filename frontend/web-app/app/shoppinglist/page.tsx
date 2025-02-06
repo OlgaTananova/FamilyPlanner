@@ -1,21 +1,12 @@
 'use client'
-import { Button } from 'flowbite-react';
-import React, { useEffect, useState } from 'react'
-import ShoppingListButton from './ShoppingListButton';
+import Link from 'next/link';
+import { useState } from 'react';
 import CurrentShoppingList from './CurrentShoppingList';
+import FrequentItems from './FrequentItems';
 import MobileViewToggles from './MobileViewToggles';
 import ShoppingLists from './ShoppingLists';
-import { setCurrentShoppingList, setShoppingLists, ShoppingList } from '../redux/shoppingListSlice';
-import { useDispatch, useSelector } from 'react-redux';
-import { useAuth } from '../hooks/useAuth';
-import { RootState } from '../redux/store';
-import { fetchShoppingListData } from '../lib/fetchShoppingLists';
-import FrequentItems from './FrequentItems';
-import Link from 'next/link';
 
 export default function ShoppingListPage() {
-    const shoppingLists = useSelector((state: RootState) => state.shoppinglists.lists);
-    const currentShoppingList = useSelector((state: RootState) => state.shoppinglists.currentShoppingList);
     const [activeSection, setActiveSection] = useState<"lists" | "current" | "frequent">("lists");
 
     return (

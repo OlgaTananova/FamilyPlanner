@@ -1,33 +1,32 @@
 "use client";
-import { useAuth } from "../hooks/useAuth";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import decodeJwt from "../lib/decodeJwt";
-import { Button } from "flowbite-react";
-import getIdToken from "../lib/getIdToken";
 import { useMsal } from "@azure/msal-react";
+import { Button } from "flowbite-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 import toast from "react-hot-toast";
-import { useDispatch, useSelector, useStore } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import { useAuth } from "../hooks/useAuth";
 import { RootState } from "../redux/store";
 import { clearUser, setUser } from "../redux/userSlice";
-import Link from "next/link";
 
 function UserProfile() {
-  const { isAuthenticated, editProfile } = useAuth();
+  const { isAuthenticated, editProfile, acquireToken } = useAuth();
   const { instance } = useMsal();
   const user = useSelector((state: RootState) => state.user);
   const dispatch = useDispatch();
   const router = useRouter();
 
-  const updateUserProfile = () => {
-    const idToken = getIdToken();
-    if (idToken) {
-      const decodedToken = decodeJwt(idToken);
+
+  const updateUserProfile = async () => {
+    const claims = (await acquireToken()).idTokenClaims;
+    if (claims) {
+
       const user = {
-        givenName: decodedToken.given_name || "",
-        family: decodedToken.extension_Family || "",
-        role: decodedToken.extension_Role || "",
-        email: decodedToken.emails ? decodedToken.emails[0] : "",
+        givenName: claims?.given_name || "",
+        family: claims?.extension_Family || "",
+        role: claims?.extension_Role || "",
+        email: claims?.emails[0] || "",
       };
       dispatch(setUser(user));
     }
@@ -62,7 +61,7 @@ function UserProfile() {
     handleRedirect();
     // Fetch the initial profile data
     updateUserProfile();
-  }, [isAuthenticated, instance, router]);
+  }, [isAuthenticated, instance, router, dispatch]);
 
   // Handle profile editing flow
   async function handleEditProfile() {

@@ -1,5 +1,5 @@
-import { Button, Modal, Datepicker } from 'flowbite-react'
-import React, { useEffect, useState } from 'react'
+import { Button, Modal } from 'flowbite-react';
+import React from 'react';
 
 interface FilterShoppingListsModalProps {
     isFilterModalOpen: boolean;

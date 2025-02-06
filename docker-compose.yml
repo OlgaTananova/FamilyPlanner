@@ -58,7 +58,30 @@ services:
         - 7002:80  
       depends_on:
         - postgres-shopping
-        - rabbitmq        
+        - rabbitmq
+  notification-svc:
+      image: olgatan/notification-svc:latest
+      build: 
+        context: .
+        dockerfile: src/NotificationService/Dockerfile
+      environment:
+        - ASPNETCORE_ENVIRONMENT=Development
+        - ASPNETCORE_URLS=http://+:80
+        - RabbitMq__Host=rabbitmq
+      ports:
+        - 7003:80  
+      depends_on:
+        - rabbitmq
+  gateway-svc:
+      image: olgatan/gateway-svc:latest
+      build: 
+        context: .
+        dockerfile: src/GatewayService/Dockerfile
+      environment:
+        - DOTNET_ENVIRONMENT=Docker
+        - ASPNETCORE_URLS=http://+:80
+      ports:
+        - 7004:80                          
 
 volumes:
   pgdata-catalog:

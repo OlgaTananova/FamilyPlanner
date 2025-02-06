@@ -1,7 +1,5 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { Category } from "./catalogSlice";
-import { deleteShoppingListItem, updateShoppingList } from "../lib/fetchShoppingLists";
-import { get } from "http";
 
 export interface ShoppingListItem {
     id: string;

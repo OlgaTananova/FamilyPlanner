@@ -1,15 +1,11 @@
 'use client'
-import React, { createContext, useContext, useEffect, useState } from "react";
 import * as signalR from "@microsoft/signalr";
-import { useMsal } from "@azure/msal-react";
-import { useAuth } from "../hooks/useAuth";
-import { getAccessToken } from "../lib/getAccessToken";
-import getIdToken from "../lib/getIdToken";
-import { useDispatch, useSelector } from "react-redux";
-import { addShoppingList, deleteShoppingListFromStore, deleteShoppingListItemFromStore, updateCatalogCategory, updateCatalogItem, updateShoppingListInStore } from "../redux/shoppingListSlice";
-import { RootState } from "../redux/store";
-import { addCategory, addItem, Category, removeCategoryFromStore, removeItemFromStore, updateCategoryInStore, updateItemInStore } from "../redux/catalogSlice";
+import React, { createContext, useContext, useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import { useDispatch } from "react-redux";
+import { useAuth } from "../hooks/useAuth";
+import { addCategory, addItem, Category, removeCategoryFromStore, removeItemFromStore, updateCategoryInStore, updateItemInStore } from "../redux/catalogSlice";
+import { addShoppingList, deleteShoppingListFromStore, deleteShoppingListItemFromStore, updateCatalogCategory, updateCatalogItem, updateShoppingListInStore } from "../redux/shoppingListSlice";
 
 interface SignalRContextType {
     connection: signalR.HubConnection | null;
@@ -33,7 +29,6 @@ export const SignalRProvider: React.FC<SignalRProviderProps> = ({ hubUrl, childr
     const [connection, setConnection] = useState<signalR.HubConnection | null>(null);
     const [isConnected, setIsConnected] = useState(false);
     const dispatch = useDispatch();
-    const items = useSelector((state: RootState) => state.categories.itemsWOCategories);
 
     const establishConnection = async () => {
         try {
@@ -166,7 +161,7 @@ export const SignalRProvider: React.FC<SignalRProviderProps> = ({ hubUrl, childr
                 connection.off("ShoppingListItemDeleted");
             };
         }
-    }, [connection, isConnected]);
+    }, [connection, isConnected, dispatch]);
 
     return (
         <SignalRContext.Provider value={{ connection, isConnected }}>

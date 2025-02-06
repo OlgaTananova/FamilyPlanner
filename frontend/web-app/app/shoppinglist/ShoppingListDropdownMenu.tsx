@@ -1,5 +1,4 @@
-import { Dropdown } from 'flowbite-react'
-import React from 'react'
+import { Dropdown } from 'flowbite-react';
 
 interface ShoppingListDropdownMenuProps {
     setEditShoppingListModalOpen: (value: boolean) => void;

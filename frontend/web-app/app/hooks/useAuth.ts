@@ -1,6 +1,6 @@
 import { InteractionRequiredAuthError } from "@azure/msal-browser";
-import { useMsal, useIsAuthenticated, useAccount } from "@azure/msal-react";
-import { usePathname, useRouter } from "next/navigation";
+import { useAccount, useIsAuthenticated, useMsal } from "@azure/msal-react";
+import { useRouter } from "next/navigation";
 
 
 const catalogReadScope = process.env.NEXT_PUBLIC_AZURE_AD_B2C_CATALOG_READ_SCOPE ?? "";

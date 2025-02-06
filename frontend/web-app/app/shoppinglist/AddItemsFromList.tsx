@@ -1,12 +1,11 @@
-import React, { useEffect, useState } from 'react'
-import { useDispatch, useSelector } from 'react-redux';
-import { RootState } from '../redux/store';
 import { Button } from 'flowbite-react';
-import { Item } from '../redux/catalogSlice';
-import { addShoppingListItems } from '../lib/fetchShoppingLists';
+import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
-import { useAuth } from '../hooks/useAuth';
+import { useDispatch, useSelector } from 'react-redux';
+import { useShoppingListApi } from '../hooks/useShoppingListApi';
+import { Item } from '../redux/catalogSlice';
 import { updateShoppingListInStore } from '../redux/shoppingListSlice';
+import { RootState } from '../redux/store';
 
 export default function AddItemsFromList() {
     const catalogItems = useSelector((state: RootState) => state.categories.itemsWOCategories);
@@ -15,7 +14,7 @@ export default function AddItemsFromList() {
     const [selectedItems, setSelectedItems] = useState<string[]>([]);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const dispatch = useDispatch();
-    const { acquireToken } = useAuth();
+    const { addShoppingListItems } = useShoppingListApi();
 
 
     useEffect(() => {
@@ -41,7 +40,6 @@ export default function AddItemsFromList() {
             toast.error("No shopping list selected");
             return;
         }
-        await acquireToken();
         const updatedShoppingList = await addShoppingListItems(shoppingListId, { skus: selectedItems });
 
         if (updatedShoppingList) {

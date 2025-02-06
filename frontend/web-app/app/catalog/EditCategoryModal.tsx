@@ -2,10 +2,11 @@ import React, { useState, useEffect } from "react";
 import { Modal, Button } from "flowbite-react";
 import { toast } from "react-hot-toast";
 import { useDispatch } from "react-redux";
-import { updateCategory, deleteCategory } from "../lib/fetchCatalog";
+
 import { removeCategoryFromStore, updateCategoryInStore } from "../redux/catalogSlice";
 import ConfirmationModal from "./ConfirmationModal";
 import { updateCatalogCategory } from "../redux/shoppingListSlice";
+import { useCatalogApi } from "../hooks/useCatalogApi";
 
 interface EditCategoryModalProps {
     isOpen: boolean;
@@ -29,6 +30,7 @@ export default function EditCategoryModal({
     const [categoryState, setCategoryState] = useState<{ id: string, name: string, sku: string, items: Array<{ id: string; name: string }> }>(category);
     const [isSaving, setIsSaving] = useState(false);
     const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+    const { updateCategory, deleteCategory } = useCatalogApi();
 
     useEffect(() => {
         if (category) {

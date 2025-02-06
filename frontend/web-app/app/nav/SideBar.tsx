@@ -1,12 +1,11 @@
 'use client';
-import { useState } from "react";
-import { FaUsers, FaListUl, FaShoppingCart, FaMoneyBillWave } from "react-icons/fa";
-import { HiChevronLeft, HiChevronRight } from "react-icons/hi";
 import Link from "next/link";
+import { useState } from "react";
+import { FaListUl, FaShoppingCart, FaUsers } from "react-icons/fa";
+import { HiChevronLeft, HiChevronRight } from "react-icons/hi";
 import { useSelector } from "react-redux";
-import { RootState } from "../redux/store";
 import { useAuth } from "../hooks/useAuth";
-import { GiMeal } from "react-icons/gi";
+import { RootState } from "../redux/store";
 
 export default function SideBar() {
     const [isCollapsed, setIsCollapsed] = useState(true);
@@ -22,9 +21,6 @@ export default function SideBar() {
         setIsCollapsed(false);
     };
 
-    const closeSideBar = () => {
-        setIsCollapsed(false)
-    }
 
     if (!isAuthenticated) {
         return <></>;

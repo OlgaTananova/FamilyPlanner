@@ -1,4 +1,3 @@
-import { Button } from "flowbite-react";
 import { FaArchive } from "react-icons/fa";
 import { HiShoppingCart } from "react-icons/hi";
 

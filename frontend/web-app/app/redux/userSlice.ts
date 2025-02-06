@@ -5,7 +5,7 @@ export interface UserState {
   family: string | null;
   role: string | null;
   email: string | null;
-  id: string | null;
+  id?: string | null;
 }
 
 const initialState: UserState = {

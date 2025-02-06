@@ -1,11 +1,8 @@
 "use client";
-
 import { useState } from "react";
 import { FaRegEdit } from "react-icons/fa";
-import { toast } from "react-hot-toast";
-import ItemComponent from "./Item"; // Assume this is the component you created for items
 import { Item } from "../redux/catalogSlice";
-import AddCategoryModal from "./AddCategoryModal";
+import ItemComponent from "./Item"; // Assume this is the component you created for items
 
 interface CategoryCardProps {
     id: string;

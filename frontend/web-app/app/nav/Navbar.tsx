@@ -1,15 +1,14 @@
 'use client'
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { MdFamilyRestroom } from "react-icons/md";
-import { Button } from "flowbite-react";
-import { useAuth } from "../hooks/useAuth";
-import AuthButton from "./AuthButton";
-import Link from "next/link";
-import { useRouter, usePathname } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
-import { RootState } from "../redux/store";
+import { useAuth } from "../hooks/useAuth";
 import { clearCategories } from "../redux/catalogSlice";
+import { clearShoppingLists } from "../redux/shoppingListSlice";
+import { RootState } from "../redux/store";
 import { clearUser } from "../redux/userSlice";
+import AuthButton from "./AuthButton";
 
 export default function Navbar() {
   const auth = useAuth();
@@ -21,6 +20,7 @@ export default function Navbar() {
   const handleSignOut = () => {
     signOut();
     dispatch(clearCategories());
+    dispatch(clearShoppingLists());
     dispatch(clearUser());
 
   }

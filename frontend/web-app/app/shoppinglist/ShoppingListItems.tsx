@@ -1,4 +1,3 @@
-import React from 'react'
 import { ShoppingList, ShoppingListItem } from '../redux/shoppingListSlice';
 import ShoppingListItemComponent from './ShoppingListItem';
 

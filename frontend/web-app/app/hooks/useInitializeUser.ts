@@ -1,10 +1,9 @@
-import { useEffect } from "react";
 import { useMsal } from "@azure/msal-react";
-import getIdToken from "../lib/getIdToken";
+import { useEffect } from "react";
 import { useDispatch } from "react-redux";
-import { clearUser, setUser } from "../redux/userSlice";
 import decodeJwt from "../lib/decodeJwt";
-import toast from "react-hot-toast";
+import getIdToken from "../lib/getIdToken";
+import { clearUser, setUser } from "../redux/userSlice";
 
 export const useInitializeUser = () => {
     const { instance } = useMsal();

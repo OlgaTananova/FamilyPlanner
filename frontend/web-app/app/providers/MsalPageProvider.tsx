@@ -1,9 +1,9 @@
 // components/ClientLayout.tsx
 "use client";
 
-import { ReactNode, useEffect, useState } from "react";
-import { MsalProvider } from "@azure/msal-react";
 import { PublicClientApplication } from "@azure/msal-browser";
+import { MsalProvider } from "@azure/msal-react";
+import { ReactNode, useEffect, useState } from "react";
 import msalConfig from "../config/authConfig";
 
 const msalInstance = new PublicClientApplication(msalConfig);

@@ -180,3 +180,4 @@ C:\Users\Olga\Documents\.NET\FamilyPlanner\src\GatewayService\obj\Debug\net8.0\r
 C:\Users\Olga\Documents\.NET\FamilyPlanner\src\GatewayService\obj\Debug\net8.0\GatewayService.pdb
 C:\Users\Olga\Documents\.NET\FamilyPlanner\src\GatewayService\obj\Debug\net8.0\GatewayService.genruntimeconfig.cache
 C:\Users\Olga\Documents\.NET\FamilyPlanner\src\GatewayService\obj\Debug\net8.0\ref\GatewayService.dll
+C:\Users\Olga\Documents\.NET\FamilyPlanner\src\GatewayService\bin\Debug\net8.0\appsettings.Docker.json

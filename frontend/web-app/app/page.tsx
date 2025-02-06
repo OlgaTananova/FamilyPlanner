@@ -1,16 +1,12 @@
 'use client'
-import { useAuth } from "./hooks/useAuth";
 import { useRouter } from "next/navigation";
 import DashboardPage from "./dashboard/page";
-import CatalogPage from "./catalog/page";
-import ShoppingListPage from "./shoppinglist/page";
-import ProfilePage from "./profile/page";
+import { useAuth } from "./hooks/useAuth";
 
 
 export default function Home() {
 
   const { isAuthenticated } = useAuth();
-  const router = useRouter();
 
 
   if (isAuthenticated) {

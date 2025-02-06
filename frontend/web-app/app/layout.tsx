@@ -1,14 +1,12 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import Navbar from "./nav/Navbar";
-import MsalPageProvider from "./providers/MsalPageProvider";
-import ToasterProvider from "./providers/ToasterProvider";
-import ReduxProvider from "./providers/ReduxProvider";
-import { Sidebar } from "flowbite-react/components/Sidebar";
-import { useAuth } from "./hooks/useAuth";
 import SideBar from "./nav/SideBar";
 import AppInitializer from "./providers/AppInitializer";
+import MsalPageProvider from "./providers/MsalPageProvider";
+import ReduxProvider from "./providers/ReduxProvider";
 import { SignalRProvider } from "./providers/SignalRProvider";
+import ToasterProvider from "./providers/ToasterProvider";
 
 
 const hubUrl = `${process.env.NEXT_PUBLIC_GATEWAY_URL}/notifications`;

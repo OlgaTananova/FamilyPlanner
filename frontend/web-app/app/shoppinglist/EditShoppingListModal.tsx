@@ -1,11 +1,10 @@
-import React, { useEffect, useState } from "react";
-import { Modal, Button, TextInput, Checkbox } from "flowbite-react";
-import { useDispatch } from "react-redux";
+import { Button, Checkbox, Modal } from "flowbite-react";
+import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
+import { useDispatch } from "react-redux";
 import ConfirmationModal from "../catalog/ConfirmationModal";
-import { deleteShoppingList, updateShoppingList } from "../lib/fetchShoppingLists";
+import { useShoppingListApi } from "../hooks/useShoppingListApi";
 import { deleteShoppingListFromStore, updateShoppingListInStore } from "../redux/shoppingListSlice";
-import { useAuth } from "../hooks/useAuth";
 
 
 interface EditShoppingListModalProps {
@@ -31,7 +30,8 @@ export default function EditShoppingListModal({
     const [isSaving, setIsSaving] = useState<boolean>(false);
     const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
     const dispatch = useDispatch();
-    const { acquireToken } = useAuth();
+    const { updateShoppingList, deleteShoppingList } = useShoppingListApi();
+
 
     const validateHeading = (name: string) => name.trim().length >= 3;
     const validateSalseTax = (tax: number) => tax >= 0;
@@ -50,7 +50,6 @@ export default function EditShoppingListModal({
         }
         try {
             setIsSaving(true);
-            await acquireToken();
             const updatedShoppingList = await updateShoppingList({ id: shoppingList.id, heading, salesTax, isArchived });
             if (updatedShoppingList) {
                 dispatch(updateShoppingListInStore(updatedShoppingList));

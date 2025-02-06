@@ -1,9 +1,4 @@
-import { Dispatch } from '@reduxjs/toolkit';
-import { Dropdown } from 'flowbite-react'
-import React, { useState } from 'react'
-import toast from 'react-hot-toast'
-import AddCategoryModal from './AddCategoryModal';
-import AddNewItemModal from './AddItemModal';
+import { Dropdown } from 'flowbite-react';
 
 interface DropdownMenuProps {
     handleShowOnlyItems: () => void;

@@ -1,12 +1,12 @@
-import React, { useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { Modal, Button, TextInput } from "flowbite-react";
-import { RootState } from "../redux/store";
-import { Item } from "../redux/catalogSlice";
-import { HiChevronDown } from "react-icons/hi";
+import { Button, Modal } from "flowbite-react";
+import { useState } from "react";
 import toast from "react-hot-toast";
-import { addNewShoppingList } from "../lib/fetchShoppingLists";
+import { HiChevronDown } from "react-icons/hi";
+import { useDispatch, useSelector } from "react-redux";
+import { useShoppingListApi } from "../hooks/useShoppingListApi";
+import { Item } from "../redux/catalogSlice";
 import { addShoppingList } from "../redux/shoppingListSlice";
+import { RootState } from "../redux/store";
 
 interface AddShoppingListModalProps {
     isOpen: boolean;
@@ -23,6 +23,7 @@ export default function AddShoppingListModal({
     const [dropdownOpen, setDropdownOpen] = useState<boolean>(false);
     const [isSaving, setIsSaving] = useState<boolean>(false);
     const dispatch = useDispatch();
+    const { addNewShoppingList } = useShoppingListApi();
 
     const handleSave = async () => {
         setIsSaving(true);

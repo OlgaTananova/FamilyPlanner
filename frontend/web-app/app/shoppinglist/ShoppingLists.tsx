@@ -1,15 +1,13 @@
 'use client'
-import React, { Dispatch, SetStateAction, useEffect, useState } from 'react';
-import ShoppingListButton from './ShoppingListButton';
-import { setCurrentShoppingList, setShoppingLists, ShoppingList } from '../redux/shoppingListSlice';
-import { useDispatch, useSelector } from 'react-redux';
-import { useAuth } from '../hooks/useAuth';
-import { fetchShoppingListData } from '../lib/fetchShoppingLists';
-import { RootState } from '../redux/store';
 import { Button, Dropdown } from 'flowbite-react';
+import { Dispatch, SetStateAction, useEffect, useState } from 'react';
 import { HiPlus } from 'react-icons/hi';
+import { useDispatch, useSelector } from 'react-redux';
+import { setCurrentShoppingList, ShoppingList } from '../redux/shoppingListSlice';
+import { RootState } from '../redux/store';
 import AddShoppingListModal from './AddShoppingListModal';
 import FilterShoppingListsModal from './FilterShoppingListsModal';
+import ShoppingListButton from './ShoppingListButton';
 
 interface ShoppingListsProps {
     activeSection: "lists" | "current" | "frequent";
@@ -35,7 +33,7 @@ export default function ShoppingLists({ activeSection, onSelectActiveSection }: 
         setVisibleShoppingLists(visibleShoppingLists);
         visibleShoppingLists.length > 0 ? dispatch(setCurrentShoppingList(visibleShoppingLists[0])) :
             dispatch(setCurrentShoppingList(null));
-    }, [shoppingLists, showArchived]);
+    }, [shoppingLists, showArchived, dispatch]);
 
     useEffect(() => {
         const timer = setTimeout(() => setShowTooltip(false), 5000);

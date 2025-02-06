@@ -1,9 +1,8 @@
-import React, { useState } from "react";
-import { HiSearch, HiX } from "react-icons/hi";
-import { fetchCatalogSearchResults } from "../lib/fetchCatalog";
-import { useAuth } from "../hooks/useAuth";
-import { Item } from "../redux/catalogSlice";
+import { useState } from "react";
 import toast from "react-hot-toast";
+import { HiSearch, HiX } from "react-icons/hi";
+import { useCatalogApi } from "../hooks/useCatalogApi";
+import { Item } from "../redux/catalogSlice";
 
 interface SearchBarProps {
     onSearch: (results: Item[] | null) => void;
@@ -12,7 +11,7 @@ interface SearchBarProps {
 export default function CatalogSearchBar({ onSearch }: SearchBarProps) {
     const [query, setQuery] = useState<string>("");
     const [isLoading, setIsLoading] = useState(false);
-    const { acquireToken } = useAuth();
+    const { fetchCatalogSearchResults } = useCatalogApi();
 
     // Handle search input
     const handleSearch = async () => {
@@ -20,7 +19,6 @@ export default function CatalogSearchBar({ onSearch }: SearchBarProps) {
 
         setIsLoading(true);
         try {
-            await acquireToken();
             const results = await fetchCatalogSearchResults(query); // Request data from the server
             onSearch(results);
         } catch (error) {

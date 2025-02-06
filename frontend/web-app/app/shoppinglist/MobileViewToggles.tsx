@@ -1,5 +1,5 @@
 import { Button } from 'flowbite-react'
-import React, { Dispatch, SetStateAction } from 'react'
+import { Dispatch, SetStateAction } from 'react'
 
 interface MobileViewTogglesProps {
     onSetActiveSection: Dispatch<SetStateAction<"lists" | "current" | "frequent">>

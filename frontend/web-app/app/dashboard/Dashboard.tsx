@@ -1,10 +1,9 @@
-import React from "react";
 import { Button } from "flowbite-react";
-import { FaListUl, FaPlus, FaUpload, FaCalendarAlt, FaDollarSign } from "react-icons/fa";
-import { useSelector } from "react-redux";
-import { RootState } from "../redux/store";
 import Link from "next/link";
 import toast from "react-hot-toast";
+import { FaCalendarAlt, FaDollarSign, FaListUl, FaPlus, FaUpload } from "react-icons/fa";
+import { useSelector } from "react-redux";
+import { RootState } from "../redux/store";
 
 export default function Dashboard() {
     const user = useSelector((state: RootState) => state.user);

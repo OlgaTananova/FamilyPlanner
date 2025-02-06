@@ -1,11 +1,10 @@
-import React, { useState } from "react";
-import { Modal, Button, TextInput, Select } from "flowbite-react";
+import { Button, Modal } from "flowbite-react";
+import { useState } from "react";
 import { toast } from "react-hot-toast";
-import { useSelector, useDispatch } from "react-redux";
-import { RootState } from "../redux/store";
-import { createItem } from "../lib/fetchCatalog";
-import { useAuth } from "../hooks/useAuth";
+import { useDispatch, useSelector } from "react-redux";
+import { useCatalogApi } from "../hooks/useCatalogApi";
 import { addItem } from "../redux/catalogSlice";
+import { RootState } from "../redux/store";
 
 
 interface AddNewItemModalProps {
@@ -16,8 +15,7 @@ interface AddNewItemModalProps {
 export default function AddNewItemModal({ isOpen, onClose }: AddNewItemModalProps) {
     const categories = useSelector((state: RootState) => state.categories || []);
     const dispatch = useDispatch();
-    const { acquireToken } = useAuth();
-
+    const { createItem } = useCatalogApi();
     const [itemName, setItemName] = useState("");
     const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
@@ -49,7 +47,6 @@ export default function AddNewItemModal({ isOpen, onClose }: AddNewItemModalProp
         setIsSaving(true);
 
         try {
-            await acquireToken();
             const newItem = await createItem(itemName, selectedCategory);
             if (newItem) {
                 dispatch(addItem(newItem));

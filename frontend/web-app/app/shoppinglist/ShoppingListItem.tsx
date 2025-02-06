@@ -1,10 +1,9 @@
-import React, { useState, useRef, useEffect } from "react";
-import { deleteShoppingListItemFromStore, ShoppingListItem, updateShoppingListInStore } from "../redux/shoppingListSlice";
-import { useAuth } from "../hooks/useAuth";
-import { deleteShoppingListItem, updateShoppingListItem } from "../lib/fetchShoppingLists";
-import { useDispatch } from "react-redux";
-import toast from "react-hot-toast";
 import { Button } from "flowbite-react";
+import { useEffect, useRef, useState } from "react";
+import toast from "react-hot-toast";
+import { useDispatch } from "react-redux";
+import { useShoppingListApi } from "../hooks/useShoppingListApi";
+import { deleteShoppingListItemFromStore, ShoppingListItem, updateShoppingListInStore } from "../redux/shoppingListSlice";
 
 interface ShoppingListItemProps {
     item: ShoppingListItem;
@@ -18,8 +17,8 @@ export default function ShoppingListItemComponent({ item }: ShoppingListItemProp
     const [price, setPrice] = useState(item.price);
     const [unit, setUnit] = useState(item.unit || "pcs");
     const [isSaving, setIsSaving] = useState(false);
-    const { acquireToken } = useAuth();
     const dispatch = useDispatch();
+    const { updateShoppingListItem, deleteShoppingListItem } = useShoppingListApi();
 
     const units = ["pcs", "gal", "lb", "oz", "carton", "fl_oz"];
     const tooltipRef = useRef<HTMLDivElement | null>(null);
@@ -32,7 +31,6 @@ export default function ShoppingListItemComponent({ item }: ShoppingListItemProp
     const onUpdateItem = async (newStatus?: boolean) => {
         try {
             setIsSaving(true);
-            await acquireToken();
             const status = newStatus ? "Finished" : "Pending";
             const shoppingList = await updateShoppingListItem(item.shoppingListId, item.id, { unit, quantity, pricePerUnit, price, status });
             if (shoppingList) {
@@ -78,7 +76,6 @@ export default function ShoppingListItemComponent({ item }: ShoppingListItemProp
     const handleItemDelete = async () => {
         try {
             setIsSaving(true);
-            await acquireToken();
             const result = await deleteShoppingListItem(item.shoppingListId, item.id);
             if (result) {
                 dispatch(deleteShoppingListItemFromStore({ shoppingListId: item.shoppingListId, itemId: item.id }));
@@ -105,11 +102,11 @@ export default function ShoppingListItemComponent({ item }: ShoppingListItemProp
         }
 
         return () => document.removeEventListener("mousedown", handleClickOutside);
-    }, [isTooltipOpen]);
+    }, [isTooltipOpen, handleCloseTooltip]);
 
     useEffect(() => {
         resetInputs();
-    }, [item]);
+    }, [item, resetInputs]);
 
     return (
         <li className="relative w-full flex justify-between items-center px-4 py-3 bg-gray-50 hover:bg-purple-100 rounded-lg border border-gray-300 shadow-sm transition duration-200">

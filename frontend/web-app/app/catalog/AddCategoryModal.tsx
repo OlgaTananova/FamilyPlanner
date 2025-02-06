@@ -1,14 +1,8 @@
+import { Button, Modal } from "flowbite-react";
 import React, { useState } from "react";
-import { Modal, Button, TextInput, Dropdown } from "flowbite-react";
-import { FaCarrot, FaAppleAlt, FaFish, FaBreadSlice } from "react-icons/fa";
-import { TbMeat } from "react-icons/tb";
-import { GiMilkCarton } from "react-icons/gi";
-import { MdOutlineEmojiFoodBeverage } from "react-icons/md";
-import { createCategory } from "../lib/fetchCatalog";
 import { useDispatch } from "react-redux";
-import { useAuth } from "../hooks/useAuth";
+import { useCatalogApi } from "../hooks/useCatalogApi";
 import { addCategory } from "../redux/catalogSlice";
-import toast from "react-hot-toast";
 
 interface AddCategoryModalProps {
     isOpen: boolean;
@@ -17,10 +11,10 @@ interface AddCategoryModalProps {
 
 export default function AddCategoryModal({ isOpen, onClose }: AddCategoryModalProps) {
     const [categoryName, setCategoryName] = useState("");
-    const { acquireToken } = useAuth();
     const dispatch = useDispatch();
     const [error, setError] = useState<string | null>(null);
     const [isSaving, setIsSaving] = useState(false);
+    const { createCategory } = useCatalogApi();
 
     // Validate input
     const validateName = (name: string) => {
@@ -57,7 +51,6 @@ export default function AddCategoryModal({ isOpen, onClose }: AddCategoryModalPr
         setIsSaving(true);
 
         try {
-            await acquireToken();
             const newCategory = await createCategory(categoryName);
             if (newCategory) {
                 dispatch(addCategory(newCategory));

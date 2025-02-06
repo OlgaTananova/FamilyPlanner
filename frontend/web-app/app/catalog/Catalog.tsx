@@ -1,25 +1,17 @@
 "use client";
-
-import { AwaitedReactNode, JSXElementConstructor, Key, ReactElement, ReactNode, ReactPortal, useEffect, useState } from "react";
-import { toast } from "react-hot-toast";
-import { useDispatch, useSelector } from "react-redux";
-import { RootState } from "../redux/store";
-import { fetchCatalogData } from "../lib/fetchCatalog";
-import { Category, Item, setCategories } from "../redux/catalogSlice";
-import { Button, Dropdown, TextInput } from "flowbite-react";
-import { HiDotsVertical, HiSearch } from "react-icons/hi";
-import { MdOutlineAddShoppingCart } from "react-icons/md";
-import { FaRegEdit } from "react-icons/fa";
-import ItemComponent from "./Item";
-import CategoryCard from "./CategoryCard";
-import DropdownMenu from "./DropdownMenu";
-import { useAuth } from "../hooks/useAuth";
 import Link from "next/link";
+import { useEffect, useState } from "react";
+import { useSelector } from "react-redux";
+import { Item } from "../redux/catalogSlice";
+import { RootState } from "../redux/store";
 import AddCategoryModal from "./AddCategoryModal";
 import AddNewItemModal from "./AddItemModal";
-import EditItemModal from "./EditItemModal";
-import EditCategoryModal from "./EditCategoryModal";
 import CatalogSearchBar from "./CatalogSearchBar";
+import CategoryCard from "./CategoryCard";
+import DropdownMenu from "./DropdownMenu";
+import EditCategoryModal from "./EditCategoryModal";
+import EditItemModal from "./EditItemModal";
+import ItemComponent from "./Item";
 import SearchResults from "./SearchResults";
 
 
@@ -37,6 +29,7 @@ export default function Catalog() {
   const [showTooltip, setShowTooltip] = useState(true);
   const [searchResults, setSearchResults] = useState<Item[] | null>();
   const [isSearching, setIsSearching] = useState(false);
+
 
   useEffect(() => {
     const timer = setTimeout(() => setShowTooltip(false), 5000);

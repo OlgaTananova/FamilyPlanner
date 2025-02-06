@@ -1,15 +1,13 @@
-import React from "react";
 import { Button } from "flowbite-react";
-import { useSelector, useDispatch } from "react-redux";
-import { RootState } from "../redux/store";
-import { CatalogItem, updateShoppingListInStore } from "../redux/shoppingListSlice";
 import { toast } from "react-hot-toast";
-import { addShoppingListItems, updateShoppingList } from "../lib/fetchShoppingLists";
-import { useAuth } from "../hooks/useAuth";
+import { useDispatch, useSelector } from "react-redux";
+import { useShoppingListApi } from "../hooks/useShoppingListApi";
+import { CatalogItem, updateShoppingListInStore } from "../redux/shoppingListSlice";
+import { RootState } from "../redux/store";
 
 export default function FrequentItems() {
     const dispatch = useDispatch();
-    const { acquireToken } = useAuth();
+    const { addShoppingListItems } = useShoppingListApi();
 
     // Get frequently bought items from the Redux store
     const frequentItems = useSelector((state: RootState) => state.shoppinglists.frequentItems);
@@ -23,7 +21,6 @@ export default function FrequentItems() {
             return;
         }
         try {
-            await acquireToken();
             const updatedShoppingList = await addShoppingListItems(currentShoppingList.id, { skus: [item.sku] });
             if (updatedShoppingList) {
                 dispatch(updateShoppingListInStore(updatedShoppingList));

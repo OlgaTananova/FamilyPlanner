@@ -1,13 +1,12 @@
-import React, { useEffect, useState } from "react";
-import { Modal, Button, TextInput, Select } from "flowbite-react";
+import { Button, Modal } from "flowbite-react";
+import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
-import { useSelector, useDispatch } from "react-redux";
-import { RootState } from "../redux/store";
-import { deleteItem, updateItem } from "../lib/fetchCatalog";
+import { useDispatch, useSelector } from "react-redux";
+import { useCatalogApi } from "../hooks/useCatalogApi";
 import { removeItemFromStore, updateItemInStore } from "../redux/catalogSlice";
-import ConfirmationModal from "./ConfirmationModal";
 import { updateCatalogItem } from "../redux/shoppingListSlice";
-import { useAuth } from "../hooks/useAuth";
+import { RootState } from "../redux/store";
+import ConfirmationModal from "./ConfirmationModal";
 
 interface EditItemModalProps {
     isOpen: boolean;
@@ -23,12 +22,12 @@ interface EditItemModalProps {
 export default function EditItemModal({ isOpen, onClose, item }: EditItemModalProps) {
     const categories = useSelector((state: RootState) => state.categories.categories || []);
     const dispatch = useDispatch();
-    const { acquireToken } = useAuth();
     const [itemName, setItemName] = useState(item.name);
     const [selectedCategory, setSelectedCategory] = useState(item.categorySKU);
     const [isSaving, setIsSaving] = useState(false);
     const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
     const [currentCategory, setCurrentCategory] = useState(item.categorySKU);
+    const { updateItem, deleteItem } = useCatalogApi();
 
     const validateName = (name: string) => name.trim().length >= 3;
 
@@ -49,7 +48,6 @@ export default function EditItemModal({ isOpen, onClose, item }: EditItemModalPr
         setIsSaving(true);
 
         try {
-            await acquireToken();
             const updatedItem = await updateItem(item.sku, itemName, selectedCategory);
 
             if (updatedItem) {

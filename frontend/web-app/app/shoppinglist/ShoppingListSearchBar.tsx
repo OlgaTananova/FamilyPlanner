@@ -1,12 +1,10 @@
-import React, { useEffect, useRef, useState } from 'react'
-import { Item } from '../redux/catalogSlice';
-import { addShoppingListItems, searchShoppingListItems } from '../lib/fetchShoppingLists';
-import { DiVim } from 'react-icons/di';
-import { useDispatch, useSelector } from 'react-redux';
-import { RootState } from '../redux/store';
+import { useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useDispatch, useSelector } from 'react-redux';
+import { useShoppingListApi } from '../hooks/useShoppingListApi';
+import { Item } from '../redux/catalogSlice';
 import { updateShoppingListInStore } from '../redux/shoppingListSlice';
-import { useAuth } from '../hooks/useAuth';
+import { RootState } from '../redux/store';
 
 export default function ShoppingListSearchBar() {
     const [searchTerm, setSearchTerm] = useState("");
@@ -15,8 +13,8 @@ export default function ShoppingListSearchBar() {
     const [showResults, setShowResults] = useState(false);
     const shoppingList = useSelector((state: RootState) => state.shoppinglists.currentShoppingList);
     const dispatch = useDispatch();
-    const { acquireToken } = useAuth();
     const resultsRef = useRef<HTMLDivElement | null>(null);
+    const { searchShoppingListItems, addShoppingListItems } = useShoppingListApi();
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -38,7 +36,6 @@ export default function ShoppingListSearchBar() {
         setIsSearching(true);
 
         try {
-            await acquireToken();
             const results = await searchShoppingListItems(query);
             if (results) {
                 setSearchResults(results);
@@ -56,7 +53,6 @@ export default function ShoppingListSearchBar() {
                 toast.error("No shopping list selected.");
                 return;
             }
-            await acquireToken();
             const updatedShoppingList = await addShoppingListItems(shoppingList!.id, { skus: [item.sku] });
 
             if (updatedShoppingList) {

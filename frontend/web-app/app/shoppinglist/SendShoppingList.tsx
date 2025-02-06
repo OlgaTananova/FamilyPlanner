@@ -1,8 +1,8 @@
-import React, { useState } from "react";
 import { Button, Modal, Textarea } from "flowbite-react";
-import { ShoppingList } from "../redux/shoppingListSlice"; // Import your ShoppingList type
-import { FaWhatsapp, FaTelegram, FaEnvelope, FaCopy } from "react-icons/fa";
+import React, { useState } from "react";
 import toast from "react-hot-toast";
+import { FaCopy, FaEnvelope, FaTelegram, FaWhatsapp } from "react-icons/fa";
+import { ShoppingList } from "../redux/shoppingListSlice"; // Import your ShoppingList type
 
 interface SendShoppingListProps {
     isOpen: boolean;
@@ -77,15 +77,15 @@ export default function SendShoppingList({ isOpen, onClose, shoppingList }: Send
                             WhatsApp
                         </Button>
                         <Button color="blue" onClick={handleSendTelegram} className="flex items-center gap-2">
-                            <FaTelegram className="mr-1 mt-1"/>
+                            <FaTelegram className="mr-1 mt-1" />
                             Telegram
                         </Button>
                         <Button color="gray" onClick={handleSendEmail} className="flex items-center gap-2">
-                            <FaEnvelope className="mr-1 mt-1"/>
+                            <FaEnvelope className="mr-1 mt-1" />
                             Email
                         </Button>
                         <Button color="purple" onClick={handleCopyToClipboard} className="flex items-center gap-2">
-                            <FaCopy className="mr-1 mt-1"/>
+                            <FaCopy className="mr-1 mt-1" />
                             Copy
                         </Button>
                     </div>

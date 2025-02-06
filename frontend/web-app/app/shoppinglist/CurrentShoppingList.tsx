@@ -1,15 +1,14 @@
-import React, { useEffect, useState } from "react";
-import { useSelector } from "react-redux";
-import { RootState } from "../redux/store";
-import { ShoppingListItem } from "../redux/shoppingListSlice";
-import { Dropdown } from "flowbite-react";
-import EditShoppingListModal from "./EditShoppingListModal";
+import { useEffect, useState } from "react";
 import { FaArchive } from "react-icons/fa";
+import { useSelector } from "react-redux";
+import { ShoppingListItem } from "../redux/shoppingListSlice";
+import { RootState } from "../redux/store";
+import AddItemsFromList from "./AddItemsFromList";
+import EditShoppingListModal from "./EditShoppingListModal";
+import SendShoppingList from "./SendShoppingList";
 import ShoppingListDropdownMenu from "./ShoppingListDropdownMenu";
 import ShoppingListItems from "./ShoppingListItems";
 import ShoppingListSearchBar from "./ShoppingListSearchBar";
-import AddItemsFromList from "./AddItemsFromList";
-import SendShoppingList from "./SendShoppingList";
 
 
 export default function CurrentShoppingList() {
