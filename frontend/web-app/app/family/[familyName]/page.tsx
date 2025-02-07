@@ -1,4 +1,4 @@
-'use client'
+
 import { getFamilyUsers } from "@/app/lib/getFamilyUsers";
 import { RootState } from "@/app/redux/store";
 import Link from "next/link";
@@ -16,9 +16,9 @@ export interface FamilyUser {
 }
 
 
-export default function FamilyPage() {
-  const { familyName } = useParams();
-  const [familyUsers, setFamilyUsers] = useState<FamilyUser[]>([]);
+export default async function FamilyPage({ params }: { params: Promise<{ familyName: string }> }) {
+  const { familyName } = await params;
+  let familyUsers: FamilyUser[] = [];
 
   if (!familyName) {
     return (
@@ -31,20 +31,14 @@ export default function FamilyPage() {
     );
   }
 
-  useEffect(() => {
-    if (!familyName) return;
 
-    async function fetchUsers() {
-      try {
-        const users = await getFamilyUsers(familyName as string);
-        setFamilyUsers(users);
-      } catch (error) {
-        console.error("Error fetching family users:", error);
-      }
-    }
+  try {
+    const users = await getFamilyUsers(familyName as string);
+    familyUsers = users;
+  } catch (error) {
+    console.error("Error fetching family users:", error);
+  }
 
-    fetchUsers();
-  }, [familyName]);
 
   return (
     <div className="flex flex-col items-center p-6 bg-gradient-to-r from-purple-50 via-purple-100 to-fuchsia-50 min-h-screen relative">

@@ -1,3 +1,4 @@
+'use client'
 import { Button } from "flowbite-react";
 import Link from "next/link";
 import toast from "react-hot-toast";

@@ -79,9 +79,20 @@ services:
         dockerfile: src/GatewayService/Dockerfile
       environment:
         - DOTNET_ENVIRONMENT=Docker
-        - ASPNETCORE_URLS=http://+:80
+        - ASPNETCORE_URLS=http://+:80 
       ports:
-        - 7004:80                          
+        - 7004:80
+  web-app:
+    image: olgatan/web-app:latest
+    build:
+      context: .
+      dockerfile: frontend/web-app/Dockerfile
+    volumes:
+      - /var/lib/web/data
+    ports:
+      - 3000:3000
+    env_file:
+      - .env                                       
 
 volumes:
   pgdata-catalog:
