@@ -35,12 +35,12 @@ export default function ShoppingListItemComponent({ item }: ShoppingListItemProp
             const shoppingList = await updateShoppingListItem(item.shoppingListId, item.id, { unit, quantity, pricePerUnit, price, status });
             if (shoppingList) {
                 dispatch(updateShoppingListInStore(shoppingList));
-                toast.success("Item updated successfully.");
+                toast.success(`Item "${item.name || ""}" updated successfully.`);
             }
         } catch (error) {
             console.error(error);
             newStatus ?? setIsFinished(!newStatus);
-            toast.error("Failed to update item.");
+            toast.error(`Failed to update ${item.name || ""} item.`);
         } finally {
             handleCloseTooltip();
             setIsSaving(false);
@@ -106,7 +106,7 @@ export default function ShoppingListItemComponent({ item }: ShoppingListItemProp
 
     useEffect(() => {
         resetInputs();
-    }, [item, resetInputs]);
+    }, [item]);
 
     return (
         <li className="relative w-full flex justify-between items-center px-4 py-3 bg-gray-50 hover:bg-purple-100 rounded-lg border border-gray-300 shadow-sm transition duration-200">

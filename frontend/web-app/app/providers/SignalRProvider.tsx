@@ -32,24 +32,35 @@ export const SignalRProvider: React.FC<SignalRProviderProps> = ({ hubUrl, childr
 
     const establishConnection = async () => {
         try {
+            // Prevent multiple connection attempts
+            if (connection?.state === signalR.HubConnectionState.Connected) {
+                console.warn("SignalR connection already established.");
+                return;
+            }
             // Acquire access token
             const token = await acquireToken();
             if (!token) {
                 console.error("Failed to acquire token.");
                 return;
             }
+            
+            // Ensure previous connection is stopped before creating a new one
+            if (connection) {
+                await connection.stop();
+                console.warn("Existing SignalR connection stopped before re-establishing.");
+            }
 
             // Build and start a SignalR connection
             const newConnection = new signalR.HubConnectionBuilder()
                 .withUrl(hubUrl, {
-                    //accessTokenFactory: () => token.accessToken,
-                    withCredentials: true,
+                    withCredentials: false,
                     headers: {
                         Authorization: `Bearer ${token.accessToken}`,
                     }
                 })
                 .withAutomaticReconnect([0, 2000, 5000, 10000])
                 .build();
+
             newConnection.onreconnecting(() => {
                 console.warn("SignalR reconnecting...");
             });
@@ -59,7 +70,7 @@ export const SignalRProvider: React.FC<SignalRProviderProps> = ({ hubUrl, childr
             });
             newConnection.onclose(() => {
                 console.error("SignalR connection closed. Please try to refresh the page.");
-                toast.error("Real-time notification service is disconnected. Please try to refresh the page.");
+                //toast.error("Real-time notification service is disconnected. Please try to refresh the page.");
                 setIsConnected(false);
             });
 
@@ -78,8 +89,7 @@ export const SignalRProvider: React.FC<SignalRProviderProps> = ({ hubUrl, childr
         if (!isAuthenticated) {
             // Disconnect SignalR if the user logs out
             if (connection) {
-                connection.stop();
-                console.log("SignalR disconnected due to logout.");
+                connection.stop().catch((error) => console.error("Error stopping SignalR:", error));
             }
             setConnection(null);
             setIsConnected(false);
@@ -92,8 +102,7 @@ export const SignalRProvider: React.FC<SignalRProviderProps> = ({ hubUrl, childr
         // Cleanup on unmount
         return () => {
             if (connection) {
-                connection.stop();
-                console.log("SignalR connection closed.");
+                connection.stop().catch((error) => console.error("Error stopping SignalR on cleanup:", error));
             }
         };
     }, [isAuthenticated, hubUrl]);
