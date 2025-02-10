@@ -12,12 +12,10 @@ interface SendShoppingListProps {
 
 export default function SendShoppingList({ isOpen, onClose, shoppingList }: SendShoppingListProps) {
     const [message, setMessage] = useState<string>("");
-    const [telegramMessage, sendTelegramMessage] = useState<string>("");
-    const [isSending, setIsSending] = useState<boolean>(false); // Track sending status
 
     // Generate Message
     const generateMessage = () => {
-        let text = `🛒 *${shoppingList.heading}*\n\n`;
+        let text = `🛒 ${shoppingList.heading}\n\n`;
 
         text += shoppingList.items
             .map((item, index) => {
@@ -43,44 +41,9 @@ export default function SendShoppingList({ isOpen, onClose, shoppingList }: Send
 
     // Send via Telegram
     const handleSendTelegram = async () => {
+        const encodedMessage = encodeURIComponent(message);
+        window.open(`https://t.me/share/url?url=${encodedMessage}`, "_blank");
 
-        let text = `🛒 *${shoppingList.heading}*\n\n`;
-
-        const inlineKeyboard = {
-            inlineKeyboard: shoppingList.items.map((item, index) => [
-                {
-                    text: item.status === "Finished" ? `✅ ${item.name}` : `⬜ ${item.name}`,
-                    callback_data: `toggle_${item.id}` // Each button sends a callback
-                }
-            ])
-        };
-
-        // Generate formatted text with escaped characters
-        text += shoppingList.items
-            .map((item, index) => {
-                const escapedItemName = item.name.replace(/[_*[\]()~`>#+\-=|{}.!]/g, "\\$&");
-                return `${index + 1}. ${escapedItemName} - ${item.quantity} ${item.unit}`;
-            })
-            .join("\n");
-        setIsSending(true);
-        try {
-            const response = await fetch("/api/telegram/sendshoppinglist", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ text })
-            });
-
-            const data = await response.json();
-            if (response.ok) {
-                toast.success("Shopping list sent to Telegram!");
-            } else {
-                throw new Error(data.error || "Failed to send");
-            }
-        } catch (error: any) {
-            toast.error(`Error: ${error.message}`);
-        } finally {
-            setIsSending(false);
-        }
     };
 
     // Send via Email
