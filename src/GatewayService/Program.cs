@@ -57,7 +57,8 @@ builder.Services.AddCors(options =>
         .WithOrigins(builder.Configuration.GetSection("ClientApps").Get<string[]>()!);
     });
 });
-
+var allowedOrigins = builder.Configuration.GetSection("ClientApps").Get<string[]>()!;
+Console.WriteLine("Allowed Origins: " + string.Join(", ", allowedOrigins));
 // Add YARP reverse proxy
 builder.Services.AddReverseProxy()
     .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));

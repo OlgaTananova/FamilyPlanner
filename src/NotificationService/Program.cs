@@ -67,7 +67,7 @@ builder.Services.AddCors(options =>
     {
         policy.WithOrigins(builder.Configuration.GetSection("ClientApps").Get<string[]>()!); // Allow only these origins
         policy.AllowAnyHeader();
-        policy.WithMethods("GET", "POST");
+        policy.AllowAnyMethod();
         policy.AllowCredentials();
     });
 });
@@ -84,7 +84,12 @@ if (!builder.Environment.IsEnvironment("Testing"))
 builder.Services.AddScoped<IClaimsTransformation, CustomClaimsTransformation>();
 builder.Services.AddAuthorization();
 
-builder.Services.AddSignalR();
+builder.Services.AddSignalR(options =>
+{
+    options.EnableDetailedErrors = true;
+    options.KeepAliveInterval = TimeSpan.FromSeconds(10);
+    options.HandshakeTimeout = TimeSpan.FromSeconds(15);
+});
 
 var app = builder.Build();
 
@@ -92,6 +97,7 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
 }
+app.UseWebSockets();
 app.UseExceptionHandler(o => { });
 app.UseCors("AllowSpecificOrigins");
 
