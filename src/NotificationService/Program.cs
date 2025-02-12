@@ -77,6 +77,20 @@ if (!builder.Environment.IsEnvironment("Testing"))
         .AddMicrosoftIdentityWebApi(options =>
         {
             builder.Configuration.Bind("AzureAdB2C", options);
+            // options.Events = new JwtBearerEvents
+            // {
+            //     OnMessageReceived = context =>
+            //     {
+            //         var accessToken = context.Request.Query["access_token"];
+
+            //         if (!string.IsNullOrEmpty(accessToken))
+            //         {
+            //             context.Token = accessToken; 
+            //         }
+
+            //         return Task.CompletedTask;
+            //     }
+            // };
         }, options => builder.Configuration.Bind("AzureAdB2C", options));
 
 }
@@ -87,8 +101,9 @@ builder.Services.AddAuthorization();
 builder.Services.AddSignalR(options =>
 {
     options.EnableDetailedErrors = true;
-    options.KeepAliveInterval = TimeSpan.FromSeconds(10);
-    options.HandshakeTimeout = TimeSpan.FromSeconds(15);
+    options.KeepAliveInterval = TimeSpan.FromSeconds(20);
+    options.HandshakeTimeout = TimeSpan.FromSeconds(30);
+    options.ClientTimeoutInterval = TimeSpan.FromSeconds(60);
 });
 
 var app = builder.Build();
@@ -105,7 +120,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
-app.MapHub<NotificationHub>("notifications").RequireAuthorization();
+app.MapHub<NotificationHub>("notifications");
 
 app.Run();
 

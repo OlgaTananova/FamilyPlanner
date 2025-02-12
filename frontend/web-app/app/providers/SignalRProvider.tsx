@@ -5,7 +5,7 @@ import toast from "react-hot-toast";
 import { useDispatch } from "react-redux";
 import { useAuth } from "../hooks/useAuth";
 import { addCategory, addItem, Category, removeCategoryFromStore, removeItemFromStore, updateCategoryInStore, updateItemInStore } from "../redux/catalogSlice";
-import { addShoppingList, deleteShoppingListFromStore, deleteShoppingListItemFromStore, updateCatalogCategory, updateCatalogItem, updateShoppingListInStore } from "../redux/shoppingListSlice";
+import { addShoppingList, deleteCatalogItemFromShoppingList, deleteShoppingListFromStore, deleteShoppingListItemFromStore, updateCatalogCategory, updateCatalogItem, updateShoppingListInStore } from "../redux/shoppingListSlice";
 
 interface SignalRContextType {
     connection: signalR.HubConnection | null;
@@ -43,24 +43,29 @@ export const SignalRProvider: React.FC<SignalRProviderProps> = ({ hubUrl, childr
                 console.error("Failed to acquire token.");
                 return;
             }
-            
+
             // Ensure previous connection is stopped before creating a new one
             if (connection) {
                 await connection.stop();
                 console.warn("Existing SignalR connection stopped before re-establishing.");
             }
 
-            // Build and start a SignalR connection
             const newConnection = new signalR.HubConnectionBuilder()
-                .withUrl(hubUrl, {
+                .withUrl(`${hubUrl}`, {
+                    accessTokenFactory: () => token.accessToken || "",
+                    transport: signalR.HttpTransportType.WebSockets | signalR.HttpTransportType.LongPolling,
                     withCredentials: false,
                     headers: {
-                        Authorization: `Bearer ${token.accessToken}`,
+                        Authorization: `Bearer ${token.accessToken}`
                     }
                 })
                 .withAutomaticReconnect([0, 2000, 5000, 10000])
+                .configureLogging(signalR.LogLevel.Information)
                 .build();
 
+            newConnection.serverTimeoutInMilliseconds = 60000; // 60 seconds (Default is 30 seconds)
+            newConnection.keepAliveIntervalInMilliseconds = 20000;
+            
             newConnection.onreconnecting(() => {
                 console.warn("SignalR reconnecting...");
             });
@@ -128,7 +133,8 @@ export const SignalRProvider: React.FC<SignalRProviderProps> = ({ hubUrl, childr
                 dispatch(addItem(createdItem));
             });
             connection.on("CatalogItemDeleted", (deletedItem) => {
-                dispatch(removeItemFromStore(deletedItem.sku))
+                dispatch(removeItemFromStore(deletedItem.sku));
+                dispatch(deleteCatalogItemFromShoppingList(deletedItem.sku));
             });
             // Shopping List Events
             connection.on("ShoppingListCreated", (shoppingList) => {

@@ -117,7 +117,7 @@ export const catalogSlice = createSlice({
             });
             state.itemsWOCategories = state.categories
                 .flatMap((category) => category.items)
-                .sort((a, b) => a.name.localeCompare(b.name));
+                .sort((a, b) => a.name.localeCompare(b.name));    
         },
         updateCategoryInStore(state, action: PayloadAction<Category>) {
             const category = state.categories.find((cat) => cat.sku === action.payload.sku);

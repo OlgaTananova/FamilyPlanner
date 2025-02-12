@@ -168,6 +168,24 @@ const shoppingListSlice = createSlice({
                 state.currentShoppingList.items = state.currentShoppingList.items.filter((item) => item.id !== itemId);
             }
         },
+        deleteCatalogItemFromShoppingList(state, action: PayloadAction<{ sku: string }>) {
+            const { sku } = action.payload;
+            state.lists = state.lists.map((sl) => {
+                sl.items = sl.items.map((i) => {
+                    if (i.sku !== sku) i.isOrphaned = true;
+                    return i;
+                });
+                return sl;
+            });
+
+            if (state.currentShoppingList) {
+                state.currentShoppingList.items = state.currentShoppingList.items.map((i) => {
+                    if (i.sku == sku) i.isOrphaned = true;
+                    return i;
+                })
+            }
+
+        },
         getFrequentItems(state, action: PayloadAction<CatalogItem[]>) {
             state.frequentItems = action.payload;
         }
@@ -185,7 +203,8 @@ export const {
     deleteShoppingListFromStore,
     updateShoppingListInStore,
     deleteShoppingListItemFromStore,
-    getFrequentItems
+    getFrequentItems,
+    deleteCatalogItemFromShoppingList
 } = shoppingListSlice.actions;
 
 export default shoppingListSlice.reducer;

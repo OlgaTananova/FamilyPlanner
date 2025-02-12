@@ -1,10 +1,13 @@
 using System;
 using System.Collections.Concurrent;
+using System.IdentityModel.Tokens.Jwt;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
 
 namespace NotificationService.Hubs;
-
+[Authorize]
 public class NotificationHub : Hub
 
 {
@@ -35,6 +38,7 @@ public class NotificationHub : Hub
             // Reject the connection if the token is invalid
             Context.Abort();
         }
+
     }
 
     public override async Task OnDisconnectedAsync(Exception? exception)

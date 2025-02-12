@@ -15,6 +15,10 @@ const hubUrl = `${process.env.NEXT_PUBLIC_GATEWAY_URL}/notifications`;
 export const metadata: Metadata = {
   title: "Family Planner",
   description: "Family Planner",
+  icons: {
+    icon: "./favicon.ico", // Path to the favicon
+  },
+
 };
 
 
@@ -27,7 +31,6 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-
         <ToasterProvider />
         <ReduxProvider>
           <MsalPageProvider>
