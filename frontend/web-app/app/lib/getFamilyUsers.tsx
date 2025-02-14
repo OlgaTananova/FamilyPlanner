@@ -1,9 +1,9 @@
 // utils/getGraphToken.ts
 import { ClientSecretCredential } from "@azure/identity";
 
-const tenantId = process.env.NEXT_PUBLIC_AZURE_AD_B2C_TENANT_ID; // e.g., {your-tenant-name}.onmicrosoft.com
+const tenantId = process.env.NEXT_PUBLIC_AZURE_AD_B2C_TENANT_ID; 
 const clientId = process.env.NEXT_PUBLIC_AZURE_AD_B2C_CLIENT_ID;
-const clientSecret = process.env.NEXT_PRIVATE_AZURE_AD_B2C_SECRET;
+const clientSecret = process.env.NEXT_PUBLIC_AZURE_AD_B2C_SECRET;
 const clientExtensionId = process.env.NEXT_PUBLIC_AZURE_AD_B2C_CLIENT_EXTENSION_ID_WITHOUT_DASH
 
 

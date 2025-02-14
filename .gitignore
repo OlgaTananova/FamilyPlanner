@@ -39,3 +39,7 @@ next-env.d.ts
 
 appsettings.Development.json
 appsettings.Docker.json
+
+.vs
+.vscode
+devcerts
