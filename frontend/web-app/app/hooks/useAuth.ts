@@ -5,12 +5,17 @@ import { useRouter } from "next/navigation";
 
 const catalogReadScope = process.env.NEXT_PUBLIC_AZURE_AD_B2C_CATALOG_READ_SCOPE ?? "";
 const catalogWriteScope = process.env.NEXT_PUBLIC_AZURE_AD_B2C_CATALOG_WRITE_SCOPE ?? "";
+const shopListWriteScope = process.env.NEXT_PUBLIC_AZURE_AD_B2C_SHOPLIST_WRITE_SCOPE ?? "";
+const shopListReadScope = process.env.NEXT_PUBLIC_AZURE_AD_B2C_SHOPLIST_READ_SCOPE ?? "";
+
 
 export const loginRequest = {
   scopes: ["openid",
     "offline_access",
     catalogWriteScope,
     catalogReadScope,
+    shopListReadScope,
+    shopListWriteScope,
     "profile",
     "email",
   ],

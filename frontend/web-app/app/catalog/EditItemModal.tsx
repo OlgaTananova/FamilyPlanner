@@ -4,7 +4,7 @@ import { toast } from "react-hot-toast";
 import { useDispatch, useSelector } from "react-redux";
 import { useCatalogApi } from "../hooks/useCatalogApi";
 import { removeItemFromStore, updateItemInStore } from "../redux/catalogSlice";
-import { updateCatalogItem } from "../redux/shoppingListSlice";
+import { deleteCatalogItemFromShoppingList, updateCatalogItem } from "../redux/shoppingListSlice";
 import { RootState } from "../redux/store";
 import ConfirmationModal from "./ConfirmationModal";
 
@@ -67,6 +67,7 @@ export default function EditItemModal({ isOpen, onClose, item }: EditItemModalPr
         const result = await deleteItem(item.sku);
         if (result) {
             dispatch(removeItemFromStore(item.sku));
+            dispatch(deleteCatalogItemFromShoppingList(item));
             toast.success("Item deleted successfully!");
             setIsConfirmModalOpen(false);
         }

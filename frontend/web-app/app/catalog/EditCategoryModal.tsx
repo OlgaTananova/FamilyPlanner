@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Modal, Button } from "flowbite-react";
+import { Modal, Button, Tooltip } from "flowbite-react";
 import { toast } from "react-hot-toast";
 import { useDispatch } from "react-redux";
 
@@ -107,17 +107,21 @@ export default function EditCategoryModal({
                         </div>
                     </div>
                 </Modal.Body>
+
                 <Modal.Footer>
+
                     <div className="flex justify-between w-full">
                         {/* Delete Button */}
                         <Button
                             color="red"
                             onClick={() => setIsConfirmModalOpen(true)}
-                            disabled={categoryState.items.length > 0}
-                            title={category.items.length > 0 ? "Cannot delete a category with items." : ""}
-                        >
-                            Delete
+                            disabled={categoryState.items.length > 0}>
+
+                            <Tooltip content="Cannot delete a category with items." placement="top" trigger="hover" hidden={categoryState.items.length === 0}>
+                                Delete
+                            </Tooltip>
                         </Button>
+
                         {/* Save and Cancel Buttons */}
                         <div className="flex space-x-4">
                             <Button
@@ -133,10 +137,11 @@ export default function EditCategoryModal({
                         </div>
                     </div>
                 </Modal.Footer>
-            </Modal>
+            </Modal >
 
             {/* Confirmation Modal */}
-            <ConfirmationModal isOpen={isConfirmModalOpen} onClose={() => setIsConfirmModalOpen(false)}
+            < ConfirmationModal isOpen={isConfirmModalOpen} onClose={() => setIsConfirmModalOpen(false)
+            }
                 onConfirm={handleDeleteConfirm} />
         </>
     );

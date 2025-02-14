@@ -123,7 +123,7 @@ export default function ShoppingListItemComponent({ item }: ShoppingListItemProp
                         {item.name}
                     </span>
                     <span className="text-sm text-gray-500 ml-2">
-                        ({item.quantity} {item.unit})
+                        ({item.quantity} {item.unit} - ${item.price.toLocaleString("en-US")})
                     </span>
                 </div>
             </div>
@@ -192,7 +192,7 @@ export default function ShoppingListItemComponent({ item }: ShoppingListItemProp
                                 onChange={(e) => {
                                     let value = parseFloat(e.target.value);
                                     setPrice(value);
-                                    if (value !== 0 && pricePerUnit !== 0) {
+                                    if (value !== 0) {
                                         const pricePerUnit = value / quantity;
                                         setPricePerUnit(pricePerUnit);
                                     }

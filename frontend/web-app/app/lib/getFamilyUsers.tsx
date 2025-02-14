@@ -1,10 +1,11 @@
 // utils/getGraphToken.ts
 import { ClientSecretCredential } from "@azure/identity";
 
-// Replace these with your Azure AD B2C app details
 const tenantId = process.env.NEXT_PUBLIC_AZURE_AD_B2C_TENANT_ID; // e.g., {your-tenant-name}.onmicrosoft.com
 const clientId = process.env.NEXT_PUBLIC_AZURE_AD_B2C_CLIENT_ID;
 const clientSecret = process.env.NEXT_PRIVATE_AZURE_AD_B2C_SECRET;
+const clientExtensionId = process.env.NEXT_PUBLIC_AZURE_AD_B2C_CLIENT_EXTENSION_ID_WITHOUT_DASH
+
 
 const scope = `${process.env.GRAPH_API_SCOPE}.default`;
 
@@ -46,14 +47,14 @@ export async function getFamilyUsers(familyName: string) {
     const filteredUsers = users
         .filter(
             (user: any) =>
-                user.extension_f6549fea4fbd4796b153c099dfa72e66_Family === familyName
+                user[`extension_${clientExtensionId}_Family`] === familyName
         )
         .map((user: any) => ({
             id: user.id,
             givenName: user.givenName,
-            family: user?.extension_f6549fea4fbd4796b153c099dfa72e66_Family || "",
-            role: user.extension_f6549fea4fbd4796b153c099dfa72e66_Role,
-            isAdmin: user.extension_f6549fea4fbd4796b153c099dfa72e66_IsAdmin,
+            family: user[`extension_${clientExtensionId}_Family`] || "",
+            role: user[`extension_${clientExtensionId}_Role`],
+            isAdmin: user[`extension_${clientExtensionId}_IsAdmin`],
             email: user.mail || user.otherMails?.[0] || user.identities[0].issuerAssignedId 
         }));
 

@@ -15,11 +15,7 @@ const hubUrl = `${process.env.NEXT_PUBLIC_GATEWAY_URL}/notifications`;
 export const metadata: Metadata = {
   title: "Family Planner",
   description: "Family Planner",
-  icons: {
-    icon: "./favicon.ico", // Path to the favicon
-  },
-
-};
+ };
 
 
 export default function RootLayout({
@@ -43,9 +39,6 @@ export default function RootLayout({
                     <main className="flex-1 p-4 bg-gradient-to-r from-purple-50 via-purple-100 to-fuchsia-50 relative z-0">
                       {children}
                     </main>
-                    {/* <main className="flex-1 p-4 bg-gradient-to-r from-purple-50 via-purple-100 to-fuchsia-50">
-                      {children}
-                    </main> */}
                   </div>
                 </div>
               </SignalRProvider>

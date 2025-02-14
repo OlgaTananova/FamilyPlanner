@@ -172,7 +172,7 @@ const shoppingListSlice = createSlice({
             const { sku } = action.payload;
             state.lists = state.lists.map((sl) => {
                 sl.items = sl.items.map((i) => {
-                    if (i.sku !== sku) i.isOrphaned = true;
+                    if (i.sku == sku) i.isOrphaned = true;
                     return i;
                 });
                 return sl;

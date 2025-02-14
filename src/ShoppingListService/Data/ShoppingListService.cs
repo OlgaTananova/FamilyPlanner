@@ -47,7 +47,7 @@ public class ShoppingListService : IShoppingListService
     {
         return await _dbcontext.ShoppingLists
             .Where(c => c.Family == family && !c.IsDeleted)
-            .Include(x => x.Items.Where(i => !i.IsOrphaned))
+            .Include(x => x.Items)
             .FirstOrDefaultAsync(c => c.Id == id);
     }
 

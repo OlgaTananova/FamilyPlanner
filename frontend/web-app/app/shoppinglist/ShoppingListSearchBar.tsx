@@ -59,6 +59,9 @@ export default function ShoppingListSearchBar() {
                 // Update the shopping list in the store
                 dispatch(updateShoppingListInStore(updatedShoppingList));
                 toast.success(`${item.name} added to the shopping list!`);
+                setSearchTerm("");
+                setShowResults(false);
+                setSearchResults([]);
             }
 
         } catch (error) {

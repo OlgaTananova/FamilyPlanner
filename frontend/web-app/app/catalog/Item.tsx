@@ -30,7 +30,7 @@ export default function ItemComponent({ name, id, categorySKU, sku, setEditedIte
 
         if (updatedShoppingList) {
             dispatch(updateShoppingListInStore(updatedShoppingList));
-            toast.success("Items added to shopping list");
+            toast.success(`Item ${name} added to shopping list`);
         } else {
             toast.error("Failed to add items to shopping list");
         }

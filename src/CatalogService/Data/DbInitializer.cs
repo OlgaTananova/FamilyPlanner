@@ -13,7 +13,7 @@ namespace CatalogService.Data;
 
 public static class DbInitializer
 {
-    private static readonly string _ownerId = "63e6299d-567c-49fc-a0e4-4d53e7ca1dd5";
+    private static readonly string _ownerId = "bda6a5a5-5538-409a-af44-1f64d7ee4468";
     private static readonly string _family = "Smith";
 
     public static bool isNewDatabase;
