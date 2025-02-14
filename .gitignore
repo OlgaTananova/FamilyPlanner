@@ -37,9 +37,13 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+
+# .NET
+.vs/
+.vscode/
+devcerts/
+bin/
+obj/
 appsettings.Development.json
 appsettings.Docker.json
-
-.vs
-.vscode
-devcerts
+appsettings.Production.json
