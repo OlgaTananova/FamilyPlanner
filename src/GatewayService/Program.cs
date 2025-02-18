@@ -1,38 +1,51 @@
 using Microsoft.Identity.Web;
-using Yarp.ReverseProxy;
 using AspNetCoreRateLimit;
-using Microsoft.ApplicationInsights.Extensibility;
-using System.Diagnostics;
-using Microsoft.AspNetCore.HttpOverrides;
-using Yarp.ReverseProxy.Transforms;
+using GatewayService.Helpers;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Load reverse proxy configuration based on environment
-var environment = Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") ?? "Development";
-builder.Configuration
-    .SetBasePath(Directory.GetCurrentDirectory())
-    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-    .AddJsonFile($"appsettings.{environment}.json", optional: true, reloadOnChange: true)
-    .AddEnvironmentVariables();
+if (builder.Environment.IsProduction())
+{
+
+    var envFilePath = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), "..", "..", ".env.prod"));
+
+    if (File.Exists(envFilePath))
+    {
+        DotNetEnv.Env.Load(envFilePath);
+        Console.WriteLine(".env.prod file loaded successfully!");
+    }
+    else
+    {
+        Console.WriteLine($".env.prod file not found at: {envFilePath}");
+    }
+}
+
+// Load environment-specific configuration into AppConfig
+var appConfig = AppConfig.LoadConfiguration(builder.Configuration, builder.Environment);
+
+// Register AppConfig as a singleton
+builder.Services.AddSingleton(appConfig);
 
 // Logging and Telemetry
 builder.Services.AddApplicationInsightsTelemetry();
 builder.Logging.AddApplicationInsights(
     configureTelemetryConfiguration: (config) =>
-        { config.ConnectionString = builder.Configuration["ApplicationInsights:ConnectionString"]; },
+        {
+            config.ConnectionString = appConfig.ApplicationInsightsConnectionString;
+        },
     configureApplicationInsightsLoggerOptions: (options) =>
     {
         options.IncludeScopes = true;
     });
 
 // Add authentication
-builder.Services.AddAuthentication("Bearer")
-    .AddMicrosoftIdentityWebApi(options =>
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddMicrosoftIdentityWebApi(options => { }, options =>
     {
-        builder.Configuration.Bind("AzureAdB2C", options);
-    },
-    options => builder.Configuration.Bind("AzureAdB2C", options));
+        AppConfig.LoadAzureAdB2CConfig(options, appConfig, builder.Configuration, builder.Environment);
+    });
 
 // Add authorization
 builder.Services.AddAuthorization();
@@ -54,11 +67,10 @@ builder.Services.AddCors(options =>
         b.AllowAnyHeader()
         .AllowAnyMethod()
         .AllowCredentials()
-        .WithOrigins(builder.Configuration.GetSection("ClientApps").Get<string[]>()!);
+        .WithOrigins(appConfig.ClientApps);
     });
 });
-var allowedOrigins = builder.Configuration.GetSection("ClientApps").Get<string[]>()!;
-Console.WriteLine("Allowed Origins: " + string.Join(", ", allowedOrigins));
+
 // Add YARP reverse proxy
 builder.Services.AddReverseProxy()
     .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));

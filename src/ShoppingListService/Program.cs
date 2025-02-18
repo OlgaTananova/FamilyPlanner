@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using MassTransit;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Identity.Web;
@@ -10,6 +11,27 @@ using ShoppingListService.Helpers;
 
 var builder = WebApplication.CreateBuilder(args);
 
+if (builder.Environment.IsProduction())
+{
+
+    var envFilePath = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), "..", "..", ".env.prod"));
+
+    if (File.Exists(envFilePath))
+    {
+        DotNetEnv.Env.Load(envFilePath);
+        Console.WriteLine(".env.prod file loaded successfully!");
+    }
+    else
+    {
+        Console.WriteLine($".env.prod file not found at: {envFilePath}");
+    }
+}
+
+// Load environment-specific configuration into AppConfig
+var appConfig = AppConfig.LoadConfiguration(builder.Configuration, builder.Environment);
+
+// Register AppConfig as a singleton
+builder.Services.AddSingleton(appConfig);
 
 // Add Telemetry and logging
 builder.Services.AddApplicationInsightsTelemetry();
@@ -17,7 +39,7 @@ builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
 builder.Logging.AddApplicationInsights(configureTelemetryConfiguration: (config) =>
 {
-    config.ConnectionString = builder.Configuration["ApplicationInsights:ConnectionString"];
+    config.ConnectionString = appConfig.ApplicationInsightsConnectionString;
 },
 configureApplicationInsightsLoggerOptions: (options) =>
 {
@@ -29,7 +51,7 @@ builder.Services.AddControllers();
 // Database context
 builder.Services.AddDbContext<ShoppingListContext>(opt =>
 {
-    opt.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
+    opt.UseNpgsql(appConfig.DefaultConnectionString);
 });
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails(options => options.CustomizeProblemDetails = context =>
@@ -68,10 +90,10 @@ builder.Services.AddMassTransit(x =>
             r.Handle<RabbitMqConnectionException>();
             r.Interval(5, TimeSpan.FromSeconds(10));
         });
-        cfg.Host(builder.Configuration["RabbitMq:Host"], "/", h =>
+        cfg.Host(appConfig.RabbitMqHost, "/", h =>
         {
-            h.Username(builder.Configuration["RabbitMq:User"]!);
-            h.Password(builder.Configuration["RabbitMq:Password"]!);
+            h.Username(appConfig.RabbitMqUser);
+            h.Password(appConfig.RabbitMqPassword);
         });
 
         cfg.ReceiveEndpoint("shoppinglist-catalog-item-created", e =>
@@ -114,7 +136,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowSpecificOrigins", policy =>
     {
-        policy.WithOrigins(builder.Configuration.GetSection("ClientApps").Get<string[]>()!) // Allow only these origins
+        policy.WithOrigins(appConfig.ClientApps) // Allow only these origins
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials();
@@ -123,12 +145,13 @@ builder.Services.AddCors(options =>
 
 // Configure authentication with Azure AD B2C
 
-builder.Services.AddAuthentication("Bearer")
-    .AddMicrosoftIdentityWebApi(options =>
-    {
-        builder.Configuration.Bind("AzureAdB2C", options);
-    }, options => builder.Configuration.Bind("AzureAdB2C", options));
 
+// Configure authentication with Azure AD B2C
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddMicrosoftIdentityWebApi(options => { }, options =>
+    {
+        AppConfig.LoadAzureAdB2CConfig(options, appConfig, builder.Configuration, builder.Environment);
+    });
 builder.Services.AddScoped<IClaimsTransformation, CustomClaimsTransformation>();
 builder.Services.AddScoped<IShoppingListService, ShoppingListService.Data.ShoppingListService>();
 

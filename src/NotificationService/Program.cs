@@ -8,7 +8,28 @@ using NotificationService.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+if (builder.Environment.IsProduction())
+{
+
+    var envFilePath = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), "..", "..", ".env.prod"));
+
+    if (File.Exists(envFilePath))
+    {
+        DotNetEnv.Env.Load(envFilePath);
+        Console.WriteLine(".env.prod file loaded successfully!");
+    }
+    else
+    {
+        Console.WriteLine($".env.prod file not found at: {envFilePath}");
+    }
+}
+
+// Load environment-specific configuration into AppConfig
+var appConfig = AppConfig.LoadConfiguration(builder.Configuration, builder.Environment);
+
+// Register AppConfig as a singleton
+builder.Services.AddSingleton(appConfig);
+
 
 builder.Services.AddControllers();
 
@@ -17,7 +38,7 @@ builder.Services.AddControllers();
 builder.Services.AddApplicationInsightsTelemetry();
 builder.Logging.AddApplicationInsights(
     configureTelemetryConfiguration: (config) =>
-        { config.ConnectionString = builder.Configuration["ApplicationInsights:ConnectionString"]; },
+        { config.ConnectionString = appConfig.ApplicationInsightsConnectionString; },
     configureApplicationInsightsLoggerOptions: (options) =>
     {
         options.IncludeScopes = true;
@@ -50,10 +71,10 @@ builder.Services.AddMassTransit(x =>
             r.Handle<RabbitMqConnectionException>();
             r.Interval(5, TimeSpan.FromSeconds(10));
         });
-        cfg.Host(builder.Configuration["RabbitMq:Host"], "/", h =>
+        cfg.Host(appConfig.RabbitMqHost, "/", h =>
         {
-            h.Username(builder.Configuration["RabbitMq:User"]!);
-            h.Password(builder.Configuration["RabbitMq:Password"]!);
+            h.Username(appConfig.RabbitMqUser);
+            h.Password(appConfig.RabbitMqPassword);
         });
 
         cfg.ConfigureEndpoints(context);
@@ -65,35 +86,19 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowSpecificOrigins", policy =>
     {
-        policy.WithOrigins(builder.Configuration.GetSection("ClientApps").Get<string[]>()!); // Allow only these origins
+        policy.WithOrigins(appConfig.ClientApps); // Allow only these origins
         policy.AllowAnyHeader();
         policy.AllowAnyMethod();
         policy.AllowCredentials();
     });
 });
-if (!builder.Environment.IsEnvironment("Testing"))
-{
-    builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-        .AddMicrosoftIdentityWebApi(options =>
-        {
-            builder.Configuration.Bind("AzureAdB2C", options);
-            // options.Events = new JwtBearerEvents
-            // {
-            //     OnMessageReceived = context =>
-            //     {
-            //         var accessToken = context.Request.Query["access_token"];
 
-            //         if (!string.IsNullOrEmpty(accessToken))
-            //         {
-            //             context.Token = accessToken; 
-            //         }
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddMicrosoftIdentityWebApi(options => { }, options =>
+    {
+        AppConfig.LoadAzureAdB2CConfig(options, appConfig, builder.Configuration, builder.Environment);
+    });
 
-            //         return Task.CompletedTask;
-            //     }
-            // };
-        }, options => builder.Configuration.Bind("AzureAdB2C", options));
-
-}
 
 builder.Services.AddScoped<IClaimsTransformation, CustomClaimsTransformation>();
 builder.Services.AddAuthorization();

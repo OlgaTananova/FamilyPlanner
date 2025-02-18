@@ -46,4 +46,3 @@ bin/
 obj/
 appsettings.Development.json
 appsettings.Docker.json
-appsettings.Production.json
