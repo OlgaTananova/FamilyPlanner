@@ -7,6 +7,11 @@ public class CustomClaimsTransformation : IClaimsTransformation
     {
         var identity = (ClaimsIdentity)principal.Identity;
 
+        if (identity == null || !identity.IsAuthenticated)
+        {
+            return Task.FromResult(principal);
+        }
+
         // Map 'objectidentifier' to 'userid'
         var objectId = principal.FindFirst("http://schemas.microsoft.com/identity/claims/objectidentifier")?.Value;
         if (objectId != null)
@@ -51,6 +56,11 @@ public class CustomClaimsTransformation : IClaimsTransformation
         if (scopes != null)
         {
             identity.AddClaim(new Claim("scopes", scopes));
+        }
+        // Check if the claims are present in the token
+        if (string.IsNullOrEmpty(family) || string.IsNullOrEmpty(objectId))
+        {
+            throw new UnauthorizedAccessException("Missing required claims: family or userId.");
         }
 
         return Task.FromResult(principal);

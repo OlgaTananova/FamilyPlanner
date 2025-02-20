@@ -1,174 +1,139 @@
-using System;
 using System.Diagnostics;
-using System.Net;
-using System.Net.Http.Headers;
 using System.Security.Claims;
 using AutoFixture;
 using AutoMapper;
 using CatalogService.Controllers;
-using CatalogService.Data;
 using CatalogService.DTOs;
-using CatalogService.Entities;
 using CatalogService.RequestHelpers;
-using Contracts.Catalog;
-using MassTransit;
+using CatalogService.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.Extensions.Logging;
-using Microsoft.Identity.Client;
 using Moq;
-using Xunit.Sdk;
 
 namespace CatalogService.UnitTests;
 
 public class HttpActivityFeature : IHttpActivityFeature
 {
-    public Activity? Activity { get; set; }
+    public Activity Activity { get; set; } = new Activity("Default");
 }
 
 public class CatalogServiceControllerTests
 {
-    public readonly Mock<ICatalogRepository> _repo;
 
-    public readonly Mock<IPublishEndpoint> _publisher;
-    public readonly Fixture _fixture;
-    public readonly CatalogController _controller;
-    public IMapper _mapper;
+    private readonly Mock<ICatalogBusinessService> _catalogBusinessServiceMock;
+    private readonly ProblemDetailsFactory _problemDetailsFactory;
+    private readonly CatalogController _controller;
+    private readonly Fixture _fixture;
 
     public CatalogServiceControllerTests()
     {
         _fixture = new Fixture();
-        _repo = new Mock<ICatalogRepository>();
-        _publisher = new Mock<IPublishEndpoint>();
+        _catalogBusinessServiceMock = new Mock<ICatalogBusinessService>();
 
-        var mockMapperCofiguration = new MapperConfiguration(mc =>
+        var mapperConfiguration = new MapperConfiguration(mc =>
         {
             mc.AddMaps(typeof(MappingProfiles).Assembly);
-        }).CreateMapper().ConfigurationProvider;
-
-        _mapper = new Mapper(mockMapperCofiguration);
+        });
+        var mapper = mapperConfiguration.CreateMapper();
 
         var mockHttpContextAccessor = new Mock<IHttpContextAccessor>();
         var mockHttpContext = new DefaultHttpContext();
 
+        // Set user claims
         mockHttpContext.User = new ClaimsPrincipal(new ClaimsIdentity(new[]
         {
-        new Claim("family", "MockFamilyName"),
-        new Claim("userId", "MockUserId")
+            new Claim("family", "MockFamilyName"),
+            new Claim("userId", "MockUserId")
         }, "mock"));
 
+        // Set TraceParent header
         mockHttpContext.Request.Headers["TraceParent"] = "MockOperationId";
 
+        var activity = new Activity("TestActivity");
+        activity.SetIdFormat(ActivityIdFormat.W3C);
+        activity.Start();
 
-        // Mock IHttpActivityFeature and add to Features collection
-        var activityFeature = new HttpActivityFeature { Activity = new Activity("TestActivity") };
-        activityFeature.Activity.SetParentId("mockTraceId");
+        var activityFeature = new HttpActivityFeature { Activity = activity };
         mockHttpContext.Features.Set<IHttpActivityFeature>(activityFeature);
+
         mockHttpContextAccessor.Setup(h => h.HttpContext).Returns(mockHttpContext);
 
         var mockLogger = new Mock<ILogger<CatalogController>>();
-        var mockProblemDetailsFactory = new TestProblemDetailsFactory();
+
+        _problemDetailsFactory = new TestProblemDetailsFactory();
+
         _controller = new CatalogController(
-        _mapper,
-        _repo.Object,
-        mockHttpContextAccessor.Object,
-        _publisher.Object,
-        mockLogger.Object,
-        mockProblemDetailsFactory);
-        _controller.ControllerContext = new ControllerContext
-        {
-            HttpContext = mockHttpContext
-        };
+            _catalogBusinessServiceMock.Object,
+            _problemDetailsFactory,
+            new ControllerContext { HttpContext = mockHttpContext }
+        );
+
     }
+
     [Fact]
-    public async Task GetAllCategories_ShouldReturnListOfCategories()
+    public async Task GetAllCategories_ShouldReturnOk_WithListOfCategories()
     {
         // Arrange
-        var categories = _fixture.CreateMany<CategoryDto>(10).ToList();
-        _repo.Setup(r => r.GetAllCategoriesAsync(It.IsAny<string>()))
-             .ReturnsAsync(categories);
+        var categories = _fixture.CreateMany<CategoryDto>(5);
+        var serviceResponse = ServiceResult<List<CategoryDto>>.SuccessResult(categories.ToList());
+
+        _catalogBusinessServiceMock
+            .Setup(s => s.GetAllCategoriesAsync())
+            .ReturnsAsync(serviceResponse);
 
         // Act
         var result = await _controller.GetAllCategories();
 
         // Assert
-        var objectResult = Assert.IsType<OkObjectResult>(result.Result);
-        var returnedCategories = Assert.IsType<List<CategoryDto>>(objectResult.Value);
-        Assert.Equal(categories.Count, returnedCategories.Count);
+        var okResult = Assert.IsType<OkObjectResult>(result.Result);
+        var returnedCategories = Assert.IsType<List<CategoryDto>>(okResult.Value);
+        Assert.Equal(categories.Count(), returnedCategories.Count);
     }
 
     [Fact]
-    public async Task GetCategoryBySku_ShouldReturnCategory()
-    {
-        // Arrange 
-        var category = _fixture.Create<CategoryDto>();
-        _repo.Setup(r => r.GetCategoryBySkuAsync(It.IsAny<Guid>(), It.IsAny<string>())).ReturnsAsync(category);
-
-        // Act 
-        var result = await _controller.GetCategoryBySku(It.IsAny<Guid>());
-
-        // Assert
-        Assert.IsType<ActionResult<CategoryDto>>(result);
-
-    }
-
-    [Fact]
-    public async Task GetCategoryBySku_ShouldReturnNotFound()
-    {
-        // Arrange 
-        var category = _fixture.Create<CategoryDto>();
-        _repo.Setup(r => r.GetCategoryBySkuAsync(It.IsAny<Guid>(), It.IsAny<string>())).ReturnsAsync((CategoryDto)null!);
-
-        // Act 
-        var result = await _controller.GetCategoryBySku(It.IsAny<Guid>());
-
-        // Assert
-        Assert.IsType<NotFoundObjectResult>(result.Result);
-
-
-    }
-
-    [Fact]
-    public async Task CreateCategory_ShouldReturnBadRequest_WhenCategoryAlreadyExists()
+    public async Task GetCategoryBySku_ShouldReturnOk_WhenCategoryExists()
     {
         // Arrange
-        // Configure Fixture to handle circular references
-        _fixture.Behaviors.OfType<ThrowingRecursionBehavior>().ToList()
-               .ForEach(b => _fixture.Behaviors.Remove(b));
-        _fixture.Behaviors.Add(new OmitOnRecursionBehavior());
+        var category = _fixture.Create<CategoryDto>();
+        var serviceResponse = ServiceResult<CategoryDto>.SuccessResult(category);
 
-        var categoryDto = _fixture.Create<CreateCategoryDto>();
-        var existingCategory = _fixture.Create<Category>();
-
-
-        _repo.Setup(r => r.GetCategoryEntityByName(categoryDto.Name, It.IsAny<string>()))
-             .ReturnsAsync(existingCategory);
+        _catalogBusinessServiceMock
+            .Setup(s => s.GetCategoryBySkuAsync(It.IsAny<Guid>()))
+            .ReturnsAsync(serviceResponse);
 
         // Act
-        var result = await _controller.CreateCategory(categoryDto);
+        var result = await _controller.GetCategoryBySku(Guid.NewGuid());
 
         // Assert
-        var badRequestResult = Assert.IsType<BadRequestObjectResult>(result.Result);
+        var okResult = Assert.IsType<OkObjectResult>(result.Result);
+        var returnedCategory = Assert.IsType<CategoryDto>(okResult.Value);
+        Assert.Equal(category.Name, returnedCategory.Name);
     }
 
     [Fact]
-    public async Task CreateCategory_ShouldReturnBadRequest_WhenSaveChangesFails()
+    public async Task GetCategoryBySku_ShouldReturnProblemDetails_WhenCategoryNotFound()
     {
         // Arrange
-        var categoryDto = _fixture.Create<CreateCategoryDto>();
+        var serviceResponse = ServiceResult<CategoryDto>.FailureResult("Category not found", 404);
 
-        _repo.Setup(r => r.GetCategoryEntityByName(categoryDto.Name, It.IsAny<string>()))
-             .ReturnsAsync((Category)null!);
+        _catalogBusinessServiceMock
+            .Setup(s => s.GetCategoryBySkuAsync(It.IsAny<Guid>()))
+            .ReturnsAsync(serviceResponse);
 
-        _repo.Setup(r => r.SaveChangesAsync()).ReturnsAsync(false);
+        _problemDetailsFactory.CreateProblemDetails(_controller.HttpContext, 404, "Category not found", "Category not found");
 
         // Act
-        var result = await _controller.CreateCategory(categoryDto);
+        var result = await _controller.GetCategoryBySku(Guid.NewGuid());
 
         // Assert
-        var badRequestResult = Assert.IsType<BadRequestObjectResult>(result.Result);
+        var objectResult = Assert.IsType<ObjectResult>(result.Result);
+        var problemDetails = Assert.IsType<ProblemDetails>(objectResult.Value);
+
+        Assert.Equal(404, problemDetails.Status);
+        Assert.Equal("Category not found", problemDetails.Title);
     }
 
     [Fact]
@@ -176,24 +141,13 @@ public class CatalogServiceControllerTests
     {
         // Arrange
         var categoryDto = _fixture.Create<CreateCategoryDto>();
+        var createdCategory = _fixture.Create<CategoryDto>();
 
-        // Configure Fixture to handle circular references
-        _fixture.Behaviors.OfType<ThrowingRecursionBehavior>().ToList()
-               .ForEach(b => _fixture.Behaviors.Remove(b));
-        _fixture.Behaviors.Add(new OmitOnRecursionBehavior());
+        var serviceResponse = ServiceResult<CategoryDto>.SuccessResult(createdCategory);
 
-        var category = _fixture.Build<Category>()
-                               .With(c => c.Name, categoryDto.Name)
-                               .Create();
-        var categoryDtoResult = _fixture.Create<CategoryDto>();
-
-        _repo.Setup(r => r.GetCategoryEntityByName(categoryDto.Name, It.IsAny<string>()))
-             .ReturnsAsync((Category)null!);
-
-        _repo.Setup(r => r.AddCategory(It.IsAny<Category>())).Verifiable();
-        _repo.Setup(r => r.SaveChangesAsync()).ReturnsAsync(true);
-
-        _repo.Setup(r => r.AddCategory(It.IsAny<Category>())).Callback<Category>(c => _mapper.Map(category, categoryDtoResult));
+        _catalogBusinessServiceMock
+            .Setup(s => s.CreateCategoryAsync(It.IsAny<CreateCategoryDto>()))
+            .ReturnsAsync(serviceResponse);
 
         // Act
         var result = await _controller.CreateCategory(categoryDto);
@@ -201,110 +155,228 @@ public class CatalogServiceControllerTests
         // Assert
         var okResult = Assert.IsType<OkObjectResult>(result.Result);
         var returnedCategory = Assert.IsType<CategoryDto>(okResult.Value);
+        Assert.Equal(createdCategory.Name, returnedCategory.Name);
     }
 
     [Fact]
-    public async Task CreateItem_ShouldReturnBadRequest_WhenItemAlreadyExists()
+    public async Task CreateCategory_ShouldReturnProblemDetails_WhenCategoryAlreadyExists()
     {
         // Arrange
-        // Configure Fixture to handle circular references
-        _fixture.Behaviors.Add(new OmitOnRecursionBehavior());
+        var categoryDto = _fixture.Create<CreateCategoryDto>();
+        var serviceResponse = ServiceResult<CategoryDto>.FailureResult("Category already exists", 400);
 
-        var itemDto = _fixture.Create<CreateItemDto>();
-        var existingItem = _fixture.Create<Item>();
+        _catalogBusinessServiceMock
+            .Setup(s => s.CreateCategoryAsync(It.IsAny<CreateCategoryDto>()))
+            .ReturnsAsync(serviceResponse);
 
-        _repo.Setup(r => r.GetItemEntityByNameAsync(itemDto.Name, It.IsAny<string>()))
-             .ReturnsAsync(existingItem);
+        _problemDetailsFactory.CreateProblemDetails(_controller.HttpContext, 404, "Category already exists", "Category already exists");
+
+        _catalogBusinessServiceMock
+            .Setup(s => s.CreateCategoryAsync(It.IsAny<CreateCategoryDto>()))
+            .ReturnsAsync(serviceResponse);
 
         // Act
-        var result = await _controller.CreateItem(itemDto);
+        var result = await _controller.CreateCategory(categoryDto);
 
         // Assert
-        var badRequestResult = Assert.IsType<BadRequestObjectResult>(result.Result);
+        var objectResult = Assert.IsType<ObjectResult>(result.Result);
+        var problemDetails = Assert.IsType<ProblemDetails>(objectResult.Value);
+
+        Assert.Equal(400, problemDetails.Status);
+        Assert.Equal("Category already exists", problemDetails.Title);
     }
 
     [Fact]
-    public async Task CreateItem_ShouldReturnNotFound_WhenCategoryDoesNotExist()
+    public async Task CreateCategory_ShouldReturnProblemDetails_WhenSaveFails()
     {
         // Arrange
-        var itemDto = _fixture.Create<CreateItemDto>();
+        var categoryDto = _fixture.Create<CreateCategoryDto>();
+        var serviceResponse = ServiceResult<CategoryDto>.FailureResult("Failed to save category", 500);
 
-        _repo.Setup(r => r.GetItemEntityByNameAsync(itemDto.Name, It.IsAny<string>()))
-             .ReturnsAsync((Item)null!);
+        _catalogBusinessServiceMock
+            .Setup(s => s.CreateCategoryAsync(It.IsAny<CreateCategoryDto>()))
+            .ReturnsAsync(serviceResponse);
 
-        _repo.Setup(r => r.GetCategoryEntityBySku(itemDto.CategorySKU, It.IsAny<string>()))
-             .ReturnsAsync((Category)null!);
+        var expectedProblemDetails = new ProblemDetails
+        {
+            Status = 500,
+            Title = "Failed to save category",
+            Detail = "Failed to save category"
+        };
 
         // Act
-        var result = await _controller.CreateItem(itemDto);
+        var result = await _controller.CreateCategory(categoryDto);
 
         // Assert
-        var notFoundResult = Assert.IsType<NotFoundObjectResult>(result.Result);
+        var objectResult = Assert.IsType<ObjectResult>(result.Result);
+        var problemDetails = Assert.IsType<ProblemDetails>(objectResult.Value);
+
+        Assert.Equal(500, problemDetails.Status);
+        Assert.Equal("Failed to save category", problemDetails.Title);
     }
 
     [Fact]
-    public async Task CreateItem_ShouldReturnBadRequest_WhenSaveChangesFails()
+    public async Task UpdateCategory_ShouldReturnOk_WhenUpdateIsSuccessful()
     {
         // Arrange
+        var sku = Guid.NewGuid();
+        var updateCategoryDto = _fixture.Create<UpdateCategoryDto>();
+        var updatedCategory = _fixture.Create<CategoryDto>();
 
-        // Configure Fixture to handle circular references
-        _fixture.Behaviors.OfType<ThrowingRecursionBehavior>().ToList()
-               .ForEach(b => _fixture.Behaviors.Remove(b));
-        _fixture.Behaviors.Add(new OmitOnRecursionBehavior());
+        var serviceResponse = ServiceResult<CategoryDto>.SuccessResult(updatedCategory);
 
-
-        var itemDto = _fixture.Create<CreateItemDto>();
-        var category = _fixture.Create<Category>();
-
-
-        _repo.Setup(r => r.GetItemEntityByNameAsync(itemDto.Name, It.IsAny<string>()))
-             .ReturnsAsync((Item)null!);
-
-        _repo.Setup(r => r.GetCategoryEntityBySku(itemDto.CategorySKU, It.IsAny<string>()))
-             .ReturnsAsync(category);
-
-        _repo.Setup(r => r.SaveChangesAsync()).ReturnsAsync(false);
+        _catalogBusinessServiceMock
+            .Setup(s => s.UpdateCategoryAsync(sku, It.IsAny<UpdateCategoryDto>()))
+            .ReturnsAsync(serviceResponse);
 
         // Act
-        var result = await _controller.CreateItem(itemDto);
-
-        // Assert
-        var badRequestResult = Assert.IsType<BadRequestObjectResult>(result.Result);
-    }
-
-    [Fact]
-    public async Task CreateItem_ShouldReturnOk_WhenItemIsCreatedSuccessfully()
-    {
-        // Arrange
-
-        // Configure Fixture to handle circular references
-        _fixture.Behaviors.OfType<ThrowingRecursionBehavior>().ToList()
-               .ForEach(b => _fixture.Behaviors.Remove(b));
-        _fixture.Behaviors.Add(new OmitOnRecursionBehavior());
-
-
-        var itemDto = _fixture.Create<CreateItemDto>();
-        var category = _fixture.Create<Category>();
-        var item = _fixture.Create<Item>();
-        var itemDtoResult = _fixture.Create<ItemDto>();
-
-        _repo.Setup(r => r.GetItemEntityByNameAsync(itemDto.Name, It.IsAny<string>()))
-             .ReturnsAsync((Item)null!);
-
-        _repo.Setup(r => r.GetCategoryEntityBySku(itemDto.CategorySKU, It.IsAny<string>()))
-             .ReturnsAsync(category);
-
-        _repo.Setup(r => r.SaveChangesAsync()).ReturnsAsync(true);
-
-        _repo.Setup(r => r.AddItem(It.IsAny<Item>())).Callback<Item>(i => _mapper.Map(i, itemDtoResult));
-
-        // Act
-        var result = await _controller.CreateItem(itemDto);
+        var result = await _controller.UpdateCategory(sku, updateCategoryDto);
 
         // Assert
         var okResult = Assert.IsType<OkObjectResult>(result.Result);
-        var returnedItem = Assert.IsType<ItemDto>(okResult.Value);
+        var returnedCategory = Assert.IsType<CategoryDto>(okResult.Value);
+        Assert.Equal(updatedCategory.Name, returnedCategory.Name);
+    }
 
+    [Fact]
+    public async Task UpdateCategory_ShouldReturnProblemDetails_WhenCategoryNotFound()
+    {
+        // Arrange
+        var sku = Guid.NewGuid();
+        var updateCategoryDto = _fixture.Create<UpdateCategoryDto>();
+
+        var serviceResponse = ServiceResult<CategoryDto>.FailureResult("Category not found", 404);
+
+        _catalogBusinessServiceMock
+            .Setup(s => s.UpdateCategoryAsync(sku, It.IsAny<UpdateCategoryDto>()))
+            .ReturnsAsync(serviceResponse);
+
+        var expectedProblemDetails = new ProblemDetails
+        {
+            Status = 404,
+            Title = "Category not found",
+            Detail = "Category not found"
+        };
+
+        // Act
+        var result = await _controller.UpdateCategory(sku, updateCategoryDto);
+
+        // Assert
+        var objectResult = Assert.IsType<ObjectResult>(result.Result);
+        var problemDetails = Assert.IsType<ProblemDetails>(objectResult.Value);
+
+        Assert.Equal(404, problemDetails.Status);
+        Assert.Equal("Category not found", problemDetails.Title);
+    }
+
+    [Fact]
+    public async Task UpdateCategory_ShouldReturnProblemDetails_WhenUpdateFails()
+    {
+        // Arrange
+        var sku = Guid.NewGuid();
+        var updateCategoryDto = _fixture.Create<UpdateCategoryDto>();
+
+        var serviceResponse = ServiceResult<CategoryDto>.FailureResult("Failed to update category", 500);
+
+        _catalogBusinessServiceMock
+            .Setup(s => s.UpdateCategoryAsync(sku, It.IsAny<UpdateCategoryDto>()))
+            .ReturnsAsync(serviceResponse);
+
+        var expectedProblemDetails = new ProblemDetails
+        {
+            Status = 500,
+            Title = "Failed to update category",
+            Detail = "Failed to update category"
+        };
+
+        // Act
+        var result = await _controller.UpdateCategory(sku, updateCategoryDto);
+
+        // Assert
+        var objectResult = Assert.IsType<ObjectResult>(result.Result);
+        var problemDetails = Assert.IsType<ProblemDetails>(objectResult.Value);
+
+        Assert.Equal(500, problemDetails.Status);
+        Assert.Equal("Failed to update category", problemDetails.Title);
+    }
+
+    [Fact]
+    public async Task DeleteCategory_ShouldReturnNoContent_WhenDeletionIsSuccessful()
+    {
+        // Arrange
+        var sku = Guid.NewGuid();
+        CategoryDto categoryDto = _fixture.Create<CategoryDto>();
+        var serviceResponse = ServiceResult<CategoryDto>.SuccessResult(categoryDto);
+
+        _catalogBusinessServiceMock
+            .Setup(s => s.DeleteCategoryAsync(sku))
+            .ReturnsAsync(serviceResponse);
+
+        // Act
+        var result = await _controller.DeleteCategory(sku);
+
+        // Assert
+        Assert.IsType<NoContentResult>(result);
+    }
+
+    [Fact]
+    public async Task DeleteCategory_ShouldReturnProblemDetails_WhenCategoryNotFound()
+    {
+        // Arrange
+        var sku = Guid.NewGuid();
+        CategoryDto categoryDto = _fixture.Create<CategoryDto>();
+        var serviceResponse = ServiceResult<CategoryDto>.FailureResult("Category not found", 404);
+
+        _catalogBusinessServiceMock
+            .Setup(s => s.DeleteCategoryAsync(sku))
+            .ReturnsAsync(serviceResponse);
+
+        var expectedProblemDetails = new ProblemDetails
+        {
+            Status = 404,
+            Title = "Category not found",
+            Detail = "Category not found"
+        };
+
+        // Act
+        var result = await _controller.DeleteCategory(sku);
+
+        // Assert
+        var objectResult = Assert.IsType<ObjectResult>(result);
+        var problemDetails = Assert.IsType<ProblemDetails>(objectResult.Value);
+
+        Assert.Equal(404, problemDetails.Status);
+        Assert.Equal("Category not found", problemDetails.Title);
+    }
+
+    [Fact]
+    public async Task DeleteCategory_ShouldReturnProblemDetails_WhenDeletionFails()
+    {
+        // Arrange
+        var sku = Guid.NewGuid();
+        CategoryDto categoryDto = _fixture.Create<CategoryDto>();
+        var serviceResponse = ServiceResult<CategoryDto>.FailureResult("Failed to delete category", 500);
+
+        _catalogBusinessServiceMock
+            .Setup(s => s.DeleteCategoryAsync(sku))
+            .ReturnsAsync(serviceResponse);
+
+        var expectedProblemDetails = new ProblemDetails
+        {
+            Status = 500,
+            Title = "Failed to delete category",
+            Detail = "Failed to delete category"
+        };
+
+        // Act
+        var result = await _controller.DeleteCategory(sku);
+
+        // Assert
+        var objectResult = Assert.IsType<ObjectResult>(result);
+        var problemDetails = Assert.IsType<ProblemDetails>(objectResult.Value);
+
+        Assert.Equal(500, problemDetails.Status);
+        Assert.Equal("Failed to delete category", problemDetails.Title);
     }
 
 }

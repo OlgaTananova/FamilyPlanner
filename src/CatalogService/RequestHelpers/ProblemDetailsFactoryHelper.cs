@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 
@@ -7,19 +6,19 @@ namespace CatalogService.RequestHelpers
     public static class ProblemDetailsFactoryHelper
     {
         public static ProblemDetails CreateProblemDetails(
-            HttpContext httpContext,
+            HttpContext context,
             int statusCode,
             string title,
             string detail,
             ProblemDetailsFactory problemDetailsFactory)
         {
-            
+
             var problemDetails = problemDetailsFactory.CreateProblemDetails(
-                httpContext,
+                httpContext: context,
                 statusCode: statusCode,
                 title: title,
                 detail: detail,
-                instance: $"{httpContext.Request.Method} {httpContext.Request.Path}"
+                instance: $"{context.Request.Method} {context.Request.Path}"
             );
 
             return problemDetails;

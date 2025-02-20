@@ -1,4 +1,3 @@
-using System;
 using Contracts.Catalog;
 using MassTransit;
 using Microsoft.AspNetCore.SignalR;
@@ -29,7 +28,7 @@ public class CatalogCategoryCreatedConsumer : IConsumer<CatalogCategoryCreated>
         Console.WriteLine($"OperationId: {operationId}, TraceId: {traceId}, RequestId: {requestId}");
 
         _logger.LogInformation("Create Category message received. Service: Notification Service, UserId: {UserId}, Family: {Family}, CategoryName: {CategoryName}, OperationId: {OperationId}",
-    context.Message.OwnerId, context.Message.Family, context.Message.Name, operationId);
+        context.Message.OwnerId, context.Message.Family, context.Message.Name, operationId);
         var activity = new System.Diagnostics.Activity("ConsumeCatalogCategoryCreated");
 
         if (!string.IsNullOrEmpty(operationId))

@@ -20,6 +20,16 @@ dotnet_naming_style.prefix_underscore.required_prefix = _
 indent_style = space
 indent_size = 4
 tab_width = 4
+csharp_new_line_before_open_brace = all
+csharp_indent_braces = false
+csharp_indent_switch_labels = true
+csharp_indent_case_contents = true
+csharp_indent_block_contents = true
+csharp_indent_labels = false
+csharp_indent_lambda_body = true
+csharp_indent_object_initializer = true
+csharp_indent_collection_initializer = true
+csharp_indent_method_chains = true
 
 # Use spaces instead of tabs
 dotnet_style_tabs_vs_spaces = false

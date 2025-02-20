@@ -2,6 +2,7 @@ using System.Diagnostics;
 using AutoMapper;
 using CatalogService.Data;
 using CatalogService.RequestHelpers;
+using CatalogService.Services;
 using Contracts.Authentication;
 using MassTransit;
 using Microsoft.ApplicationInsights.Extensibility;
@@ -14,6 +15,10 @@ using Microsoft.Identity.Web;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
+builder.Configuration.AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true);
+
+Console.WriteLine($"Environment: {builder.Environment.EnvironmentName}");
 if (builder.Environment.IsProduction())
 {
 
@@ -52,6 +57,7 @@ builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
 builder.Logging.AddApplicationInsights((configureTelemetryConfiguration) =>
 {
+    Console.WriteLine($"App Insights Connection String: {appConfig.ApplicationInsightsConnectionString ?? "Not Found"}");
     configureTelemetryConfiguration.ConnectionString = appConfig.ApplicationInsightsConnectionString;
 }, options =>
 {
@@ -72,6 +78,7 @@ builder.Services.AddProblemDetails(options => options.CustomizeProblemDetails = 
     });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddScoped<ICatalogRepository, CatalogRepository>();
+builder.Services.AddScoped<ICatalogBusinessService, CatalogBusinessService>();
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowSpecificOrigins", policy =>
@@ -115,9 +122,9 @@ builder.Services.AddMassTransit(x =>
 // Configure authentication with Azure AD B2C
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddMicrosoftIdentityWebApi(options => { }, options =>
-    {
-        AppConfig.LoadAzureAdB2CConfig(options, appConfig, builder.Configuration, builder.Environment);
-    });
+   {
+       AppConfig.LoadAzureAdB2CConfig(options, appConfig, builder.Configuration, builder.Environment);
+   });
 
 builder.Services.AddScoped<IClaimsTransformation, CustomClaimsTransformation>();
 
@@ -141,7 +148,7 @@ builder.Services.AddAuthorization(options =>
 );
 // Enrich telemetry with data
 builder.Services.AddSingleton<ITelemetryInitializer, CustomTelemetryInitializer>();
-
+builder.Services.AddScoped<IRequestContextService, RequestContextService>();
 
 var app = builder.Build();
 

@@ -1,56 +1,45 @@
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.Features;
-using Microsoft.Extensions.Logging;
-using System.Collections.Generic;
 #nullable enable
+using CatalogService.Services;
+
 namespace CatalogService.RequestHelpers
 {
     public static class StructuredLogger
     {
+
         public static void LogInformation(
-            ILogger logger, HttpContext httpContext, string message, string ownerId, string family, Dictionary<string, object>? additionalData = null)
+        ILogger logger, string message, IRequestContextService context, Dictionary<string, object>? additionalData = null)
         {
-            Log(logger, LogLevel.Information, httpContext, message, ownerId, family, additionalData);
+            Log(logger, LogLevel.Information, message, context, additionalData);
         }
 
         public static void LogWarning(
-            ILogger logger, HttpContext httpContext, string message, string ownerId, string family, Dictionary<string, object>? additionalData = null)
+        ILogger logger, string message, IRequestContextService context, Dictionary<string, object>? additionalData = null)
         {
-            Log(logger, LogLevel.Warning, httpContext, message, ownerId, family, additionalData);
+            Log(logger, LogLevel.Warning, message, context, additionalData);
         }
 
-        public static void LogError(
-            ILogger logger, HttpContext httpContext, string message, string ownerId, string family, Dictionary<string, object>? additionalData = null)
+        public static void LogError(ILogger logger, string message, IRequestContextService context, Dictionary<string, object>? additionalData = null)
         {
-            Log(logger, LogLevel.Error, httpContext, message, ownerId, family, additionalData);
+            Log(logger, LogLevel.Error, message, context, additionalData);
         }
 
-        public static void LogCritical(
-            ILogger logger, HttpContext httpContext, string message, string ownerId, string family, Dictionary<string, object>? additionalData = null)
+        public static void LogCritical(ILogger logger, string message, IRequestContextService context, Dictionary<string, object>? additionalData = null)
         {
-            Log(logger, LogLevel.Critical, httpContext, message, ownerId, family, additionalData);
+            Log(logger, LogLevel.Critical, message, context, additionalData);
         }
 
         private static void Log(
-            ILogger logger, LogLevel level, HttpContext httpContext, string message, string ownerId, string family, Dictionary<string, object>? additionalData)
+        ILogger logger, LogLevel level, string message, IRequestContextService context, Dictionary<string, object>? additionalData)
         {
-            string? traceId = httpContext.Features.Get<IHttpActivityFeature>()?.Activity.TraceId.ToString();
-            if (string.IsNullOrEmpty(traceId))
-            {
-                traceId = httpContext.TraceIdentifier;
-            }
-
-            string requestId = httpContext.TraceIdentifier;
-
             var logData = new Dictionary<string, object>
-            {
-                { "traceId", traceId },
-                { "requestId", requestId },
-                { "method", httpContext.Request.Method },
-                { "path", httpContext.Request.Path },
-                { "ownerId", ownerId },
-                { "family", family }
-            };
+        {
+            { "traceId", context.TraceId },
+            { "requestId", context.OperationId },
+            { "method", context.RequestMethod },
+            { "path", context.RequestPath },
+            { "ownerId", context.UserId },
+            { "family", context.FamilyName }
+        };
 
             if (additionalData != null)
             {

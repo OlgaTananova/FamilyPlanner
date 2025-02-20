@@ -1,4 +1,3 @@
-using System;
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
 using CatalogService.DTOs;
@@ -108,7 +107,7 @@ public class CatalogRepository : ICatalogRepository
             if (newCategory != null)
             {
                 _context.Entry(newCategory).State = EntityState.Unchanged; // Attach new category
-                item.Category = newCategory; 
+                item.Category = newCategory;
                 item.CategorySKU = itemDto.CategorySKU;
                 item.CategoryName = newCategory.Name;
             }

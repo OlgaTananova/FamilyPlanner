@@ -1,11 +1,6 @@
-using System;
-using System.Net;
-using System.Security.Authentication;
-using System.Text.Json;
 using Microsoft.AspNetCore.Diagnostics;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
-using Microsoft.IdentityModel.Tokens;
+
 
 namespace CatalogService.RequestHelpers;
 

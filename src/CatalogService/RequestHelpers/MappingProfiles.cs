@@ -1,10 +1,8 @@
-using System;
+
 using AutoMapper;
 using CatalogService.DTOs;
 using CatalogService.Entities;
 using Contracts.Catalog;
-using Contracts.ShoppingLists;
-using Microsoft.OpenApi.Writers;
 
 namespace CatalogService.RequestHelpers;
 

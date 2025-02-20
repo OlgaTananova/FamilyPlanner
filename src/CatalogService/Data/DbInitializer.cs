@@ -1,13 +1,7 @@
-using System;
-using System.Security.Cryptography;
 using AutoMapper;
-using CatalogService.Data.Migrations;
-using CatalogService.DTOs;
 using CatalogService.Entities;
-using Contracts.Catalog;
 using MassTransit;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Identity.Client;
 
 namespace CatalogService.Data;
 
