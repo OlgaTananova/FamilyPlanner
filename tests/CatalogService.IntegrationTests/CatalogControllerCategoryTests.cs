@@ -1,15 +1,11 @@
-using System;
 using System.Net;
 using System.Net.Http.Json;
-using System.Security.Claims;
 using CatalogService.Data;
 using CatalogService.DTOs;
 using CatalogService.Entities;
 using CatalogService.IntegrationTests.Fixtures;
 using CatalogService.IntegrationTests.Utils;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
-using WebMotions.Fake.Authentication.JwtBearer;
 
 namespace CatalogService.IntegrationTests;
 
@@ -38,14 +34,13 @@ public class CatalogControllerCategoryTests : IAsyncLifetime
     public async Task GetCategories_ShouldReturnListOfCategoryDto()
     {
         // Arrange
-
         _httpClient.SetFakeJwtBearerToken(AuthHelper.GetBearerForUser("test-user-id", "test-family"));
 
-
-        //Act
+        // Act
         var response = await _httpClient.GetFromJsonAsync<List<CategoryDto>>("api/Catalog/categories");
 
-        //Assert
+        // Assert
+        Assert.NotNull(response);
         Assert.Equal(3, response?.Count);
     }
 

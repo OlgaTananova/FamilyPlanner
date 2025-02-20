@@ -1,6 +1,3 @@
-using System;
-using System.Security.Claims;
-
 namespace CatalogService.IntegrationTests.Utils;
 
 public class AuthHelper

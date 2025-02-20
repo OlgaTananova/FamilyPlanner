@@ -1,7 +1,4 @@
-using System;
-using System.Security.Claims;
 using CatalogService.Data;
-using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.Channel;
 using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.AspNetCore.Authentication;
@@ -9,7 +6,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
-using Npgsql.Replication;
 
 namespace CatalogService.IntegrationTests.Utils;
 

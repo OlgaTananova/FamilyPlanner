@@ -31,7 +31,7 @@ namespace CatalogService.Controllers
         public async Task<ActionResult<List<CategoryDto>>> GetAllCategories()
         {
             var result = await _catalogBusinessService.GetAllCategoriesAsync();
-            return Ok(result.Data);
+            return HandleServiceResult(result);
         }
 
         [HttpGet("categories/{sku}")]
@@ -39,12 +39,7 @@ namespace CatalogService.Controllers
         {
             var result = await _catalogBusinessService.GetCategoryBySkuAsync(sku);
 
-            if (!result.Success)
-            {
-                var problemDetails = ProblemDetailsFactoryHelper.CreateProblemDetails(HttpContext, result.StatusCode, result.Message, result.Message, _problemDetailsFactory);
-                return new ObjectResult(problemDetails) { StatusCode = result.StatusCode };
-            }
-            return Ok(result.Data);
+            return HandleServiceResult(result);
         }
 
         [HttpPost("categories")]
@@ -53,25 +48,14 @@ namespace CatalogService.Controllers
 
             var result = await _catalogBusinessService.CreateCategoryAsync(categoryDto);
 
-            if (!result.Success)
-            {
-                var problemDetails = ProblemDetailsFactoryHelper.CreateProblemDetails(HttpContext, result.StatusCode, result.Message, result.Message, _problemDetailsFactory);
-                return new ObjectResult(problemDetails) { StatusCode = result.StatusCode };
-            }
-
-            return Ok(result.Data);
+            return HandleServiceResult(result);
         }
 
         [HttpPut("categories/{sku}")]
         public async Task<ActionResult<CategoryDto>> UpdateCategory(Guid sku, UpdateCategoryDto categoryDto)
         {
             var result = await _catalogBusinessService.UpdateCategoryAsync(sku, categoryDto);
-            if (!result.Success)
-            {
-                var problemDetails = ProblemDetailsFactoryHelper.CreateProblemDetails(HttpContext, result.StatusCode, result.Message, result.Message, _problemDetailsFactory);
-                return new ObjectResult(problemDetails) { StatusCode = result.StatusCode };
-            }
-            return Ok(result.Data);
+            return HandleServiceResult(result);
         }
 
         [HttpDelete("categories/{sku}")]
@@ -79,12 +63,7 @@ namespace CatalogService.Controllers
         {
 
             var result = await _catalogBusinessService.DeleteCategoryAsync(sku);
-            if (!result.Success)
-            {
-                var problemDetails = ProblemDetailsFactoryHelper.CreateProblemDetails(HttpContext, result.StatusCode, result.Message, result.Message, _problemDetailsFactory);
-                return new ObjectResult(problemDetails) { StatusCode = result.StatusCode };
-            }
-            return NoContent();
+            return HandleEmptyServiceResult(result);
 
         }
 
@@ -96,7 +75,7 @@ namespace CatalogService.Controllers
         public async Task<ActionResult<List<ItemDto>>> GetAllItems()
         {
             var result = await _catalogBusinessService.GetAllItemsAsync();
-            return Ok(result.Data);
+            return HandleServiceResult(result);
         }
 
         [HttpGet("items/{sku}")]
@@ -104,12 +83,7 @@ namespace CatalogService.Controllers
         {
             var result = await _catalogBusinessService.GetItemBySkuAsync(sku);
 
-            if (!result.Success)
-            {
-                var problemDetails = ProblemDetailsFactoryHelper.CreateProblemDetails(HttpContext, result.StatusCode, result.Message, result.Message, _problemDetailsFactory);
-                return new ObjectResult(problemDetails) { StatusCode = result.StatusCode };
-            }
-            return Ok(result.Data);
+            return HandleServiceResult(result);
         }
 
         [HttpPost("items")]
@@ -117,51 +91,54 @@ namespace CatalogService.Controllers
         {
             var result = await _catalogBusinessService.CreateItemAsync(itemDto);
 
-            if (!result.Success)
-            {
-                var problemDetails = ProblemDetailsFactoryHelper.CreateProblemDetails(HttpContext, result.StatusCode, result.Message, result.Message, _problemDetailsFactory);
-                return new ObjectResult(problemDetails) { StatusCode = result.StatusCode };
-            }
-
-            return Ok(result.Data);
+            return HandleServiceResult(result);
         }
 
         [HttpPut("items/{sku}")]
         public async Task<ActionResult<CatalogItemUpdated>> UpdateItem(Guid sku, UpdateItemDto itemDto)
         {
             var result = await _catalogBusinessService.UpdateItemAsync(sku, itemDto);
-            if (!result.Success)
-            {
-                var problemDetails = ProblemDetailsFactoryHelper.CreateProblemDetails(HttpContext, result.StatusCode, result.Message, result.Message, _problemDetailsFactory);
-                return new ObjectResult(problemDetails) { StatusCode = result.StatusCode };
-            }
-            return Ok(result.Data);
+            return HandleServiceResult(result);
         }
 
         [HttpDelete("items/{sku}")]
         public async Task<ActionResult> DeleteItem(Guid sku)
         {
             var result = await _catalogBusinessService.DeleteItemAsync(sku);
-            if (!result.Success)
-            {
-                var problemDetails = ProblemDetailsFactoryHelper.CreateProblemDetails(HttpContext, result.StatusCode, result.Message, result.Message, _problemDetailsFactory);
-                return new ObjectResult(problemDetails) { StatusCode = result.StatusCode };
-            }
-            return NoContent();
+            return HandleEmptyServiceResult(result);
         }
 
         [HttpGet("items/search")]
         public async Task<ActionResult<List<ItemDto>>> SearchItems([FromQuery] string query)
         {
             var result = await _catalogBusinessService.SearchItemsAsync(query);
-            if (!result.Success)
-            {
-                var problemDetails = ProblemDetailsFactoryHelper.CreateProblemDetails(HttpContext, result.StatusCode, result.Message, result.Message, _problemDetailsFactory);
-                return new ObjectResult(problemDetails) { StatusCode = result.StatusCode };
-            }
-            return Ok(result.Data);
+            return HandleServiceResult(result);
         }
 
         #endregion
+
+        private ActionResult HandleServiceResult<T>(ServiceResult<T> result)
+        {
+            if (!result.Success)
+            {
+                var problemDetails = ProblemDetailsFactoryHelper.CreateProblemDetails(
+                    HttpContext, result.StatusCode, result.Message, result.Message, _problemDetailsFactory);
+                return new ObjectResult(problemDetails) { StatusCode = result.StatusCode };
+            }
+
+            return Ok(result.Data);
+        }
+
+        private ActionResult HandleEmptyServiceResult<T>(ServiceResult<T> result)
+        {
+            if (!result.Success)
+            {
+                var problemDetails = ProblemDetailsFactoryHelper.CreateProblemDetails(
+                    HttpContext, result.StatusCode, result.Message, result.Message, _problemDetailsFactory);
+                return new ObjectResult(problemDetails) { StatusCode = result.StatusCode };
+            }
+
+            return NoContent();
+        }
     }
 }

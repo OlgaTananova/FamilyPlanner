@@ -35,8 +35,6 @@ if (builder.Environment.IsProduction())
     }
 }
 
-// Add services to the container.
-
 // Load environment-specific configuration into AppConfig
 var appConfig = AppConfig.LoadConfiguration(builder.Configuration, builder.Environment);
 
@@ -77,8 +75,7 @@ builder.Services.AddProblemDetails(options => options.CustomizeProblemDetails = 
         context.ProblemDetails.Extensions.TryAdd("traceId", activity?.Id);
     });
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddScoped<ICatalogRepository, CatalogRepository>();
-builder.Services.AddScoped<ICatalogBusinessService, CatalogBusinessService>();
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowSpecificOrigins", policy =>
@@ -126,7 +123,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
        AppConfig.LoadAzureAdB2CConfig(options, appConfig, builder.Configuration, builder.Environment);
    });
 
-builder.Services.AddScoped<IClaimsTransformation, CustomClaimsTransformation>();
+
 
 // Add authorization
 builder.Services.AddAuthorization(options =>
@@ -146,9 +143,13 @@ builder.Services.AddAuthorization(options =>
     });
 }
 );
-// Enrich telemetry with data
+// Allow httpcontext to be available in the services
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<IClaimsTransformation, CustomClaimsTransformation>();
 builder.Services.AddSingleton<ITelemetryInitializer, CustomTelemetryInitializer>();
 builder.Services.AddScoped<IRequestContextService, RequestContextService>();
+builder.Services.AddScoped<ICatalogRepository, CatalogRepository>();
+builder.Services.AddScoped<ICatalogBusinessService, CatalogBusinessService>();
 
 var app = builder.Build();
 

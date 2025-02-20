@@ -57,8 +57,10 @@ public class CustomClaimsTransformation : IClaimsTransformation
         {
             identity.AddClaim(new Claim("scopes", scopes));
         }
-        // Check if the claims are present in the token
-        if (string.IsNullOrEmpty(family) || string.IsNullOrEmpty(objectId))
+
+        string familyClaim = principal.FindFirst("family")?.Value;
+        string userIdClaim = principal.FindFirst("userId")?.Value;
+        if (string.IsNullOrEmpty(familyClaim) || string.IsNullOrEmpty(userIdClaim))
         {
             throw new UnauthorizedAccessException("Missing required claims: family or userId.");
         }

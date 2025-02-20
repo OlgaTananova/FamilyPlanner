@@ -1,12 +1,9 @@
-using System;
-using System.Security.Claims;
 using MassTransit;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.VisualStudio.TestPlatform.TestHost;
 using ShoppingListService.Consumers;
 using ShoppingListService.Data;
 using ShoppingListService.Helpers;
@@ -33,6 +30,8 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
         {
             services.AddAutoMapper(typeof(MappingProfile));
             services.RemoveDbContext<ShoppingListContext>();
+            // Disable Application Insights telemetry
+            services.RemoveTelemetry();
             services.AddDbContext<ShoppingListContext>(options =>
             {
                 var connectionString = _posgresSqlContainer.GetConnectionString();
@@ -54,9 +53,6 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
                 {
                     opt.BearerValueType = FakeJwtBearerBearerValueType.Jwt;
                 });
-
-            // Disable Application Insights telemetry
-            services.RemoveTelemetry();
 
         });
     }

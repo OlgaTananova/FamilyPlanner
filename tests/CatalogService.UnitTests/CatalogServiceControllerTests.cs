@@ -65,11 +65,13 @@ public class CatalogServiceControllerTests
 
         _problemDetailsFactory = new TestProblemDetailsFactory();
 
-        _controller = new CatalogController(
-            _catalogBusinessServiceMock.Object,
-            _problemDetailsFactory,
-            new ControllerContext { HttpContext = mockHttpContext }
-        );
+        _controller = new CatalogController(_catalogBusinessServiceMock.Object, _problemDetailsFactory)
+        {
+            ControllerContext = new ControllerContext
+            {
+                HttpContext = mockHttpContext
+            }
+        };
 
     }
 

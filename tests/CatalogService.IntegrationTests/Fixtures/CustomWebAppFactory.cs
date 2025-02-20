@@ -1,15 +1,13 @@
-using System;
-using System.Security.Claims;
 using CatalogService.Data;
 using CatalogService.IntegrationTests.Utils;
 using MassTransit;
-using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Testcontainers.PostgreSql;
 using WebMotions.Fake.Authentication.JwtBearer;
 
@@ -31,6 +29,7 @@ public class CustomWebAppFactory : WebApplicationFactory<Program>, IAsyncLifetim
         builder.ConfigureTestServices(services =>
         {
 
+            services.RemoveTelemetry();
             services.RemoveDbContext<CatalogDbContext>();
             services.AddDbContext<CatalogDbContext>(options =>
             {
@@ -44,17 +43,13 @@ public class CustomWebAppFactory : WebApplicationFactory<Program>, IAsyncLifetim
             // Add Migration to the testing database
             services.EnsureCreated<CatalogDbContext>();
 
+            services.RemoveAll<IAuthenticationSchemeProvider>();
             services.AddAuthentication(FakeJwtBearerDefaults.AuthenticationScheme)
                 .AddFakeJwtBearer(opt =>
                 {
                     opt.BearerValueType = FakeJwtBearerBearerValueType.Jwt;
                 });
 
-            // Disable Application Insights telemetry
-            services.RemoveTelemetry();
-
-            // Disable Application Insights telemetry
-            services.RemoveTelemetry();
 
         });
     }
