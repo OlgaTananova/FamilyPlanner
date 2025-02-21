@@ -8,6 +8,7 @@ using Microsoft.Identity.Web;
 using ShoppingListService.Consumers;
 using ShoppingListService.Data;
 using ShoppingListService.Helpers;
+using ShoppingListService.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -43,7 +44,7 @@ builder.Logging.AddApplicationInsights(configureTelemetryConfiguration: (config)
 },
 configureApplicationInsightsLoggerOptions: (options) =>
 {
-    options.IncludeScopes = true; // Optional: Enable scopes for structured logging
+    options.IncludeScopes = true;
 });
 
 builder.Services.AddControllers();
@@ -143,8 +144,6 @@ builder.Services.AddCors(options =>
     });
 });
 
-// Configure authentication with Azure AD B2C
-
 
 // Configure authentication with Azure AD B2C
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -152,8 +151,12 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     {
         AppConfig.LoadAzureAdB2CConfig(options, appConfig, builder.Configuration, builder.Environment);
     });
+
 builder.Services.AddScoped<IClaimsTransformation, CustomClaimsTransformation>();
 builder.Services.AddScoped<IShoppingListService, ShoppingListService.Data.ShoppingListService>();
+builder.Services.AddScoped<IShoppingListBusinessService, ShoppingListBusinessService>();
+builder.Services.AddScoped<IRequestContextService, RequestContextService>();
+builder.Services.AddHttpContextAccessor();
 
 // Add authorization
 builder.Services.AddAuthorization(options =>

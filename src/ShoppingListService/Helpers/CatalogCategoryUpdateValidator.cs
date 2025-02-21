@@ -1,7 +1,5 @@
-using System;
 using Contracts.Catalog;
 using FluentValidation;
-using FluentValidation.Validators;
 
 namespace ShoppingListService.Helpers;
 

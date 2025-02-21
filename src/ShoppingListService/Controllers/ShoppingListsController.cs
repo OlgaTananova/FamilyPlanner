@@ -1,10 +1,8 @@
-using System.Net.Http;
 using AutoMapper;
 using CatalogService.RequestHelpers;
 using Contracts.ShoppingLists;
 using MassTransit;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
