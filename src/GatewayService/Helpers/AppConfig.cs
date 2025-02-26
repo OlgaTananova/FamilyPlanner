@@ -48,10 +48,17 @@ public class AppConfig
             config.RabbitMqPassword = Environment.GetEnvironmentVariable("RABBIT_MQ_PASSWORD") ?? "";
             config.RabbitMqHost = Environment.GetEnvironmentVariable("RABBIT_MQ_HOST") ?? "";
         }
-        else
+        else if (environment.IsDevelopment())
         {
-            // Load from appsettings.json in development
-            configuration.Bind(config);
+            config.ApplicationInsightsConnectionString = configuration.GetValue<string>("ApplicationInsights:ConnectionString") ?? "";
+            var clientApps = configuration.GetSection("ClientApps").Get<string[]>() ?? Array.Empty<string>();
+            config.ClientApps = clientApps;
+
+            config.DefaultConnectionString = configuration.GetConnectionString("DefaultConnection") ?? "";
+
+            config.RabbitMqUser = configuration.GetValue<string>("RabbitMq:User") ?? "";
+            config.RabbitMqPassword = configuration.GetValue<string>("RabbitMq:Password") ?? "";
+            config.RabbitMqHost = configuration.GetValue<string>("RabbitMq:Host") ?? "";
         }
 
         return config;

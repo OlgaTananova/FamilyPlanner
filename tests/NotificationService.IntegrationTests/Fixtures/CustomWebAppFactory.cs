@@ -1,4 +1,4 @@
-using System;
+
 using System.Text;
 using MassTransit;
 using Microsoft.AspNetCore.Authentication;
@@ -14,7 +14,6 @@ using Microsoft.IdentityModel.Tokens;
 using NotificationService.Consumers;
 using NotificationService.Hubs;
 using NotificationService.IntegrationTests.Utils;
-using WebMotions.Fake.Authentication.JwtBearer;
 
 namespace NotificationService.IntegrationTests.Fixtures;
 
@@ -29,7 +28,8 @@ public class CustomWebAppFactory : WebApplicationFactory<Program>, IAsyncLifetim
 
         builder.ConfigureTestServices(services =>
         {
-
+            // Disable Application Insights telemetry
+            services.RemoveTelemetry();
             // Remove existing authentication to avoid duplicate registration
             services.RemoveAll<IAuthenticationSchemeProvider>();
             services.RemoveAll<IConfigureOptions<AuthenticationOptions>>();
@@ -71,8 +71,7 @@ public class CustomWebAppFactory : WebApplicationFactory<Program>, IAsyncLifetim
             // Add SignalR hub to the test services
             services.AddSignalR();
 
-            // Disable Application Insights telemetry
-            services.RemoveTelemetry();
+
 
         });
         builder.Configure(app =>
