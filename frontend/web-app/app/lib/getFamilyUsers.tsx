@@ -1,10 +1,10 @@
 // utils/getGraphToken.ts
 import { ClientSecretCredential } from "@azure/identity";
 
-const tenantId = process.env.AZURE_AD_B2C_TENANT_ID;
-const clientId = process.env.AZURE_AD_B2C_CLIENT_ID;
-const clientSecret = process.env.AZURE_AD_B2C_SECRET;
-const clientExtensionId = process.env.AZURE_AD_B2C_CLIENT_EXTENSION_ID_WITHOUT_DASH;
+const tenantId = process.env.NEXT_PUBLIC_AZURE_AD_B2C_TENANT_ID;
+const clientId = process.env.NEXT_PUBLIC_AZURE_AD_B2C_CLIENT_ID;
+const clientSecret = process.env.NEXT_PUBLIC_AZURE_AD_B2C_SECRET;
+const clientExtensionId = process.env.NEXT_PUBLIC_AZURE_AD_B2C_CLIENT_EXTENSION_ID_WITHOUT_DASH;
 
 
 const scope = `${process.env.GRAPH_API_SCOPE}.default`;

@@ -9,6 +9,7 @@ COPY src/ShoppingListService/ShoppingListService.csproj src/ShoppingListService/
 COPY src/GatewayService/GatewayService.csproj src/GatewayService/GatewayService.csproj
 COPY src/Contracts/Contracts.csproj src/Contracts/Contracts.csproj
 COPY src/NotificationService/NotificationService.csproj src/NotificationService/NotificationService.csproj
+COPY src/FrontendBlazor/FrontendBlazor.csproj src/FrontendBlazor/FrontendBlazor.csproj 
 
 COPY tests/CatalogService.UnitTests/CatalogService.UnitTests.csproj tests/CatalogService.UnitTests/CatalogService.UnitTests.csproj
 COPY tests/CatalogService.IntegrationTests/CatalogService.IntegrationTests.csproj tests/CatalogService.IntegrationTests/CatalogService.IntegrationTests.csproj

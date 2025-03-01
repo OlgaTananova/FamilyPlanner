@@ -1,9 +1,6 @@
-
 import { getFamilyUsers } from "@/app/lib/getFamilyUsers";
 import { RootState } from "@/app/redux/store";
 import Link from "next/link";
-import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
 
 export interface FamilyUser {
   id: string;
