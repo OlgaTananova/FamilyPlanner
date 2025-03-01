@@ -46,3 +46,4 @@ bin/
 obj/
 appsettings.Development.json
 appsettings.Docker.json
+node_modules
