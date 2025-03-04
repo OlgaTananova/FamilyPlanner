@@ -1,5 +1,4 @@
-import { getFamilyUsers } from "@/app/lib/getFamilyUsers";
-import { RootState } from "@/app/redux/store";
+import { useCatalogApi } from "@/app/hooks/useCatalogApi";
 import Link from "next/link";
 
 export interface FamilyUser {
@@ -15,6 +14,7 @@ export interface FamilyUser {
 
 export default async function FamilyPage({ params }: { params: Promise<{ familyName: string }> }) {
   const { familyName } = await params;
+  const { fetchFamilyUsers } = useCatalogApi();
   let familyUsers: FamilyUser[] = [];
 
   if (!familyName) {
@@ -30,8 +30,8 @@ export default async function FamilyPage({ params }: { params: Promise<{ familyN
 
 
   try {
-    const users = await getFamilyUsers(familyName as string);
-    familyUsers = users;
+    const users = await fetchFamilyUsers(familyName as string);
+    familyUsers = users ?? [];
   } catch (error) {
     console.error("Error fetching family users:", error);
   }

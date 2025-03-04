@@ -122,9 +122,6 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
    {
        AppConfig.LoadAzureAdB2CConfig(options, appConfig, builder.Configuration, builder.Environment);
    });
-
-
-
 // Add authorization
 builder.Services.AddAuthorization(options =>
 {
@@ -150,6 +147,8 @@ builder.Services.AddSingleton<ITelemetryInitializer, CustomTelemetryInitializer>
 builder.Services.AddScoped<IRequestContextService, RequestContextService>();
 builder.Services.AddScoped<ICatalogRepository, CatalogRepository>();
 builder.Services.AddScoped<ICatalogBusinessService, CatalogBusinessService>();
+builder.Services.AddScoped<IGraphServiceClientFactory, GraphServiceClientFactory>();
+builder.Services.AddScoped<IGraphService, GraphService>();
 
 var app = builder.Build();
 

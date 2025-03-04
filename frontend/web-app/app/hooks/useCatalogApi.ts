@@ -2,6 +2,7 @@ import { useCallback } from "react";
 import toast from "react-hot-toast";
 import { Category, Item } from "../redux/catalogSlice";
 import { useFetchApi } from "./useFetchApi";
+import { FamilyUser } from "../family/[familyName]/page";
 const gatewayUrl = process.env.NEXT_PUBLIC_GATEWAY_URL;
 
 
@@ -94,6 +95,17 @@ export function useCatalogApi() {
         return await fetchApi(gatewayUrl!, `/catalog/items/search?query=${query}`, { method: "GET" });
     }, [fetchApi]);
 
+    const fetchFamilyUsers = useCallback(async (familyName: string): Promise<FamilyUser[] | null> => {
+        const res = await fetchApi<FamilyUser[]>(gatewayUrl!, `/api/family/${familyName}/users`, {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+            }
+        });
+
+        return res;
+    }, [fetchApi]);
+
     return {
         fetchCatalogSearchResults,
         deleteCategory,
@@ -102,6 +114,7 @@ export function useCatalogApi() {
         updateItem,
         createItem,
         createCategory,
-        fetchCatalogData
+        fetchCatalogData,
+        fetchFamilyUsers
     }
 }

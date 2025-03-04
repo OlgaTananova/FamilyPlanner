@@ -32,31 +32,23 @@ async function extractUsersFromResponse(response: Response) {
 }
 
 export async function getFamilyUsers(familyName: string) {
-    const token = await getGraphToken();
-    const graphApiUrl = "https://graph.microsoft.com/beta/users"
-    const response = await fetch(graphApiUrl, {
-        method: 'GET',
-        headers: {
-            Authorization: `Bearer ${token}`,
-        },
-    });
+    try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/family/${familyName}/users`, {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            next: { revalidate: 0 }, // disable cache if you want fresh data
+        });
 
+        if (!res.ok) {
+            throw new Error(`Failed to fetch family users: ${res.status}`);
+        }
 
-    const users = await extractUsersFromResponse(response);
-
-    const filteredUsers = users
-        .filter(
-            (user: any) =>
-                user[`extension_${clientExtensionId}_Family`] === familyName
-        )
-        .map((user: any) => ({
-            id: user.id,
-            givenName: user.givenName,
-            family: user[`extension_${clientExtensionId}_Family`] || "",
-            role: user[`extension_${clientExtensionId}_Role`],
-            isAdmin: user[`extension_${clientExtensionId}_IsAdmin`],
-            email: user.mail || user.otherMails?.[0] || user.identities[0].issuerAssignedId
-        }));
-
-    return filteredUsers;
+        const users = await res.json();
+        return users;
+    } catch (error) {
+        console.error("Error fetching family users:", error);
+        return [];
+    }
 }
