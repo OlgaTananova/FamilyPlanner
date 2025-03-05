@@ -14,13 +14,11 @@ namespace CatalogService.Controllers
     {
         private readonly IGraphService _graphService;
         private readonly IRequestContextService _requestContextService;
-        private readonly AppConfig _appConfig;
         private readonly ProblemDetailsFactory _problemDetailsFactory;
-        public FamilyController(IGraphService graphService, IRequestContextService requestContextService, AppConfig appConfig, ProblemDetailsFactory problemDetailsFactory)
+        public FamilyController(IGraphService graphService, IRequestContextService requestContextService, ProblemDetailsFactory problemDetailsFactory)
         {
             _graphService = graphService;
             _requestContextService = requestContextService;
-            _appConfig = appConfig;
             _problemDetailsFactory = problemDetailsFactory;
         }
 

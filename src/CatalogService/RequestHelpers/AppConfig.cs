@@ -42,7 +42,7 @@ public class AppConfig
             config.AzureAdB2CSignUpSignInPolicyId = Environment.GetEnvironmentVariable("AZURE_AD_B2C_SIGNUP_SIGNIN_POLICY");
             config.AzureAdB2CIssuer = Environment.GetEnvironmentVariable("AZURE_AD_B2C_ISSUER");
             config.AzureAdB2CTenantId = Environment.GetEnvironmentVariable("AZURE_AD_B2C_TENANT_ID");
-            config.AzureAdB2CClientSecret = Environment.GetEnvironmentVariable("AZURE_AD_B2C_SECRET");
+            config.AzureAdB2CClientSecret = Environment.GetEnvironmentVariable("AZURE_AD_B2C_CLIENT_SECRET");
             config.AzureAdB2CExtensionId = Environment.GetEnvironmentVariable("AZURE_AD_B2C_CLIENT_EXTENSION_ID_WITHOUT_DASH");
 
             config.ApplicationInsightsConnectionString = Environment.GetEnvironmentVariable("APPLICATIONINSIGHTS_CONNECTION_STRING");

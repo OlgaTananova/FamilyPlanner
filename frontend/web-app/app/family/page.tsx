@@ -1,5 +1,10 @@
+"use client"
 import { useCatalogApi } from "@/app/hooks/useCatalogApi";
+import { RootState } from "@/app/redux/store";
 import Link from "next/link";
+import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
+import { useSelector } from "react-redux";
 
 export interface FamilyUser {
   id: string;
@@ -12,12 +17,28 @@ export interface FamilyUser {
 }
 
 
-export default async function FamilyPage({ params }: { params: Promise<{ familyName: string }> }) {
-  const { familyName } = await params;
+export default function FamilyPage() {
   const { fetchFamilyUsers } = useCatalogApi();
-  let familyUsers: FamilyUser[] = [];
+  const user = useSelector((state: RootState) => state.user);
+  const [familyUsers, setFamilyUsers] = useState<FamilyUser[]>([]);
 
-  if (!familyName) {
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const users = await fetchFamilyUsers();
+        if (users) {
+          setFamilyUsers(users);
+        }
+      } catch (error) {
+        toast.error("Error fetching family users.");
+      }
+    };
+
+    fetchUsers();
+  }, [user]);
+
+  if (!user.family) {
     return (
       <div className="flex flex-col items-center justify-center h-full bg-gradient-to-r from-purple-50 via-purple-100 to-fuchsia-50 p-4">
         <h1 className="text-2xl font-bold text-purple-600 mb-4">Family Members</h1>
@@ -27,15 +48,6 @@ export default async function FamilyPage({ params }: { params: Promise<{ familyN
       </div>
     );
   }
-
-
-  try {
-    const users = await fetchFamilyUsers(familyName as string);
-    familyUsers = users ?? [];
-  } catch (error) {
-    console.error("Error fetching family users:", error);
-  }
-
 
   return (
     <div className="flex flex-col items-center p-6 bg-gradient-to-r from-purple-50 via-purple-100 to-fuchsia-50 min-h-screen relative">
@@ -48,7 +60,7 @@ export default async function FamilyPage({ params }: { params: Promise<{ familyN
       </Link>
 
       <h1 className="text-3xl md:text-2xl sm:text-xl font-bold text-purple-700 mb-6">
-        Members of <span className="text-fuchsia-600">{familyName}</span> family
+        Members of <span className="text-fuchsia-600">{user.family}</span> family
       </h1>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 w-full max-w-6xl">

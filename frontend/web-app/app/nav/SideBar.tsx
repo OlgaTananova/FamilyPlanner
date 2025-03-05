@@ -3,14 +3,11 @@ import Link from "next/link";
 import { useState } from "react";
 import { FaListUl, FaShoppingCart, FaUsers } from "react-icons/fa";
 import { HiChevronLeft, HiChevronRight } from "react-icons/hi";
-import { useSelector } from "react-redux";
 import { useAuth } from "../hooks/useAuth";
-import { RootState } from "../redux/store";
 
 export default function SideBar() {
     const [isCollapsed, setIsCollapsed] = useState(true);
     const [isOpen, setIsOpen] = useState(false); // For mobile view
-    const familyName = useSelector((state: RootState) => state.user.family);
     const auth = useAuth();
     const { isAuthenticated } = auth;
 
@@ -58,7 +55,7 @@ export default function SideBar() {
                 {/* Links */}
                 <div className={`p-4 space-y-4 ${isCollapsed ? "hidden" : "block"}`}>
                     <SidebarLink
-                        href={`/family/${familyName}`}
+                        href={`/family`}
                         icon={<FaUsers size={24} />}
                         label="Family"
                         isCollapsed={isCollapsed}
