@@ -1,9 +1,9 @@
-
-using Microsoft.Graph;
+using CatalogService.DTOs;
+using CatalogService.RequestHelpers;
 
 namespace CatalogService.Services;
 
 public interface IGraphService
 {
-    Task<IEnumerable<User>> GetFamilyUsersAsync(string family);
+    Task<ServiceResult<List<FamilyUserDto>>> GetFamilyUsersAsync(string family);
 }

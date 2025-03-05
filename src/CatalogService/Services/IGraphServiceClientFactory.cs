@@ -1,4 +1,5 @@
-using Microsoft.Graph;
+
+using Microsoft.Graph.Beta;
 
 namespace CatalogService.Services;
 

@@ -24,7 +24,8 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.Graph" Version="4.36.0" />
+    <!-- <PackageReference Include="Microsoft.Graph" Version="4.36.0" /> -->
+    <PackageReference Include="Microsoft.Graph.Beta" Version="5.98.1-preview" />
     <PackageReference Include="Microsoft.Identity.Client" Version="4.69.1" />
     <PackageReference Include="Microsoft.Identity.Web" Version="3.4.0" />
     <PackageReference Include="Microsoft.Identity.Web.MicrosoftGraph" Version="3.0.0" />

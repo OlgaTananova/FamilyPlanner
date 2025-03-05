@@ -13,6 +13,7 @@ public class AppConfig
     public string AzureAdB2CTenantId { get; set; } = string.Empty;
 
     public string AzureAdB2CClientSecret { get; set; } = string.Empty;
+    public string AzureAdB2CExtensionId { get; set; } = string.Empty;
 
     // Application Insights
     public string ApplicationInsightsConnectionString { get; set; } = string.Empty;
@@ -42,6 +43,7 @@ public class AppConfig
             config.AzureAdB2CIssuer = Environment.GetEnvironmentVariable("AZURE_AD_B2C_ISSUER");
             config.AzureAdB2CTenantId = Environment.GetEnvironmentVariable("AZURE_AD_B2C_TENANT_ID");
             config.AzureAdB2CClientSecret = Environment.GetEnvironmentVariable("AZURE_AD_B2C_SECRET");
+            config.AzureAdB2CExtensionId = Environment.GetEnvironmentVariable("AZURE_AD_B2C_CLIENT_EXTENSION_ID_WITHOUT_DASH");
 
             config.ApplicationInsightsConnectionString = Environment.GetEnvironmentVariable("APPLICATIONINSIGHTS_CONNECTION_STRING");
 
@@ -68,6 +70,7 @@ public class AppConfig
             config.AzureAdB2CClientId = configuration.GetValue<string>("AzureAdB2C:ClientId");
             config.AzureAdB2CClientSecret = configuration.GetValue<string>("AzureAdB2C:ClientSecret");
             config.AzureAdB2CDomain = configuration.GetValue<string>("AzureAdB2C:Domain");
+            config.AzureAdB2CExtensionId = configuration.GetValue<string>("AzureAdB2C:ExtensionId");
         }
 
         return config;

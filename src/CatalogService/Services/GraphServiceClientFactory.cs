@@ -1,6 +1,6 @@
 using Azure.Identity;
 using CatalogService.RequestHelpers;
-using Microsoft.Graph;
+using Microsoft.Graph.Beta;
 
 namespace CatalogService.Services;
 

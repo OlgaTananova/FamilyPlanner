@@ -1,40 +1,51 @@
-using AutoMapper;
-using Microsoft.Graph;
+using CatalogService.DTOs;
+using CatalogService.RequestHelpers;
+using Microsoft.Graph.Beta;
 
 namespace CatalogService.Services;
 
 public class GraphService : IGraphService
 {
     private readonly GraphServiceClient _graphServiceClient;
-    private readonly IMapper _mapper;
-    public GraphService(IGraphServiceClientFactory graphServiceClientFactory, IMapper mapper)
+    private readonly AppConfig _appConfig;
+    public GraphService(IGraphServiceClientFactory graphServiceClientFactory, AppConfig appConfig)
     {
         _graphServiceClient = graphServiceClientFactory.GetGraphServiceClient();
+        _appConfig = appConfig;
     }
-    public async Task<IEnumerable<User>> GetFamilyUsersAsync(string family)
+    public async Task<ServiceResult<List<FamilyUserDto>>> GetFamilyUsersAsync(string family)
     {
-        var users = await _graphServiceClient.Users
-            .Request()
-            .Select($"id,givenName,mail,otherMails,identities,extensions")
-            .Top(999) // Adjust as needed
-            .GetAsync();
+        string extensionId = _appConfig.AzureAdB2CExtensionId;
+        var userResponse = await _graphServiceClient.Users.GetAsync();
+        var extensionPrefix = $"extension_{extensionId}_";
+        var familyUsers = userResponse.Value
+            .Where(user =>
+                user.AdditionalData != null &&
+                user.AdditionalData.ContainsKey($"{extensionPrefix}Family") &&
+                user.AdditionalData.ContainsKey($"{extensionPrefix}Role") &&
+                user.AdditionalData.ContainsKey($"{extensionPrefix}IsAdmin") &&
+                user.AdditionalData[$"{extensionPrefix}Family"]?.ToString() == family)
+            .Select(user => new FamilyUserDto
+            {
+                Id = user.Id,
+                GivenName = user.GivenName,
+                DisplayName = user.DisplayName,
+                Email = user.Mail
+                    ?? user.OtherMails?.FirstOrDefault()
+                    ?? user.Identities?.FirstOrDefault()?.IssuerAssignedId,
+                Family = user.AdditionalData[$"{extensionPrefix}Family"]?.ToString() ?? "",
+                Role = user.AdditionalData[$"{extensionPrefix}Role"]?.ToString() ?? "",
+                IsAdmin = bool.TryParse(
+                    user.AdditionalData[$"{extensionPrefix}IsAdmin"]?.ToString(),
+                    out var isAdmin) && isAdmin
+            })
+        .ToList();
 
-        // var familyUsers = users.CurrentPage
-        // .Where(user =>
-        //     user.AdditionalData != null &&
-        //     user.AdditionalData.TryGetValue($"extension_{_extensionIdWithoutDashes}_Family", out var familyValue) &&
-        //     familyValue?.ToString() == familyName
-        // )
-        // .Select(user => new FamilyUserDto
-        // {
-        //     Id = user.Id,
-        //     GivenName = user.GivenName,
-        //     Family = user.AdditionalData[$"extension_{_extensionIdWithoutDashes}_Family"]?.ToString(),
-        //     Role = user.AdditionalData[$"extension_{_extensionIdWithoutDashes}_Role"]?.ToString(),
-        //     IsAdmin = bool.TryParse(user.AdditionalData[$"extension_{_extensionIdWithoutDashes}_IsAdmin"]?.ToString(), out var isAdmin) && isAdmin,
-        //     Email = user.Mail ?? user.OtherMails?.FirstOrDefault() ?? user.Identities?.FirstOrDefault()?.Id
-        // })
-        // .ToList();
-        return users.CurrentPage.ToList();
+        if (familyUsers != null)
+        {
+            return ServiceResult<List<FamilyUserDto>>.SuccessResult(familyUsers);
+        }
+
+        return ServiceResult<List<FamilyUserDto>>.FailureResult("Family users are not found", 404);
     }
 }
