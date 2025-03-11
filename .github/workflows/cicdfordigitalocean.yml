@@ -20,8 +20,8 @@ jobs:
 
       - name: 📄 Create .env file for Web App Build
         run: |
-          echo "NEXT_PUBLIC_API_URL=https://api.familyplanner.online" >> .env
-          echo "NEXT_PUBLIC_AZURE_AD_B2C_CLIENT_ID=ef8f5cf6-198a-4213-beb4-d2d08e00c07a" >> .env
+          echo NEXT_PUBLIC_API_URL=https://api.familyplanner.online >> .env
+          echo NEXT_PUBLIC_AZURE_AD_B2C_CLIENT_ID=ef8f5cf6-198a-4213-beb4-d2d08e00c07a >> .env
           echo NEXT_PUBLIC_AZURE_AD_B2C_TENANT_NAME=familyplanneronline >> .env
           echo NEXT_PUBLIC_AZURE_AD_B2C_USER_FLOW=B2C_1_susi >> .env
           echo NEXT_PUBLIC_AZURE_AD_B2C_PROFILE_EDIT_FLOW=B2C_1_edit_profile >> .env
@@ -64,3 +64,65 @@ jobs:
 
           docker build -t $DOCKER_REGISTRY/$DOCKER_REPO/notification-svc:latest -f src/NotificationService/Dockerfile .
           docker push $DOCKER_REGISTRY/$DOCKER_REPO/notification-svc:latest
+  deploy:
+    name: Deploy to DigitalOcean
+    needs: build-test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Copy Updated Files to Droplet
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.DIGITALOCEAN_IP }}
+          username: ${{ env.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "nginx/nginx.conf,docker-compose.prod.yml"
+          target: "~/FamilyPlanner"
+
+      - name: Connect to DigitalOcean & Deploy
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.DIGITALOCEAN_IP }}
+          username: ${{ env.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd ~/FamilyPlanner
+
+            echo "Pulling latest images..."
+            docker pull $DOCKER_REGISTRY/$DOCKER_REPO/web-app:latest
+            docker pull $DOCKER_REGISTRY/$DOCKER_REPO/gateway-svc:latest
+            docker pull $DOCKER_REGISTRY/$DOCKER_REPO/catalog-svc:latest
+            docker pull $DOCKER_REGISTRY/$DOCKER_REPO/shoppinglist-svc:latest
+            docker pull $DOCKER_REGISTRY/$DOCKER_REPO/notification-svc:latest
+            docker pull $DOCKER_REGISTRY/$DOCKER_REPO/nginx:latest
+
+            echo "Recreating .env..."
+            cat <<EOF > .env
+            POSTGRES_CATALOG_USER=${{ secrets.POSTGRES_CATALOG_USER }}
+            POSTGRES_CATALOG_PASSWORD=${{ secrets.POSTGRES_CATALOG_PASSWORD }}
+            POSTGRES_CATALOG_DATABASE=${{ secrets.POSTGRES_CATALOG_DATABASE }}
+            POSTGRES_SHOPPING_USER=${{ secrets.POSTGRES_SHOPPING_USER }}
+            POSTGRES_SHOPPING_PASSWORD=${{ secrets.POSTGRES_SHOPPING_PASSWORD }}
+            POSTGRES_SHOPPING_DATABASE=${{ secrets.POSTGRES_SHOPPING_DATABASE }}
+            RABBIT_MQ_USER=${{ secrets.RABBIT_MQ_USER }}
+            RABBIT_MQ_PASSWORD=${{ secrets.RABBIT_MQ_PASSWORD }}
+            RABBIT_MQ_HOST=${{secrets.RABBIT_MQ_HOST}}
+            CATALOG_POSTGRES_CONNECTION_STRING=${{secrets.CATALOG_POSTGRES_CONNECTION_STRING}}
+            SHOPPING_POSTGRES_CONNECTION_STRING=${{secrets.SHOPPING_POSTGRES_CONNECTION_STRING}}
+            APPLICATIONINSIGHTS_CONNECTION_STRING=${{secrets.APPLICATIONINSIGHTS_CONNECTION_STRING}}
+            CLIENT_APPS=${{secrets.CLIENT_APPS}}
+            AZURE_AD_B2C_INSTANCE=${{secrets.AZURE_AD_B2C_INSTANCE}}
+            AZURE_AD_B2C_CLIENT_ID=${{secrets.AZURE_AD_B2C_CLIENT_ID}}
+            AZURE_AD_B2C_DOMAIN=${{secrets.AZURE_AD_B2C_DOMAIN}}
+            AZURE_AD_B2C_SIGNUP_SIGNIN_POLICY=${{secrets.AZURE_AD_B2C_SIGNUP_SIGNIN_POLICY}}
+            AZURE_AD_B2C_TENANT_ID=${{secrets.AZURE_AD_B2C_TENANT_ID}}
+            AZURE_AD_B2C_CLIENT_SECRET=${{secrets.AZURE_AD_B2C_CLIENT_SECRET}}
+            AZURE_AD_B2C_CLIENT_EXTENSION_ID_WITHOUT_DASH=${{secrets.AZURE_AD_B2C_CLIENT_EXTENSION_ID_WITHOUT_DASH}}
+            EOF
+
+            chmod 600 .env
+
+            docker compose --env-file .env -f docker-compose.prod.yml up -d --build
+
+            echo "Restarting Nginx..."
+            docker exec nginx nginx -s reload        
