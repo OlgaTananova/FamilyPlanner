@@ -6,7 +6,7 @@ services:
       - POSTGRES_PASSWORD=${POSTGRES_CATALOG_PASSWORD}
       - POSTGRES_DB=${POSTGRES_CATALOG_DATABASE}
     env_file:
-      - .env.prod  
+      - .env
     ports:
       - 5432:5432
     volumes:
@@ -19,7 +19,7 @@ services:
       - POSTGRES_PASSWORD=${POSTGRES_SHOPPING_PASSWORD}
       - POSTGRES_DB=${POSTGRES_SHOPPING_DATABASE}
     env_file:
-      - .env.prod  
+      - .env
     ports:
       - 5433:5432
     volumes:
@@ -33,7 +33,7 @@ services:
         - RABBITMQ_DEFAULT_USER=${RABBIT_MQ_USER}
         - RABBITMQ_DEFAULT_PASS=${RABBIT_MQ_PASSWORD}
       env_file:
-        - .env.prod  
+        - .env 
   catalog-svc:
       image: olgatan/catalog-svc:latest
       build: 
@@ -43,7 +43,7 @@ services:
         - ASPNETCORE_ENVIRONMENT=Production
         - ASPNETCORE_URLS=http://+:80
       env_file:
-        - .env.prod   
+        - .env
       ports:
         - 7001:80  
       depends_on:
@@ -58,7 +58,7 @@ services:
         - ASPNETCORE_ENVIRONMENT=Production
         - ASPNETCORE_URLS=http://+:80
       env_file:
-        - .env.prod  
+        - .env  
       ports:
         - 7002:80  
       depends_on:
@@ -73,7 +73,7 @@ services:
         - ASPNETCORE_ENVIRONMENT=Production
         - ASPNETCORE_URLS=http://+:80
       env_file:
-        - .env.prod  
+        - .env  
       ports:
         - 7003:80  
       depends_on:
@@ -87,7 +87,7 @@ services:
         - DOTNET_ENVIRONMENT=Production
         - ASPNETCORE_URLS=http://+:80
       env_file:
-        - .env.prod  
+        - .env 
       ports:
         - 7004:80
   web-app:
@@ -100,7 +100,7 @@ services:
     ports:
       - 3000:3000
     env_file:
-      - .env.prod
+      - .env
   nginx:
     image: nginx:latest
     container_name: nginx

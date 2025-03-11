@@ -1,0 +1,66 @@
+name: CI/CD Pipeline for DigitalOcean
+on:
+  workflow_dispatch:
+env:
+  DOCKER_REGISTRY: docker.io
+  DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+  DOCKER_PASSWORD: ${{ secrets.DOCKER_TOKEN }}
+  DOCKER_REPO: olgatan
+  DIGITALOCEAN_IP: ${{ secrets.DIGITALOCEAN_IP }}
+  SSH_USER: root
+  SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+jobs:  
+  build-test:
+    name: Build Images
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 🛎 Checkout Code
+        uses: actions/checkout@v3
+
+      - name: 📄 Create .env file for Web App Build
+        run: |
+          echo "NEXT_PUBLIC_API_URL=https://api.familyplanner.online" >> .env
+          echo "NEXT_PUBLIC_AZURE_AD_B2C_CLIENT_ID=ef8f5cf6-198a-4213-beb4-d2d08e00c07a" >> .env
+          echo NEXT_PUBLIC_AZURE_AD_B2C_TENANT_NAME=familyplanneronline >> .env
+          echo NEXT_PUBLIC_AZURE_AD_B2C_USER_FLOW=B2C_1_susi >> .env
+          echo NEXT_PUBLIC_AZURE_AD_B2C_PROFILE_EDIT_FLOW=B2C_1_edit_profile >> .env
+          echo NEXT_PUBLIC_AZURE_AD_B2C_REDIRECT_URI=https://familyplanner.online >> .env
+          echo NEXT_PUBLIC_AZURE_AD_B2C_EDIT_PROFILE_REDIRECT_URI=https://familyplanner.online/profile >> .env
+          echo NEXT_PUBLIC_AZURE_AD_B2C_CATALOG_WRITE_SCOPE=https://familyplanneronline.onmicrosoft.com/api.familyplanneronline/catalog.write >> .env
+          echo NEXT_PUBLIC_AZURE_AD_B2C_CATALOG_READ_SCOPE=https://familyplanneronline.onmicrosoft.com/api.familyplanneronline/catalog.read >> .env
+          echo NEXT_PUBLIC_AZURE_AD_B2C_SHOPLIST_READ_SCOPE=https://familyplanneronline.onmicrosoft.com/api.familyplanneronline/shoppinglist.read >> .env
+          echo NEXT_PUBLIC_AZURE_AD_B2C_SHOPLIST_WRITE_SCOPE=https://familyplanneronline.onmicrosoft.com/api.familyplanneronline/shoppinglist.write >> .env
+          echo NEXT_PUBLIC_SIGNALR_HUB_URL=https://api.familyplanner.online/notifications >> .env
+          echo NEXT_PUBLIC_GATEWAY_URL=https://api.familyplanner.online >> .env
+        working-directory: frontend/web-app
+
+      - name: 🔧 Update nginx.conf with Production SSL Paths
+        run: |
+            sed -i 's|server_name app.familyplan.com;|server_name familyplanner.online;|' nginx/nginx.conf
+            sed -i 's|ssl_certificate /etc/nginx/certs/familyplan.com.certs;|ssl_certificate /etc/letsencrypt/live/familyplanner.online/fullchain.pem;|' nginx/nginx.conf
+            sed -i 's|ssl_certificate_key /etc/nginx/certs/familyplan.com.key;|ssl_certificate_key /etc/letsencrypt/live/familyplanner.online/privkey.pem;|' nginx/nginx.conf
+
+            sed -i 's|server_name api.familyplan.com;|server_name api.familyplanner.online;|' nginx/nginx.conf
+            sed -i 's|ssl_certificate /etc/nginx/certs/api.familyplan.com.certs;|ssl_certificate /etc/letsencrypt/live/familyplanner.online/fullchain.pem;|' nginx/nginx.conf
+            sed -i 's|ssl_certificate_key /etc/nginx/certs/api.familyplan.com.key;|ssl_certificate_key /etc/letsencrypt/live/familyplanner.online/privkey.pem;|' nginx/nginx.conf
+      
+      - name: 📦 Login to Docker Registry
+        run: echo "${{ secrets.DOCKER_TOKEN }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+      - name: 🏗 Build & Push Docker Images
+        run: |
+          docker build -t $DOCKER_REGISTRY/$DOCKER_REPO/web-app:latest -f frontend/web-app/Dockerfile .
+          docker push $DOCKER_REGISTRY/$DOCKER_REPO/web-app:latest
+
+          docker build -t $DOCKER_REGISTRY/$DOCKER_REPO/gateway-svc:latest -f src/GatewayService/Dockerfile .
+          docker push $DOCKER_REGISTRY/$DOCKER_REPO/gateway-svc:latest
+
+          docker build -t $DOCKER_REGISTRY/$DOCKER_REPO/catalog-svc:latest -f src/CatalogService/Dockerfile .
+          docker push $DOCKER_REGISTRY/$DOCKER_REPO/catalog-svc:latest
+
+          docker build -t $DOCKER_REGISTRY/$DOCKER_REPO/shoppinglist-svc:latest -f src/ShoppingListService/Dockerfile .
+          docker push $DOCKER_REGISTRY/$DOCKER_REPO/shoppinglist-svc:latest
+
+          docker build -t $DOCKER_REGISTRY/$DOCKER_REPO/notification-svc:latest -f src/NotificationService/Dockerfile .
+          docker push $DOCKER_REGISTRY/$DOCKER_REPO/notification-svc:latest

@@ -1,6 +1,4 @@
-using System;
 using AutoMapper;
-using AutoMapper.QueryableExtensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Caching.Memory;
@@ -176,7 +174,7 @@ public class ShoppingListService : IShoppingListService
     public async Task<List<CatalogItem>> GetFrequentlyBoughtItemsAsync(string family)
     {
         // Define a cache key
-        const string cacheKey = "FrequentlyBoughtItems";
+        var cacheKey = $"FrequentlyBoughtItems_{family}";
 
         // Try to get the data from cache
         if (!_cache.TryGetValue(cacheKey, out List<CatalogItem> frequentlyBoughtItems))
