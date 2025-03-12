@@ -24,7 +24,7 @@ jobs:
   #       with:
   #         dotnet-version: '8.0.x'  # Adjust for your .NET version
 
-  #     - name: 🧪 Run Tests
+  #     - name: Run Tests
   #       run: dotnet test --verbosity normal
   #       working-directory: tests  # Adjust if your tests folder is elsewhere
 
@@ -34,7 +34,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: 🔑 Connect to DigitalOcean and Deploy
+      - name:  Connect to DigitalOcean and Deploy
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.DIGITALOCEAN_IP }}
@@ -44,7 +44,7 @@ jobs:
           script: |
             set -e  # Stop on first error
 
-            echo "🚀 Cloning latest code..."
+            echo "Cloning latest code..."
             cd ~/ || exit
             if [ -d "FamilyPlanner" ]; then
               cd FamilyPlanner && git reset --hard && git pull
@@ -94,22 +94,23 @@ jobs:
             AZURE_AD_B2C_CLIENT_EXTENSION_ID_WITHOUT_DASH=${{ secrets.AZURE_AD_B2C_CLIENT_EXTENSION_ID_WITHOUT_DASH }}
             EOF
 
-            echo "🔧 Updating nginx.conf..."
+            echo "Updating nginx.conf..."
             sed -i 's|server_name app.familyplan.com;|server_name familyplanner.online;|' nginx/nginx.conf
             sed -i 's|ssl_certificate /etc/nginx/certs/familyplan.com.certs;|ssl_certificate /etc/letsencrypt/live/familyplanner.online/fullchain.pem;|' nginx/nginx.conf
             sed -i 's|ssl_certificate_key /etc/nginx/certs/familyplan.com.key;|ssl_certificate_key /etc/letsencrypt/live/familyplanner.online/privkey.pem;|' nginx/nginx.conf
             sed -i 's|server_name api.familyplan.com;|server_name api.familyplanner.online;|' nginx/nginx.conf
             sed -i 's|ssl_certificate /etc/nginx/certs/api.familyplan.com.certs;|ssl_certificate /etc/letsencrypt/live/familyplanner.online/fullchain.pem;|' nginx/nginx.conf
             sed -i 's|ssl_certificate_key /etc/nginx/certs/api.familyplan.com.key;|ssl_certificate_key /etc/letsencrypt/live/familyplanner.online/privkey.pem;|' nginx/nginx.conf
+            
+            echo "Updating docker-compose.prod.yml..."
+            sed -i '/nginx:/,/restart: unless-stopped/ s|volumes:\n      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro\n      - ./devcerts:/etc/nginx/certs:ro|volumes:\n      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro\n      - /etc/letsencrypt/live:/etc/letsencrypt/live:ro\n      - /etc/letsencrypt/archive:/etc/letsencrypt/archive:ro|' docker-compose.prod.yml
 
-            echo "🏗 Building Docker Images..."
+            echo "Building Docker Images..."
             docker compose -f docker-compose.prod.yml build
 
-            echo "🚀 Deploying Application..."
+            echo "Deploying Application..."
             docker compose --env-file .env -f docker-compose.prod.yml up -d --build
 
-            echo "🔄 Restarting Nginx..."
-            docker restart nginx
 
 # name: CI/CD Pipeline for DigitalOcean
 # on:
