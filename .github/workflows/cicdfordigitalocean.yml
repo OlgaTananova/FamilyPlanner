@@ -12,29 +12,12 @@ env:
   SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
 
 jobs:
-  # test:
-  #   name: Run .NET Tests
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: 🛎 Checkout Code
-  #       uses: actions/checkout@v3
-
-  #     - name: 🔨 Setup .NET SDK
-  #       uses: actions/setup-dotnet@v3
-  #       with:
-  #         dotnet-version: '8.0.x'  # Adjust for your .NET version
-
-  #     - name: Run Tests
-  #       run: dotnet test --verbosity normal
-  #       working-directory: tests  # Adjust if your tests folder is elsewhere
-
   deploy:
     name: Deploy to DigitalOcean
-    # needs: test  # Runs only if tests pass
     runs-on: ubuntu-latest
 
     steps:
-      - name:  Connect to DigitalOcean and Deploy
+      - name: 🔑 Connect to DigitalOcean and Deploy
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.DIGITALOCEAN_IP }}
@@ -44,7 +27,7 @@ jobs:
           script: |
             set -e  # Stop on first error
 
-            echo "Cloning latest code..."
+            echo "📂 Cloning latest code..."
             cd ~/ || exit
             if [ -d "FamilyPlanner" ]; then
               cd FamilyPlanner && git reset --hard && git pull
@@ -94,153 +77,19 @@ jobs:
             AZURE_AD_B2C_CLIENT_EXTENSION_ID_WITHOUT_DASH=${{ secrets.AZURE_AD_B2C_CLIENT_EXTENSION_ID_WITHOUT_DASH }}
             EOF
 
-            echo "Updating nginx.conf..."
+            echo "🔧 Updating nginx.conf..."
             sed -i 's|server_name app.familyplan.com;|server_name familyplanner.online;|' nginx/nginx.conf
             sed -i 's|ssl_certificate /etc/nginx/certs/familyplan.com.certs;|ssl_certificate /etc/letsencrypt/live/familyplanner.online/fullchain.pem;|' nginx/nginx.conf
             sed -i 's|ssl_certificate_key /etc/nginx/certs/familyplan.com.key;|ssl_certificate_key /etc/letsencrypt/live/familyplanner.online/privkey.pem;|' nginx/nginx.conf
             sed -i 's|server_name api.familyplan.com;|server_name api.familyplanner.online;|' nginx/nginx.conf
             sed -i 's|ssl_certificate /etc/nginx/certs/api.familyplan.com.certs;|ssl_certificate /etc/letsencrypt/live/familyplanner.online/fullchain.pem;|' nginx/nginx.conf
             sed -i 's|ssl_certificate_key /etc/nginx/certs/api.familyplan.com.key;|ssl_certificate_key /etc/letsencrypt/live/familyplanner.online/privkey.pem;|' nginx/nginx.conf
-            
-            echo "Updating docker-compose.prod.yml..."
+
+            echo "🔧 Updating docker-compose.prod.yml..."
             sed -i '/nginx:/,/restart: unless-stopped/ s|volumes:\n      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro\n      - ./devcerts:/etc/nginx/certs:ro|volumes:\n      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro\n      - /etc/letsencrypt/live:/etc/letsencrypt/live:ro\n      - /etc/letsencrypt/archive:/etc/letsencrypt/archive:ro|' docker-compose.prod.yml
 
-            echo "Building Docker Images..."
-            docker compose -f docker-compose.prod.yml build
-
-            echo "Deploying Application..."
+            echo "🚀 Deploying Application..."
             docker compose --env-file .env -f docker-compose.prod.yml up -d --build
 
-
-# name: CI/CD Pipeline for DigitalOcean
-# on:
-#   workflow_dispatch:
-# env:
-#   DOCKER_REGISTRY: docker.io
-#   DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-#   DOCKER_PASSWORD: ${{ secrets.DOCKER_TOKEN }}
-#   DOCKER_REPO: olgatan
-#   DIGITALOCEAN_IP: ${{ secrets.DIGITALOCEAN_IP }}
-#   SSH_USER: root
-#   SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-# jobs:  
-#   build-test:
-#     name: Build Images
-#     runs-on: ubuntu-latest
-
-#     steps:
-#       - name: 🛎 Checkout Code
-#         uses: actions/checkout@v3
-
-#       - name: 📄 Create .env file for Web App Build
-#         run: |
-#           echo NEXT_PUBLIC_API_URL=https://api.familyplanner.online >> .env
-#           echo NEXT_PUBLIC_AZURE_AD_B2C_CLIENT_ID=ef8f5cf6-198a-4213-beb4-d2d08e00c07a >> .env
-#           echo NEXT_PUBLIC_AZURE_AD_B2C_TENANT_NAME=familyplanneronline >> .env
-#           echo NEXT_PUBLIC_AZURE_AD_B2C_USER_FLOW=B2C_1_susi >> .env
-#           echo NEXT_PUBLIC_AZURE_AD_B2C_PROFILE_EDIT_FLOW=B2C_1_edit_profile >> .env
-#           echo NEXT_PUBLIC_AZURE_AD_B2C_REDIRECT_URI=https://familyplanner.online >> .env
-#           echo NEXT_PUBLIC_AZURE_AD_B2C_EDIT_PROFILE_REDIRECT_URI=https://familyplanner.online/profile >> .env
-#           echo NEXT_PUBLIC_AZURE_AD_B2C_CATALOG_WRITE_SCOPE=https://familyplanneronline.onmicrosoft.com/api.familyplanneronline/catalog.write >> .env
-#           echo NEXT_PUBLIC_AZURE_AD_B2C_CATALOG_READ_SCOPE=https://familyplanneronline.onmicrosoft.com/api.familyplanneronline/catalog.read >> .env
-#           echo NEXT_PUBLIC_AZURE_AD_B2C_SHOPLIST_READ_SCOPE=https://familyplanneronline.onmicrosoft.com/api.familyplanneronline/shoppinglist.read >> .env
-#           echo NEXT_PUBLIC_AZURE_AD_B2C_SHOPLIST_WRITE_SCOPE=https://familyplanneronline.onmicrosoft.com/api.familyplanneronline/shoppinglist.write >> .env
-#           echo NEXT_PUBLIC_SIGNALR_HUB_URL=https://api.familyplanner.online/notifications >> .env
-#           echo NEXT_PUBLIC_GATEWAY_URL=https://api.familyplanner.online >> .env
-#         working-directory: frontend/web-app
-
-#       - name: 🔧 Update nginx.conf with Production SSL Paths
-#         run: |
-#             sed -i 's|server_name app.familyplan.com;|server_name familyplanner.online;|' nginx/nginx.conf
-#             sed -i 's|ssl_certificate /etc/nginx/certs/familyplan.com.certs;|ssl_certificate /etc/letsencrypt/live/familyplanner.online/fullchain.pem;|' nginx/nginx.conf
-#             sed -i 's|ssl_certificate_key /etc/nginx/certs/familyplan.com.key;|ssl_certificate_key /etc/letsencrypt/live/familyplanner.online/privkey.pem;|' nginx/nginx.conf
-
-#             sed -i 's|server_name api.familyplan.com;|server_name api.familyplanner.online;|' nginx/nginx.conf
-#             sed -i 's|ssl_certificate /etc/nginx/certs/api.familyplan.com.certs;|ssl_certificate /etc/letsencrypt/live/familyplanner.online/fullchain.pem;|' nginx/nginx.conf
-#             sed -i 's|ssl_certificate_key /etc/nginx/certs/api.familyplan.com.key;|ssl_certificate_key /etc/letsencrypt/live/familyplanner.online/privkey.pem;|' nginx/nginx.conf
-      
-#       - name: 📦 Login to Docker Registry
-#         run: echo "${{ secrets.DOCKER_TOKEN }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
-
-#       - name: 🏗 Build & Push Docker Images
-#         run: |
-#           docker build -t $DOCKER_REGISTRY/$DOCKER_REPO/web-app:latest -f frontend/web-app/Dockerfile .
-#           docker push $DOCKER_REGISTRY/$DOCKER_REPO/web-app:latest
-
-#           docker build -t $DOCKER_REGISTRY/$DOCKER_REPO/gateway-svc:latest -f src/GatewayService/Dockerfile .
-#           docker push $DOCKER_REGISTRY/$DOCKER_REPO/gateway-svc:latest
-
-#           docker build -t $DOCKER_REGISTRY/$DOCKER_REPO/catalog-svc:latest -f src/CatalogService/Dockerfile .
-#           docker push $DOCKER_REGISTRY/$DOCKER_REPO/catalog-svc:latest
-
-#           docker build -t $DOCKER_REGISTRY/$DOCKER_REPO/shoppinglist-svc:latest -f src/ShoppingListService/Dockerfile .
-#           docker push $DOCKER_REGISTRY/$DOCKER_REPO/shoppinglist-svc:latest
-
-#           docker build -t $DOCKER_REGISTRY/$DOCKER_REPO/notification-svc:latest -f src/NotificationService/Dockerfile .
-#           docker push $DOCKER_REGISTRY/$DOCKER_REPO/notification-svc:latest
-#   deploy:
-#     name: Deploy to DigitalOcean
-#     #needs: build-test
-#     runs-on: ubuntu-latest
-#     steps:
-#       - name: 📡 Verify Files Before Copying
-#         run: |
-#           ls -la ./nginx/nginx.conf || echo "⚠️ nginx.conf file not found!"
-#           ls -la ./docker-compose.prod.yml || echo "⚠️ docker-compose.prod.yml file not found!"
-#       - name: Copy Updated Files to Droplet
-#         uses: appleboy/scp-action@master
-#         with:
-#           host: ${{ secrets.DIGITALOCEAN_IP }}
-#           username: ${{ env.SSH_USER }}
-#           key: ${{ secrets.SSH_PRIVATE_KEY }}
-#           source: |
-#             ./nginx/nginx.conf
-#             ./docker-compose.prod.yml
-#           target: "~/FamilyPlanner"
-#       - name: Connect to DigitalOcean & Deploy
-#         uses: appleboy/ssh-action@master
-#         with:
-#           host: ${{ secrets.DIGITALOCEAN_IP }}
-#           username: ${{ env.SSH_USER }}
-#           key: ${{ secrets.SSH_PRIVATE_KEY }}
-#           script: |
-#             cd ~/FamilyPlanner
-
-#             echo "Pulling latest images..."
-#             docker pull $DOCKER_REGISTRY/$DOCKER_REPO/web-app:latest
-#             docker pull $DOCKER_REGISTRY/$DOCKER_REPO/gateway-svc:latest
-#             docker pull $DOCKER_REGISTRY/$DOCKER_REPO/catalog-svc:latest
-#             docker pull $DOCKER_REGISTRY/$DOCKER_REPO/shoppinglist-svc:latest
-#             docker pull $DOCKER_REGISTRY/$DOCKER_REPO/notification-svc:latest
-#             docker pull $DOCKER_REGISTRY/$DOCKER_REPO/nginx:latest
-
-#             echo "Recreating .env..."
-#             cat <<EOF > .env
-#             POSTGRES_CATALOG_USER=${{ secrets.POSTGRES_CATALOG_USER }}
-#             POSTGRES_CATALOG_PASSWORD=${{ secrets.POSTGRES_CATALOG_PASSWORD }}
-#             POSTGRES_CATALOG_DATABASE=${{ secrets.POSTGRES_CATALOG_DATABASE }}
-#             POSTGRES_SHOPPING_USER=${{ secrets.POSTGRES_SHOPPING_USER }}
-#             POSTGRES_SHOPPING_PASSWORD=${{ secrets.POSTGRES_SHOPPING_PASSWORD }}
-#             POSTGRES_SHOPPING_DATABASE=${{ secrets.POSTGRES_SHOPPING_DATABASE }}
-#             RABBIT_MQ_USER=${{ secrets.RABBIT_MQ_USER }}
-#             RABBIT_MQ_PASSWORD=${{ secrets.RABBIT_MQ_PASSWORD }}
-#             RABBIT_MQ_HOST=${{secrets.RABBIT_MQ_HOST}}
-#             CATALOG_POSTGRES_CONNECTION_STRING=${{secrets.CATALOG_POSTGRES_CONNECTION_STRING}}
-#             SHOPPING_POSTGRES_CONNECTION_STRING=${{secrets.SHOPPING_POSTGRES_CONNECTION_STRING}}
-#             APPLICATIONINSIGHTS_CONNECTION_STRING=${{secrets.APPLICATIONINSIGHTS_CONNECTION_STRING}}
-#             CLIENT_APPS=${{secrets.CLIENT_APPS}}
-#             AZURE_AD_B2C_INSTANCE=${{secrets.AZURE_AD_B2C_INSTANCE}}
-#             AZURE_AD_B2C_CLIENT_ID=${{secrets.AZURE_AD_B2C_CLIENT_ID}}
-#             AZURE_AD_B2C_DOMAIN=${{secrets.AZURE_AD_B2C_DOMAIN}}
-#             AZURE_AD_B2C_SIGNUP_SIGNIN_POLICY=${{secrets.AZURE_AD_B2C_SIGNUP_SIGNIN_POLICY}}
-#             AZURE_AD_B2C_TENANT_ID=${{secrets.AZURE_AD_B2C_TENANT_ID}}
-#             AZURE_AD_B2C_CLIENT_SECRET=${{secrets.AZURE_AD_B2C_CLIENT_SECRET}}
-#             AZURE_AD_B2C_CLIENT_EXTENSION_ID_WITHOUT_DASH=${{secrets.AZURE_AD_B2C_CLIENT_EXTENSION_ID_WITHOUT_DASH}}
-#             EOF
-
-#             chmod 600 .env
-
-#             docker compose --env-file .env -f docker-compose.prod.yml up -d --build
-
-#             echo "Restarting Nginx..."
-#             docker exec nginx nginx -s reload        
+            echo "🔄 Restarting Nginx..."
+            docker restart nginx    
