@@ -84,10 +84,14 @@ jobs:
             sed -i 's|server_name api.familyplan.com;|server_name api.familyplanner.online;|' nginx/nginx.conf
             sed -i 's|ssl_certificate /etc/nginx/certs/api.familyplan.com.certs;|ssl_certificate /etc/letsencrypt/live/familyplanner.online/fullchain.pem;|' nginx/nginx.conf
             sed -i 's|ssl_certificate_key /etc/nginx/certs/api.familyplan.com.key;|ssl_certificate_key /etc/letsencrypt/live/familyplanner.online/privkey.pem;|' nginx/nginx.conf
-
+          
             echo "🔧 Updating docker-compose.prod.yml..."
-            sed -i '/nginx:/,/restart: unless-stopped/ s|volumes:\n      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro\n      - ./devcerts:/etc/nginx/certs:ro|volumes:\n      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro\n      - /etc/letsencrypt/live:/etc/letsencrypt/live:ro\n      - /etc/letsencrypt/archive:/etc/letsencrypt/archive:ro|' docker-compose.prod.yml
-
+            sed -i '/nginx:/,/restart: unless-stopped/{
+              s|.*- ./devcerts:/etc/nginx/certs:ro|    - /etc/letsencrypt/live:/etc/letsencrypt/live:ro|;
+              s|.*- ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro|    - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro|;
+              s|.*restart: unless-stopped|    - /etc/letsencrypt/archive:/etc/letsencrypt/archive:ro\n  restart: unless-stopped|;
+            }' docker-compose.prod.yml
+            
             echo "🚀 Deploying Application..."
             docker compose --env-file .env -f docker-compose.prod.yml up -d --build
 
