@@ -1,9 +1,6 @@
 name: CI/CD Pipeline for DigitalOcean
 
 on:
-  push:
-    branches:
-      - main  # Adjust this to your production branch
   workflow_dispatch:  # Allow manual triggering
 
 env:
@@ -43,6 +40,7 @@ jobs:
           host: ${{ secrets.DIGITALOCEAN_IP }}
           username: ${{ env.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
+          passphrase: ${{ secrets.SSH_PASSPHRASE }}
           script: |
             set -e  # Stop on first error
 
