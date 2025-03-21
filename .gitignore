@@ -46,5 +46,7 @@ bin/
 obj/
 appsettings.Development.json
 appsettings.Docker.json
+appsettings.Staging.json
 node_modules
 .secrets
+*.sql

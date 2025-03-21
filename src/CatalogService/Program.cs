@@ -27,11 +27,11 @@ if (builder.Environment.IsProduction())
     if (File.Exists(envFilePath))
     {
         DotNetEnv.Env.Load(envFilePath);
-        Console.WriteLine(".env.prod file loaded successfully!");
+        Console.WriteLine(".env file loaded successfully!");
     }
     else
     {
-        Console.WriteLine($".env.prod file not found at: {envFilePath}");
+        Console.WriteLine($".env file not found at: {envFilePath}");
     }
 }
 

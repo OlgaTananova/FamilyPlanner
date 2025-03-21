@@ -1,4 +1,3 @@
-using System;
 using AutoMapper;
 using Contracts.Catalog;
 using MassTransit;
@@ -14,9 +13,8 @@ public static class SendData
         var catalogSeededData = mapper.Map<CatalogItemSeeded>(items);
 
         await Task.Delay(TimeSpan.FromMinutes(1));
-        
         Console.WriteLine($"Publishing {catalogSeededData.Items.Count} catalog items.");
-        await publishEndpoint.Publish( catalogSeededData);
+        await publishEndpoint.Publish(catalogSeededData);
         await context.SaveChangesAsync();
         Console.WriteLine("CatalogSeededData event published."); ;
     }

@@ -1,7 +1,4 @@
-using System;
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-using AutoMapper.Configuration.Annotations;
 using NpgsqlTypes;
 
 namespace ShoppingListService.Entities;
@@ -26,8 +23,6 @@ public class CatalogItem
     public string Family { get; set; }
     [Required]
     public string OwnerId { get; set; }
-
-    
 
     public NpgsqlTsVector SearchVector { get; set; }
 }

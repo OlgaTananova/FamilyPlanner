@@ -65,7 +65,23 @@ export default function Catalog() {
         </Link>
         <div className="flex flex-col">
           {/* Heading */}
-          <h1 className="text-2xl font-bold text-purple-700">Catalog</h1>
+          <div className="flex items-center space-x-4">
+            <h1 className="text-2xl font-bold text-purple-700">Catalog</h1>
+            <div className="relative">
+              <DropdownMenu
+                showOnlyItems={showOnlyItems}
+                handleShowOnlyItems={handleShowOnlyItems}
+                setIsAddCategoryModalOpen={setIsAddCategoryModalOpen}
+                setIsAddItemModalOpen={setIsAddItemModalOpen}
+              />
+              {showTooltip && (
+                <div className="absolute top-5 -left-1/2 w-40 transform -translate-x-1/2 px-3 py-1 text-xs text-white bg-purple-500 rounded-lg shadow-lg animate-fade-in-out">
+                  Add a new catalog item
+                </div>
+              )}
+            </div>
+          </div>
+
           <p className="text-xl mt-3">No catalog data is avaliable.</p>
 
         </div>

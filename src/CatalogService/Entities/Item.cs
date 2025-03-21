@@ -1,7 +1,5 @@
-using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using Microsoft.EntityFrameworkCore;
 using NpgsqlTypes;
 
 namespace CatalogService.Entities;
@@ -29,6 +27,6 @@ public class Item
     public string CategoryName { get; set; }
     public virtual Category Category { get; set; }
 
-     public NpgsqlTsVector SearchVector { get; set; }
+    public NpgsqlTsVector SearchVector { get; set; }
 
 }

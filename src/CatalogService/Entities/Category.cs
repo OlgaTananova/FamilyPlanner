@@ -1,4 +1,3 @@
-using System;
 using System.ComponentModel.DataAnnotations;
 
 namespace CatalogService.Entities;
@@ -12,11 +11,11 @@ public class Category
     public string Name { get; set; }
     [Required]
     public string OwnerId { get; set; }
-    [Required]    
+    [Required]
     public string Family { get; set; }
-    public bool IsDeleted { get; set; } =false;
+    public bool IsDeleted { get; set; } = false;
 
     // navigation properties
     public virtual List<Item> Items { get; set; } = new List<Item>();
-    
+
 }
