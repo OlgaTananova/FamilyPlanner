@@ -29,6 +29,7 @@ export default function Catalog() {
   const [showTooltip, setShowTooltip] = useState(true);
   const [searchResults, setSearchResults] = useState<Item[] | null>();
   const [isSearching, setIsSearching] = useState(false);
+  const [query, setQuery] = useState<string>("");
 
 
   useEffect(() => {
@@ -52,6 +53,7 @@ export default function Catalog() {
   const handleClearSearch = () => {
     setSearchResults([]);
     setIsSearching(false);
+    setQuery("");
   };
 
   if (categories.length == 0) {
@@ -59,7 +61,7 @@ export default function Catalog() {
       <div className="container mx-auto px-4 py-6 relative">
         <Link href={("/")}
           className="absolute top-0 right-0 text-gray-600 hover:text-gray-900"
-          aria-label="Close Profile"
+          aria-label="Close Button"
         >
           ✖
         </Link>
@@ -69,8 +71,6 @@ export default function Catalog() {
             <h1 className="text-2xl font-bold text-purple-700">Catalog</h1>
             <div className="relative">
               <DropdownMenu
-                showOnlyItems={showOnlyItems}
-                handleShowOnlyItems={handleShowOnlyItems}
                 setIsAddCategoryModalOpen={setIsAddCategoryModalOpen}
                 setIsAddItemModalOpen={setIsAddItemModalOpen}
               />
@@ -85,8 +85,16 @@ export default function Catalog() {
           <p className="text-xl mt-3">No catalog data is avaliable.</p>
 
         </div>
+        {/* Modals */}
+        <AddCategoryModal
+          isOpen={isAddCategoryModalOpen}
+          onClose={() => setIsAddCategoryModalOpen(false)}
+        />
+        <AddNewItemModal
+          isOpen={isAddItemModalOpen}
+          onClose={() => setIsAddItemModalOpen(false)}
+        />
       </div>
-
     )
   }
 
@@ -124,7 +132,7 @@ export default function Catalog() {
       </div>
 
       {/* Search Bar */}
-      <CatalogSearchBar onSearch={handleSearchResults} />
+      <CatalogSearchBar onSearch={handleSearchResults} query={query} setQuery={setQuery} />
 
       {/* Modals */}
       <AddCategoryModal

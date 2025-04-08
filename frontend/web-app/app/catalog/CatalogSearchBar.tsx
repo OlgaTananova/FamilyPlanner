@@ -6,10 +6,11 @@ import { Item } from "../redux/catalogSlice";
 
 interface SearchBarProps {
     onSearch: (results: Item[] | null) => void;
+    query: string,
+    setQuery: (query: string) => void;
 }
 
-export default function CatalogSearchBar({ onSearch }: SearchBarProps) {
-    const [query, setQuery] = useState<string>("");
+export default function CatalogSearchBar({ onSearch, query, setQuery }: SearchBarProps) {
     const [isLoading, setIsLoading] = useState(false);
     const { fetchCatalogSearchResults } = useCatalogApi();
 

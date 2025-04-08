@@ -6,6 +6,8 @@ services:
       - POSTGRES_USER=${POSTGRES_CATALOG_USER}
       - POSTGRES_PASSWORD=${POSTGRES_CATALOG_PASSWORD}
       - POSTGRES_DB=${POSTGRES_CATALOG_DATABASE}
+    env_file:
+      - .env.stage
     ports:
       - 5432:5432
     volumes:
@@ -21,27 +23,33 @@ services:
       - 5433:5432
     volumes:
       - pgdata-shopping:/var/lib/postgresql/data
+    env_file:
+      - .env.stage 
   rabbitmq:
-      image: rabbitmq:3-management-alpine
-      ports: 
+    image: rabbitmq:3-management-alpine
+    ports: 
       - 5672:5672
       - 15672:15672
-      environment:
-        - RABBITMQ_DEFAULT_USER=${RABBIT_MQ_USER}
-        - RABBITMQ_DEFAULT_PASS=${RABBIT_MQ_PASSWORD}
+    environment:
+      - RABBITMQ_DEFAULT_USER=${RABBIT_MQ_USER}
+      - RABBITMQ_DEFAULT_PASS=${RABBIT_MQ_PASSWORD}
+    env_file:
+      - .env.stage 
   catalog-svc:
-      image: olgatan/catalog-svc:latest
-      build: 
-        context: .
-        dockerfile: src/CatalogService/Dockerfile
-      environment:
-        - ASPNETCORE_ENVIRONMENT=Development
-        - ASPNETCORE_URLS=http://+:80
-        - RabbitMq__Host=rabbitmq
-        - ConnectionStrings__DefaultConnection=${CATALOG_POSTGRES_CONNECTION_STRING} 
-      ports:
-        - 7001:80  
-      depends_on:
+    image: olgatan/catalog-svc:latest
+    build: 
+      context: .
+      dockerfile: src/CatalogService/Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Staging
+      - ASPNETCORE_URLS=http://+:80
+      - RabbitMq__Host=rabbitmq
+      - ConnectionStrings__DefaultConnection=${CATALOG_POSTGRES_CONNECTION_STRING} 
+    ports:
+      - 7001:80
+    env_file:
+      - .env.stage  
+    depends_on:
         - postgres-catalog
         - rabbitmq  
   shoppinglist-svc:
@@ -50,12 +58,14 @@ services:
         context: .
         dockerfile: src/ShoppingListService/Dockerfile
       environment:
-        - ASPNETCORE_ENVIRONMENT=Development
+        - ASPNETCORE_ENVIRONMENT=Staging
         - ASPNETCORE_URLS=http://+:80
         - RabbitMq__Host=rabbitmq
         - ConnectionStrings__DefaultConnection=${SHOPPING_POSTGRES_CONNECTION_STRING} 
       ports:
-        - 7002:80  
+        - 7002:80
+      env_file:
+        - .env.stage
       depends_on:
         - postgres-shopping
         - rabbitmq
@@ -65,11 +75,13 @@ services:
         context: .
         dockerfile: src/NotificationService/Dockerfile
       environment:
-        - ASPNETCORE_ENVIRONMENT=Development
+        - ASPNETCORE_ENVIRONMENT=Staging
         - ASPNETCORE_URLS=http://+:80
         - RabbitMq__Host=rabbitmq
       ports:
-        - 7003:80  
+        - 7003:80
+      env_file:
+        - .env.stage
       depends_on:
         - rabbitmq
   gateway-svc:
@@ -79,7 +91,9 @@ services:
         dockerfile: src/GatewayService/Dockerfile
       environment:
         - ASPNETCORE_ENVIRONMENT=Staging
-        - ASPNETCORE_URLS=http://+:80 
+        - ASPNETCORE_URLS=http://+:80
+      env_file:
+        - .env.stage
       ports:
         - 7004:80
   web-app:
@@ -92,7 +106,7 @@ services:
     ports:
       - 3000:3000
     env_file:
-      - .env
+      - .env # local evn file 
   nginx:
     image: nginx:latest
     container_name: nginx

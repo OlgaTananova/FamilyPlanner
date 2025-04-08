@@ -56,7 +56,7 @@ public class AppConfig
             config.RabbitMqPassword = Environment.GetEnvironmentVariable("RABBIT_MQ_PASSWORD");
             config.RabbitMqHost = Environment.GetEnvironmentVariable("RABBIT_MQ_HOST");
         }
-        else if (environment.IsDevelopment())
+        else if (environment.IsDevelopment() || environment.IsStaging())
         {
             config.ApplicationInsightsConnectionString = configuration.GetValue<string>("ApplicationInsights:ConnectionString");
             var clientApps = configuration.GetSection("ClientApps").Get<string[]>();

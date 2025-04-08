@@ -15,16 +15,16 @@ var builder = WebApplication.CreateBuilder(args);
 if (builder.Environment.IsProduction())
 {
 
-    var envFilePath = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), "..", "..", ".env.prod"));
+    var envFilePath = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), "..", "..", ".env"));
 
     if (File.Exists(envFilePath))
     {
         DotNetEnv.Env.Load(envFilePath);
-        Console.WriteLine(".env.prod file loaded successfully!");
+        Console.WriteLine(".env file loaded successfully!");
     }
     else
     {
-        Console.WriteLine($".env.prod file not found at: {envFilePath}");
+        Console.WriteLine($".env file not found at: {envFilePath}");
     }
 }
 

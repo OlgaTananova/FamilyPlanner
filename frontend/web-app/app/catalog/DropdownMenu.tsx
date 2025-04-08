@@ -1,8 +1,8 @@
 import { Dropdown } from 'flowbite-react';
 
 interface DropdownMenuProps {
-    handleShowOnlyItems: () => void;
-    showOnlyItems: boolean;
+    handleShowOnlyItems?: () => void;
+    showOnlyItems?: boolean;
     setIsAddCategoryModalOpen: (action: boolean) => void;
     setIsAddItemModalOpen: (action: boolean) => void;
 }
