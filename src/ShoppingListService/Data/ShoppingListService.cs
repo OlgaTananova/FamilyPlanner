@@ -204,7 +204,7 @@ public class ShoppingListService : IShoppingListService
 
         // Get query result from the cache
         const string cacheKeyPrefix = "Autocomplete_";
-        string cacheKey = $"{cacheKeyPrefix}{query.ToLower()}";
+        string cacheKey = $"{cacheKeyPrefix}{query.ToLower()}{family.ToLower()}";
 
         if (_cache.TryGetValue(cacheKey, out List<CatalogItem> cachedItems))
         {

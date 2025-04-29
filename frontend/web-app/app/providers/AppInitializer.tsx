@@ -9,7 +9,7 @@ import { setCategories } from "../redux/catalogSlice";
 import { setUser } from "../redux/userSlice";
 
 export default function AppInitializer({ children }: { children: React.ReactNode }) {
-    const { acquireToken, isAuthenticated } = useAuth();
+    const { acquireToken, isAuthenticated, instance } = useAuth();
     const dispatch = useDispatch()
     const { fetchShoppingListData, getFrequentyBoughtItems } = useShoppingListApi();
     const { fetchCatalogData } = useCatalogApi();
@@ -59,6 +59,21 @@ export default function AppInitializer({ children }: { children: React.ReactNode
         fetchData();
 
     }, [isAuthenticated]);
+
+    useEffect(() => {
+        const callbackId = instance.addEventCallback((event) => {
+            if (event.eventType === "msal:loginSuccess") {
+                console.log("Login success, reloading window...");
+                window.location.reload();
+            }
+        });
+
+        return () => {
+            if (callbackId) {
+                instance.removeEventCallback(callbackId);
+            }
+        };
+    }, [instance]);
 
     return <>{children}</>;
 }

@@ -73,5 +73,5 @@ export const useAuth = () => {
   };
 
 
-  return { signIn, signOut, isAuthenticated, account, acquireToken, editProfile };
+  return { signIn, signOut, isAuthenticated, account, acquireToken, editProfile, instance };
 };
