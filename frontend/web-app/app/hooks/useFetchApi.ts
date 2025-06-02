@@ -4,7 +4,7 @@ import { useAuth } from "../hooks/useAuth";
 
 export function useFetchApi() {
 
-    const { acquireToken } = useAuth();
+    const { acquireToken, signIn } = useAuth();
 
     const fetchApi = useCallback(async <T>(
         serviceUrl: string,
@@ -12,12 +12,16 @@ export function useFetchApi() {
         options: RequestInit,
         maxRetries: number = 3
     ): Promise<T | null> => {
+
         const { accessToken } = await acquireToken(); // Get the valid token
 
-        if (!serviceUrl || !accessToken) {
-            console.error("API URL or Access Token is not available.");
-            toast.error("API URL or Access Token is not available. Please login again.");
+        if (!serviceUrl) {
+            toast.error("Network request failed. Try to reload the page.")
             return null;
+        }
+
+        if (!accessToken) {
+            await acquireToken();
         }
 
         const backoffDelay = (retryCount: number) => Math.pow(2, retryCount) * 1000;
@@ -55,9 +59,7 @@ export function useFetchApi() {
                             ? `${errorResponse.title} - ${errorResponse.detail}`
                             : errorResponse?.message || "An error occurred.";
 
-                    toast.error(`Network error: ${errorMessage}. Please try again.`);
                     console.error(`Fetch API Error (Attempt ${attempt + 1}/${maxRetries}):`, errorMessage);
-
                     return null; // If not a retryable error, exit
                 }
 

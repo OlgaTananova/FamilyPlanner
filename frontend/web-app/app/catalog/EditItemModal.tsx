@@ -53,7 +53,7 @@ export default function EditItemModal({ isOpen, onClose, item }: EditItemModalPr
             if (updatedItem) {
                 dispatch(updateItemInStore(updatedItem));
                 dispatch(updateCatalogItem(updatedItem.updatedItem))
-                toast.success(`Item "${name}" updated successfully!`);
+                toast.success(`Item "${itemName}" updated successfully!`);
             }
             onClose();
         }

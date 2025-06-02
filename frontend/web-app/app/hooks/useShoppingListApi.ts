@@ -12,7 +12,7 @@ export function useShoppingListApi() {
     const fetchShoppingListData = useCallback(async (): Promise<ShoppingList[] | null> => {
         return await fetchApi<ShoppingList[]>(gatewayUrl!, "/shoppingList", {
             method: "GET",
-        })
+        });
     }, [fetchApi]);
 
     const addNewShoppingList = useCallback(async (shoppingListData: { heading: string, SKUs: string[] }): Promise<ShoppingList | null> => {
@@ -22,7 +22,7 @@ export function useShoppingListApi() {
                 "Content-Type": "application/json",
             },
             body: JSON.stringify(shoppingListData),
-        })
+        });
     }, [fetchApi]);
 
 

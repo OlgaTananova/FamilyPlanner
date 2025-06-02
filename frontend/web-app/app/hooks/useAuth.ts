@@ -29,7 +29,6 @@ export const useAuth = () => {
   const router = useRouter();
 
   const signIn = async () => {
-    //await instance.loginPopup(loginRequest).catch((error) => console.error("Login error:", error));
     await instance.loginRedirect(loginRequest).catch((error) => console.error("Login error:", error));
   };
 
@@ -49,14 +48,28 @@ export const useAuth = () => {
 
   const acquireToken = async (): Promise<{ accessToken: string | null; idTokenClaims: any | null }> => {
     try {
-      const account = instance.getAllAccounts()[0];
+      const accounts = instance.getAllAccounts();
+      if (accounts.length === 0) {
+        console.warn("No user account found. Attempting login...");
+
+        // Trigger interactive login
+        const loginResponse = await instance.loginPopup(loginRequest);
+
+        return {
+          accessToken: loginResponse.accessToken,
+          idTokenClaims: loginResponse.idTokenClaims
+        };
+      }
+
+      const account = accounts[0];
       const response = await instance.acquireTokenSilent({
         ...loginRequest,
         account,
       });
+
       return {
         accessToken: response.accessToken,
-        idTokenClaims: response.idTokenClaims, // Get ID token claims
+        idTokenClaims: response.idTokenClaims,
       };
     } catch (error) {
       if (error instanceof InteractionRequiredAuthError) {

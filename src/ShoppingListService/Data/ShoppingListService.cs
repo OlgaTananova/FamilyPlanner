@@ -202,13 +202,12 @@ public class ShoppingListService : IShoppingListService
     public async Task<List<CatalogItem>> AutocompleteCatalogItemsAsync(string query, string family)
     {
 
-        // Get query result from the cache
+        //Get query result from the cache
         const string cacheKeyPrefix = "Autocomplete_";
-        string cacheKey = $"{cacheKeyPrefix}{query.ToLower()}{family.ToLower()}";
+        string cacheKey = $"{cacheKeyPrefix}{query.ToLower()}_{family.ToLower()}";
 
         if (_cache.TryGetValue(cacheKey, out List<CatalogItem> cachedItems))
         {
-            Console.WriteLine("Return the data from the cache");
             return cachedItems;
         }
 
@@ -219,8 +218,8 @@ public class ShoppingListService : IShoppingListService
         .FromSqlInterpolated(
         $@"SELECT * 
         FROM ""CatalogItems""
-        WHERE ""SearchVector"" @@ plainto_tsquery('english', {formattedQuery})
-        OR ""Name""::text % {query} OR ""CategoryName""::text % {query}
+        WHERE (""SearchVector"" @@ plainto_tsquery('english', {formattedQuery})
+        OR ""Name""::text % {query} OR ""CategoryName""::text % {query})
         AND ""Family"" = {family}
         ORDER BY GREATEST(similarity(""Name"", {query}), similarity(""CategoryName"", {query})) DESC
         LIMIT 10")

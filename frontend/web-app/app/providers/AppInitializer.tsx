@@ -37,21 +37,17 @@ export default function AppInitializer({ children }: { children: React.ReactNode
                 dispatch(setUser(user));
             }
 
+            const [fetchedCategories, fetchedShoppingLists, frequentItems] = await Promise.all([fetchCatalogData(), fetchShoppingListData(), getFrequentyBoughtItems()]);
             // Fetch categories
-            const fetchedCategories = await fetchCatalogData();
 
             if (fetchedCategories) {
                 dispatch(setCategories(fetchedCategories));
             }
-            // Fetch shopping lists
-            const fetchedShoppingLists = await fetchShoppingListData();
 
             if (fetchedShoppingLists) {
                 dispatch(setShoppingLists(fetchedShoppingLists));
                 dispatch(setCurrentShoppingList(fetchedShoppingLists[0]));
             }
-
-            const frequentItems = await getFrequentyBoughtItems();
             if (frequentItems) {
                 dispatch(getFrequentItems(frequentItems));
             }
