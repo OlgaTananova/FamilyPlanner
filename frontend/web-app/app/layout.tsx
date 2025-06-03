@@ -9,13 +9,15 @@ import { SignalRProvider } from "./providers/SignalRProvider";
 import ToasterProvider from "./providers/ToasterProvider";
 
 
-const hubUrl = `${process.env.NEXT_PUBLIC_GATEWAY_URL}/notifications`;
+const hubUrl = process.env.NEXT_PUBLIC_GATEWAY_URL
+  ? `${process.env.NEXT_PUBLIC_GATEWAY_URL}/notifications`
+  : "";
 
 
 export const metadata: Metadata = {
   title: "Family Planner",
   description: "Family Planner",
- };
+};
 
 
 export default function RootLayout({

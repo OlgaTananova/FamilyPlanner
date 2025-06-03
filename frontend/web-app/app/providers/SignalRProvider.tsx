@@ -1,11 +1,19 @@
-'use client'
+"use client";
+
 import * as signalR from "@microsoft/signalr";
-import React, { createContext, useContext, useEffect, useState } from "react";
-import toast from "react-hot-toast";
-import { useDispatch } from "react-redux";
+import React, { createContext, useContext, useEffect, useRef, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { useAuth } from "../hooks/useAuth";
-import { addCategory, addItem, Category, removeCategoryFromStore, removeItemFromStore, updateCategoryInStore, updateItemInStore } from "../redux/catalogSlice";
-import { addShoppingList, deleteCatalogItemFromShoppingList, deleteShoppingListFromStore, deleteShoppingListItemFromStore, updateCatalogCategory, updateCatalogItem, updateShoppingListInStore } from "../redux/shoppingListSlice";
+import {
+    addCategory, addItem, removeCategoryFromStore, removeItemFromStore,
+    updateCategoryInStore, updateItemInStore
+} from "../redux/catalogSlice";
+import {
+    addShoppingList, deleteCatalogItemFromShoppingList, deleteShoppingListFromStore,
+    deleteShoppingListItemFromStore, updateCatalogCategory, updateCatalogItem,
+    updateShoppingListInStore
+} from "../redux/shoppingListSlice";
+import { RootState } from "../redux/store";
 
 interface SignalRContextType {
     connection: signalR.HubConnection | null;
@@ -26,64 +34,93 @@ interface SignalRProviderProps {
 
 export const SignalRProvider: React.FC<SignalRProviderProps> = ({ hubUrl, children }) => {
     const { acquireToken, isAuthenticated } = useAuth();
+    const user = useSelector((state: RootState) => state.user);
+    const dispatch = useDispatch();
+
     const [connection, setConnection] = useState<signalR.HubConnection | null>(null);
     const [isConnected, setIsConnected] = useState(false);
-    const dispatch = useDispatch();
+    const connectionRef = useRef<signalR.HubConnection | null>(null);
+
+    const setupSignalRHandlers = (conn: signalR.HubConnection) => {
+        conn.on("CatalogCategoryCreated", (category) => dispatch(addCategory(category)));
+        conn.on("CatalogCategoryDeleted", (deletedCategory) => dispatch(removeCategoryFromStore(deletedCategory.sku)));
+        conn.on("CatalogCategoryUpdated", (updatedCategory) => {
+            dispatch(updateCategoryInStore(updatedCategory));
+            dispatch(updateCatalogCategory(updatedCategory));
+        });
+
+        conn.on("CatalogItemCreated", (createdItem) => dispatch(addItem(createdItem)));
+        conn.on("CatalogItemUpdated", (updatedItem) => {
+            dispatch(updateItemInStore(updatedItem));
+            dispatch(updateCatalogItem(updatedItem.updatedItem));
+        });
+        conn.on("CatalogItemDeleted", (deletedItem) => {
+            dispatch(removeItemFromStore(deletedItem.sku));
+            dispatch(deleteCatalogItemFromShoppingList(deletedItem.sku));
+        });
+
+        conn.on("ShoppingListCreated", (shoppingList) => dispatch(addShoppingList(shoppingList)));
+        conn.on("ShoppingListUpdated", (shoppingList) => dispatch(updateShoppingListInStore(shoppingList)));
+        conn.on("ShoppingListDeleted", (shoppingList) => dispatch(deleteShoppingListFromStore(shoppingList.id)));
+
+        conn.on("ShoppingListItemUpdated", (shoppingList) => dispatch(updateShoppingListInStore(shoppingList)));
+        conn.on("ShoppingListItemsAdded", (shoppingList) => dispatch(updateShoppingListInStore(shoppingList)));
+        conn.on("ShoppingListItemDeleted", (data) => {
+            dispatch(deleteShoppingListItemFromStore({
+                shoppingListId: data.shoppingListId,
+                itemId: data.itemId
+            }));
+        });
+    };
 
     const establishConnection = async () => {
         try {
-            // Prevent multiple connection attempts
-            if (connection?.state === signalR.HubConnectionState.Connected) {
-                console.warn("SignalR connection already established.");
-                return;
-            }
-            // Acquire access token
-            const token = await acquireToken();
-            if (!token) {
-                console.error("Failed to acquire token.");
+            const tokenResult = await acquireToken();
+            if (!tokenResult?.accessToken) {
+                console.error("Failed to acquire token for SignalR.");
                 return;
             }
 
-            // Ensure previous connection is stopped before creating a new one
-            if (connection) {
-                await connection.stop();
-                console.warn("Existing SignalR connection stopped before re-establishing.");
+            if (connectionRef.current) {
+                await connectionRef.current.stop();
+                connectionRef.current = null;
             }
 
             const newConnection = new signalR.HubConnectionBuilder()
-                .withUrl(`${hubUrl}`, {
-                    accessTokenFactory: () => token.accessToken || "",
+                .withUrl(hubUrl, {
+                    accessTokenFactory: () => tokenResult.accessToken!,
                     transport: signalR.HttpTransportType.WebSockets | signalR.HttpTransportType.LongPolling,
                     withCredentials: false,
-                    headers: {
-                        Authorization: `Bearer ${token.accessToken}`
-                    }
                 })
                 .withAutomaticReconnect([0, 2000, 5000, 10000])
                 .configureLogging(signalR.LogLevel.Information)
                 .build();
 
-            newConnection.serverTimeoutInMilliseconds = 60000; // 60 seconds (Default is 30 seconds)
+            newConnection.serverTimeoutInMilliseconds = 60000;
             newConnection.keepAliveIntervalInMilliseconds = 20000;
-            
+
             newConnection.onreconnecting(() => {
                 console.warn("SignalR reconnecting...");
-            });
-            newConnection.onreconnected(() => {
-                console.log("SignalR reconnected successfully!");
-                setIsConnected(true);
-            });
-            newConnection.onclose(() => {
-                console.error("SignalR connection closed. Please try to refresh the page.");
-                //toast.error("Real-time notification service is disconnected. Please try to refresh the page.");
                 setIsConnected(false);
             });
 
+            newConnection.onreconnected(() => {
+                console.log("SignalR reconnected.");
+                setIsConnected(true);
+            });
+
+            newConnection.onclose(() => {
+                console.warn("SignalR connection closed.");
+                setIsConnected(false);
+            });
+
+            setupSignalRHandlers(newConnection);
 
             await newConnection.start();
-            console.log("SignalR connected!");
+            connectionRef.current = newConnection;
             setConnection(newConnection);
             setIsConnected(true);
+            console.log("SignalR connected.");
         } catch (error) {
             console.error("SignalR connection error:", error);
             setIsConnected(false);
@@ -91,92 +128,18 @@ export const SignalRProvider: React.FC<SignalRProviderProps> = ({ hubUrl, childr
     };
 
     useEffect(() => {
-        if (!isAuthenticated) {
-            // Disconnect SignalR if the user logs out
-            if (connection) {
-                connection.stop().catch((error) => console.error("Error stopping SignalR:", error));
-            }
-            setConnection(null);
-            setIsConnected(false);
-            return;
-        }
+        if (!isAuthenticated || !user?.email) return;
 
-        // Establish SignalR connection
         establishConnection();
 
-        // Cleanup on unmount
         return () => {
-            if (connection) {
-                connection.stop().catch((error) => console.error("Error stopping SignalR on cleanup:", error));
+            if (connectionRef.current) {
+                connectionRef.current.stop().catch((err) =>
+                    console.error("Error disconnecting SignalR:", err)
+                );
             }
         };
-    }, [isAuthenticated, hubUrl]);
-
-    useEffect(() => {
-        if (connection && isConnected) {
-            // Catalog Events
-            connection.on("CatalogCategoryCreated", (category: Category) => {
-                dispatch(addCategory(category));
-            });
-            connection.on("CatalogCategoryDeleted", (deletedCategory: Category) => {
-                dispatch(removeCategoryFromStore(deletedCategory.sku));
-            });
-            connection.on("CatalogCategoryUpdated", (updatedCategory: Category) => {
-                dispatch(updateCategoryInStore(updatedCategory));
-                dispatch(updateCatalogCategory(updatedCategory));
-            });
-            connection.on("CatalogItemUpdated", (updatedItem) => {
-                dispatch(updateItemInStore(updatedItem));
-                dispatch(updateCatalogItem(updatedItem.updatedItem));
-            });
-            connection.on("CatalogItemCreated", (createdItem) => {
-                dispatch(addItem(createdItem));
-            });
-            connection.on("CatalogItemDeleted", (deletedItem) => {
-                dispatch(removeItemFromStore(deletedItem.sku));
-                dispatch(deleteCatalogItemFromShoppingList(deletedItem.sku));
-            });
-            // Shopping List Events
-            connection.on("ShoppingListCreated", (shoppingList) => {
-                dispatch(addShoppingList(shoppingList));
-            });
-            connection.on("ShoppingListDeleted", (shoppingList: { id: string, family: string, ownerId: string }) => {
-                dispatch(deleteShoppingListFromStore(shoppingList.id))
-            });
-            connection.on("ShoppingListUpdated", (shoppingList) => {
-                dispatch(updateShoppingListInStore(shoppingList));
-            });
-
-            connection.on("ShoppingListItemUpdated", (updatedShoppingList) => {
-                dispatch(updateShoppingListInStore(updatedShoppingList));
-            });
-
-            connection.on("ShoppingListItemsAdded", (updatedShoppingList) => {
-                dispatch(updateShoppingListInStore(updatedShoppingList));
-            });
-            connection.on("ShoppingListItemDeleted", (data: { shoppingListId: string, itemId: string, ownerId: string, family: string }) => {
-                dispatch(deleteShoppingListItemFromStore({ shoppingListId: data.shoppingListId, itemId: data.itemId }));
-            });
-
-            return () => {
-                connection.off("CatalogItemUpdated");
-                connection.off("CatalogItemCreated");
-                connection.off("CatalogItemDeleted");
-
-                connection.off("CatalogCategoryCreated");
-                connection.off("CatalogCategoryDeleted");
-                connection.off("CatalogCategoryUpdated");
-
-                connection.off("ShoppingListCreated");
-                connection.off("ShoppingListDeleted");
-                connection.off("ShoppingListUpdated");
-
-                connection.off("ShoppingListItemUpdated");
-                connection.off("ShoppingListItemsAdded");
-                connection.off("ShoppingListItemDeleted");
-            };
-        }
-    }, [connection, isConnected, dispatch]);
+    }, [isAuthenticated, user.family, hubUrl]);
 
     return (
         <SignalRContext.Provider value={{ connection, isConnected }}>

@@ -25,10 +25,26 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           passphrase: ${{ secrets.SSH_PASSPHRASE }}
           script: |
-            set -e  # Stop on first error
+            set -e
+
+            echo "🧠 Ensuring swap space..."
+            SWAP_EXISTS=$(swapon --show | wc -l)
+            if [ "$SWAP_EXISTS" -eq 0 ]; then
+              fallocate -l 1G /swapfile || dd if=/dev/zero of=/swapfile bs=1M count=1024
+              chmod 600 /swapfile
+              mkswap /swapfile
+              swapon /swapfile
+              echo '/swapfile none swap sw 0 0' >> /etc/fstab
+            fi
+
+            echo "🧹 Cleaning up Docker system..."
+            docker stop $(docker ps -aq) || true
+            docker rm $(docker ps -aq) || true
+            docker system prune -af
+            rm -rf ~/.nuget/packages/* /tmp/* /var/tmp/* /var/log/letsencrypt/*
 
             echo "📂 Cloning latest code..."
-            cd ~/ || exit
+            cd ~
             if [ -d "FamilyPlanner" ]; then
               cd FamilyPlanner && git reset --hard && git pull
             else

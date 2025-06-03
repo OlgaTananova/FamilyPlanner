@@ -1,4 +1,4 @@
-import { InteractionRequiredAuthError } from "@azure/msal-browser";
+import { AuthenticationResult, InteractionRequiredAuthError } from "@azure/msal-browser";
 import { useAccount, useIsAuthenticated, useMsal } from "@azure/msal-react";
 import { useRouter } from "next/navigation";
 
@@ -18,7 +18,7 @@ export const loginRequest = {
     shopListWriteScope,
     "profile",
     "email",
-  ],
+  ].filter(Boolean),
 
 };
 
@@ -29,59 +29,85 @@ export const useAuth = () => {
   const router = useRouter();
 
   const signIn = async () => {
-    await instance.loginRedirect(loginRequest).catch((error) => console.error("Login error:", error));
+    try {
+      await instance.loginRedirect(loginRequest);
+    } catch (error) {
+      console.error("Login redirect error:", error);
+    }
   };
 
   const editProfile = async () => {
-    await instance.loginRedirect({
-      authority: `https://${process.env.NEXT_PUBLIC_AZURE_AD_B2C_TENANT_NAME}.b2clogin.com/${process.env.NEXT_PUBLIC_AZURE_AD_B2C_TENANT_NAME}.onmicrosoft.com/${process.env.NEXT_PUBLIC_AZURE_AD_B2C_PROFILE_EDIT_FLOW}`,
-      redirectUri: process.env.NEXT_PUBLIC_AZURE_AD_B2C_EDIT_PROFILE_REDIRECT_URI,
-      scopes: ["openid"],
-      prompt: "login",
-    }).catch(() => console.error("Edit profile redirect error."))
+    try {
+      await instance.loginRedirect({
+        authority: `https://${process.env.NEXT_PUBLIC_AZURE_AD_B2C_TENANT_NAME}.b2clogin.com/${process.env.NEXT_PUBLIC_AZURE_AD_B2C_TENANT_NAME}.onmicrosoft.com/${process.env.NEXT_PUBLIC_AZURE_AD_B2C_PROFILE_EDIT_FLOW}`,
+        redirectUri: process.env.NEXT_PUBLIC_AZURE_AD_B2C_EDIT_PROFILE_REDIRECT_URI,
+        scopes: ["openid"],
+        prompt: "login",
+      });
+    } catch (error) {
+      console.error("Edit profile redirect error:", error);
+    }
   }
 
   const signOut = () => {
-    instance.logoutPopup().catch((error) => console.error("Logout error:", error));
-    router.push("/");
+    try {
+      instance.logoutPopup();
+      router.push("/");
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
   };
 
   const acquireToken = async (): Promise<{ accessToken: string | null; idTokenClaims: any | null }> => {
-    try {
-      const accounts = instance.getAllAccounts();
-      if (accounts.length === 0) {
-        console.warn("No user account found. Attempting login...");
+    const accounts = instance.getAllAccounts();
 
-        // Trigger interactive login
-        const loginResponse = await instance.loginPopup(loginRequest);
-
+    // Case 1: No signed-in user
+    if (accounts.length === 0) {
+      console.warn("No accounts found — prompting login.");
+      try {
+        const loginResult = await instance.loginPopup(loginRequest);
         return {
-          accessToken: loginResponse.accessToken,
-          idTokenClaims: loginResponse.idTokenClaims
+          accessToken: loginResult.accessToken,
+          idTokenClaims: loginResult.idTokenClaims,
         };
+      } catch (loginError) {
+        console.error("Login popup failed:", loginError);
+        return { accessToken: null, idTokenClaims: null };
       }
+    }
 
-      const account = accounts[0];
-      const response = await instance.acquireTokenSilent({
+    const account = accounts[0];
+
+    // Case 2: Silent attempt
+    try {
+      const tokenResult: AuthenticationResult = await instance.acquireTokenSilent({
         ...loginRequest,
         account,
       });
-
       return {
-        accessToken: response.accessToken,
-        idTokenClaims: response.idTokenClaims,
+        accessToken: tokenResult.accessToken,
+        idTokenClaims: tokenResult.idTokenClaims,
       };
     } catch (error) {
       if (error instanceof InteractionRequiredAuthError) {
-        const response = await instance.acquireTokenPopup(loginRequest);
-        return {
-          accessToken: response.accessToken,
-          idTokenClaims: response.idTokenClaims,
-        };
-      } else {
-        console.error("Token acquisition failed:", error);
-        return { accessToken: null, idTokenClaims: null };
+        try {
+          const tokenResult = await instance.acquireTokenPopup({
+            ...loginRequest,
+            account,
+          });
+          return {
+            accessToken: tokenResult.accessToken,
+            idTokenClaims: tokenResult.idTokenClaims,
+          };
+        } catch (popupError) {
+          console.error("Interactive token acquisition failed:", popupError);
+          return { accessToken: null, idTokenClaims: null };
+        }
       }
+
+
+      console.error("Token acquisition error:", error);
+      return { accessToken: null, idTokenClaims: null };
     }
   };
 
