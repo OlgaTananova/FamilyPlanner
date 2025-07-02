@@ -1,14 +1,28 @@
+// using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+// using Microsoft.Identity.Web;
+// using Microsoft.Identity.Web.UI;
 
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.Identity.Web;
+using MudBlazor.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// builder.Services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
+//     .AddMicrosoftIdentityWebApp(builder.Configuration.GetSection("AzureAdB2C"));
+
+//builder.Services.AddControllersWithViews();
+//     .AddMicrosoftIdentityUI();
+// // Add services to the container.
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddMicrosoftIdentityWebApi(builder.Configuration.GetSection("AzureAdB2C"));
+builder.Services.AddMudServices();
+
+//.AddInteractiveServerComponents();
+//.AddMicrosoftIdentityConsentHandler();
+
+// builder.Services.AddAuthorization(options =>
+// {
+//     options.FallbackPolicy = options.DefaultPolicy;
+// });
 
 var app = builder.Build();
 
@@ -20,12 +34,18 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-
-app.UseHttpsRedirection();
+//app.UseHttpsRedirection();
+app.MapStaticAssets();
 app.UseStaticFiles();
+
+
 app.UseRouting();
-app.UseAuthentication();
-app.UseAuthorization();
+
+// app.UseAuthentication();
+// app.UseAuthorization();
+
+app.MapControllers();
+
 app.MapBlazorHub();
 app.MapFallbackToPage("/_Host");
 

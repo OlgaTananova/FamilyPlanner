@@ -15,7 +15,7 @@ export default function Home() {
         <DashboardPage />
       </>
     );
-  }
+  } 
 
   return (
     <div className="flex justify-center items-center h-screen bg-gradient-to-r from-purple-50 via-purple-100 to-fuchsia-50">

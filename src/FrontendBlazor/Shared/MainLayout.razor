@@ -1,13 +1,54 @@
 ﻿@inherits LayoutComponentBase
 
-<PageTitle>FrontendBlazor</PageTitle>
+<MudThemeProvider />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+<MudLayout>
 
-<div class="flex flex-col h-screen">
-    <Navbar />
-    <div class="flex flex-1">
-        @* <SideBar /> *@
-        <main class="flex-1 p-4 bg-gradient-to-r from-purple-50 via-purple-100 to-fuchsia-50 relative z-0">
+    <!-- Top App Bar -->
+    <MudAppBar Elevation="1" Color="Color.Primary" Dense="true">
+        <MudText Typo="Typo.h6" Class="ml-2">Family Planner</MudText>
+        <MudSpacer />
+        @if (isAuthenticated)
+        {
+            <MudAvatar Size="Size.Medium" Color="Color.Secondary">@userInitial</MudAvatar>
+            <MudButton OnClick="Logout" Color="Color.Secondary" Class="ml-2">Logout</MudButton>
+        }
+        else
+        {
+            <MudButton OnClick="Login" Color="Color.Primary" Variant="Variant.Outlined">Sign In</MudButton>
+        }
+    </MudAppBar>
+
+    <!-- Sidebar + Main content -->
+    <MudMainContent Class="d-flex flex-grow-1 overflow-hidden">
+        <MudDrawer Open="true" Variant="DrawerVariant.Mini" Elevation="1" Class="h-full">
+            <MudNavMenu>
+                <MudNavLink Href="/" Match="NavLinkMatch.All">Dashboard</MudNavLink>
+                <MudNavLink Href="/catalog">Catalog</MudNavLink>
+                <MudNavLink Href="/shopping-list">Shopping List</MudNavLink>
+            </MudNavMenu>
+        </MudDrawer>
+
+        <div class="flex-grow-1 p-4 gradient-bg overflow-auto">
             @Body
-        </main>
-    </div>
-</div>
+        </div>
+    </MudMainContent>
+
+</MudLayout>
+
+@code {
+    private bool isAuthenticated = true; // Replace with real auth later
+    private string userInitial = "A";
+
+    private void Login()
+    {
+        // TODO: integrate Azure AD B2C
+    }
+
+    private void Logout()
+    {
+        // TODO: integrate Azure AD B2C
+    }
+}

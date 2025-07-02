@@ -1,9 +1,27 @@
 ﻿@page "/"
 
-<PageTitle>Index</PageTitle>
+@if (isAuthenticated)
+{
+    //<Dashboard />
+}
+else
+{
+    <div class="flex justify-center items-center h-screen bg-gradient-to-r from-purple-50 via-purple-100 to-fuchsia-50">
+        <MudPaper Class="p-8 mx-auto rounded-lg shadow-lg max-w-md text-center">
+            <MudText Typo="Typo.h4" Color="Color.Primary" Class="mb-6">Welcome to Family Planner</MudText>
+            <MudText Typo="Typo.body1" Class="mb-6">
+                Organize your family life with ease. Sign in to get started!
+            </MudText>
+            <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="Login">Sign In</MudButton>
+        </MudPaper> 
+    </div>
+}
 
-<h1>Hello, world!</h1>
+@code {
+    private bool isAuthenticated = false; // Placeholder
 
-Welcome to your new app.
-
-<SurveyPrompt Title="How is Blazor working for you?" />
+    private void Login()
+    {
+        // TODO: Redirect to Azure AD B2C login
+    }
+}
