@@ -1,0 +1,82 @@
+﻿@using FrontendBlazor.Services
+@using MudBlazor
+@inject UserService UserService
+
+<MudAppBar Elevation="1" Color="Color.Primary">
+    <!-- Logo + Title -->
+    <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start"
+        OnClick="@((e) => DrawerToggle())" />
+    <MudText Typo="Typo.h6" Class="ml-2 d-flex align-items-center">
+        <MudIcon Icon="@Icons.Material.Filled.FamilyRestroom" Size="Size.Medium" Class="text-white mr-2" />
+        Family Planner
+    </MudText>
+
+    <MudSpacer />
+
+    <!-- Toggle Auth (Dev Only) -->
+    <MudSwitch T="bool" Checked="@UserService.IsAuthenticated" Color="Color.Secondary" OnChanged="ToggleAuth"
+        Class="mr-4" Label="Dev: Authenticated" />
+
+    @if (UserService.IsAuthenticated)
+    {
+        <MudAvatar Size="Size.Medium" Color="Color.Secondary" Class="mr-2">
+            @UserInitial
+        </MudAvatar>
+        <MudButton OnClick="HandleSignOut" Color="Color.Secondary" Variant="Variant.Filled">
+            Sign Out
+        </MudButton>
+    }
+    else
+    {
+        <MudButton OnClick="HandleSignIn" Color="Color.Primary" Variant="Variant.Outlined">
+            Sign In
+        </MudButton>
+    }
+    <MudDrawer @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="2" Class="drawer-height border-end">
+        <MudNavMenu>
+            <MudNavLink Href="/family" Icon="@Icons.Material.Filled.Group">Family</MudNavLink>
+            <MudNavLink Href="/catalog" Icon="@Icons.Material.Filled.Category">Catalog</MudNavLink>
+            <MudNavLink Href="/shoppinglist" Icon="@Icons.Material.Filled.List">Shopping List</MudNavLink>
+        </MudNavMenu>
+    </MudDrawer>
+</MudAppBar>
+
+@code {
+    private bool _authSwitch;
+
+    protected override void OnInitialized()
+    {
+        _authSwitch = UserService.IsAuthenticated;
+        UserService.OnChange += StateHasChanged;
+    }
+
+    private void HandleSignIn()
+    {
+        UserService.SignIn();
+    }
+
+    private void HandleSignOut()
+    {
+        UserService.SignOut();
+    }
+
+    private void ToggleAuth()
+    {
+        if (!_authSwitch)
+            HandleSignIn();
+        else
+            HandleSignOut();
+        StateHasChanged();
+    }
+
+    private string UserInitial => string.IsNullOrWhiteSpace(UserService.GivenName)
+    ? "NA"
+    : UserService.GivenName[0].ToString();
+
+    bool _drawerOpen = true;
+
+    void DrawerToggle()
+    {
+        _drawerOpen = !_drawerOpen;
+    }
+}

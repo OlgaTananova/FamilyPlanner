@@ -1,0 +1,20 @@
+﻿@inherits LayoutComponentBase
+@using MudBlazor
+
+<MudThemeProvider />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+<MudLayout Class="h-screen d-flex flex-column">
+    <NavBar />
+
+    <!-- Sidebar + Main Content -->
+    <MudMainContent Class="d-flex flex-grow-1 overflow-hidden">
+        <div class="flex-grow-1 p-4 gradient-bg overflow-auto">
+            @Body
+        </div>
+    </MudMainContent>
+</MudLayout>
+@code {
+}
