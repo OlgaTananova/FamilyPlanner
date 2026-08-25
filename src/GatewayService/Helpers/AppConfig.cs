@@ -52,7 +52,7 @@ public class AppConfig
         }
         else if (environment.IsDevelopment() || environment.IsStaging())
         {
-            config.ApplicationInsightsConnectionString = configuration.GetValue<string>("ApplicationInsights:ConnectionString") ?? "";
+            config.ApplicationInsightsConnectionString = Environment.GetEnvironmentVariable("APPLICATIONINSIGHTS_CONNECTION_STRING") ?? configuration.GetValue<string>("ApplicationInsights:ConnectionString") ?? "";
             var clientApps = configuration.GetSection("ClientApps").Get<string[]>() ?? Array.Empty<string>();
             config.ClientApps = clientApps;
 

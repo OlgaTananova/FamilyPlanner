@@ -1,7 +1,7 @@
 version: "3.9"
 services:
   postgres-catalog:
-    image: postgres
+    image: postgres:16
     environment:
       - POSTGRES_USER=${POSTGRES_CATALOG_USER}
       - POSTGRES_PASSWORD=${POSTGRES_CATALOG_PASSWORD}
@@ -14,7 +14,7 @@ services:
       - pgdata-catalog:/var/lib/postgresql/data
 
   postgres-shopping:
-    image: postgres
+    image: postgres:16
     environment:
       - POSTGRES_USER=${POSTGRES_SHOPPING_USER}
       - POSTGRES_PASSWORD=${POSTGRES_SHOPPING_PASSWORD}
@@ -42,7 +42,8 @@ services:
         - ASPNETCORE_ENVIRONMENT=Development
         - ASPNETCORE_URLS=http://+:80
         - RabbitMq__Host=rabbitmq
-        - ConnectionStrings__DefaultConnection=${CATALOG_POSTGRES_CONNECTION_STRING} 
+        - ConnectionStrings__DefaultConnection=${CATALOG_POSTGRES_CONNECTION_STRING}
+        - ApplicationInsights__ConnectionString=${APPLICATIONINSIGHTS_CONNECTION_STRING}
       ports:
         - 7001:80
       env_file:
@@ -59,7 +60,8 @@ services:
         - ASPNETCORE_ENVIRONMENT=Development
         - ASPNETCORE_URLS=http://+:80
         - RabbitMq__Host=rabbitmq
-        - ConnectionStrings__DefaultConnection=${SHOPPING_POSTGRES_CONNECTION_STRING} 
+        - ConnectionStrings__DefaultConnection=${SHOPPING_POSTGRES_CONNECTION_STRING}
+        - ApplicationInsights__ConnectionString=${APPLICATIONINSIGHTS_CONNECTION_STRING}
       ports:
         - 7002:80
       env_file:
