@@ -1,4 +1,10 @@
-import { Button, Modal } from "flowbite-react";
+import {
+    Button,
+    Modal,
+    ModalBody,
+    ModalFooter,
+    ModalHeader,
+} from "flowbite-react";
 import React, { useState } from "react";
 import { useDispatch } from "react-redux";
 import { useCatalogApi } from "../hooks/useCatalogApi";
@@ -69,8 +75,8 @@ export default function AddCategoryModal({ isOpen, onClose }: AddCategoryModalPr
 
     return (
         <Modal show={isOpen} onClose={handleClose}>
-            <Modal.Header>Add New Category</Modal.Header>
-            <Modal.Body>
+            <ModalHeader>Add New Category</ModalHeader>
+            <ModalBody>
                 <div className="space-y-6">
                     {/* Category Name */}
                     <div>
@@ -89,8 +95,8 @@ export default function AddCategoryModal({ isOpen, onClose }: AddCategoryModalPr
                     </div>
 
                 </div>
-            </Modal.Body>
-            <Modal.Footer>
+            </ModalBody>
+            <ModalFooter>
                 <Button
                     color="purple"
                     onClick={handleSave}
@@ -101,7 +107,7 @@ export default function AddCategoryModal({ isOpen, onClose }: AddCategoryModalPr
                 <Button color="light" onClick={handleClose}>
                     Cancel
                 </Button>
-            </Modal.Footer>
+            </ModalFooter>
         </Modal>
     );
 }

@@ -1,6 +1,5 @@
 'use client'
 import Link from "next/link";
-import { useEffect, useState } from "react";
 import { MdFamilyRestroom } from "react-icons/md";
 import { useDispatch, useSelector } from "react-redux";
 import { useAuth } from "../hooks/useAuth";
@@ -14,7 +13,7 @@ export default function Navbar() {
   const auth = useAuth();
   const { isAuthenticated, account, signIn, signOut } = auth;
   const user = useSelector((state: RootState) => state.user);
-  const [userInitials, setUserInitials] = useState("");
+  const userInitials = user?.givenName ? user.givenName[0] : "NA";
   const dispatch = useDispatch();
 
   const handleSignOut = () => {
@@ -25,14 +24,10 @@ export default function Navbar() {
 
   }
 
-  useEffect(() => {
-    setUserInitials(() => user?.givenName ? user.givenName[0] : "NA")
-  }, [user])
-
   return (
     <nav
-      className="bg-gradient-to-r from-purple-100 via-purple-50 to-fuchsia-100 
-                 shadow-md p-4 flex justify-between items-center 
+      className="bg-gradient-to-r from-purple-100 via-purple-50 to-fuchsia-100
+                 shadow-md p-4 flex justify-between items-center
                  sticky top-0 z-50 w-full"
     >
       {/* Logo and Header */}
@@ -48,8 +43,8 @@ export default function Navbar() {
         {isAuthenticated ? (
           <>
             <Link href={"/profile"}
-              className="w-8 h-8 flex items-center justify-center rounded-full 
-                         bg-purple-500 text-white text-sm md:w-10 md:h-10 md:text-base 
+              className="w-8 h-8 flex items-center justify-center rounded-full
+                         bg-purple-500 text-white text-sm md:w-10 md:h-10 md:text-base
                          shadow-lg"
             >
               {userInitials}

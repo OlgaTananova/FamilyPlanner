@@ -1,4 +1,10 @@
-import { Button, Modal } from "flowbite-react";
+import {
+    Button,
+    Modal,
+    ModalBody,
+    ModalFooter,
+    ModalHeader,
+} from "flowbite-react";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
 import { useDispatch, useSelector } from "react-redux";
@@ -61,8 +67,8 @@ export default function AddNewItemModal({ isOpen, onClose }: AddNewItemModalProp
 
     return (
         <Modal show={isOpen} onClose={handleClose}>
-            <Modal.Header>Add New Item</Modal.Header>
-            <Modal.Body>
+            <ModalHeader>Add New Item</ModalHeader>
+            <ModalBody>
                 <div className="space-y-6">
                     {/* Item Name */}
                     <div>
@@ -103,8 +109,8 @@ export default function AddNewItemModal({ isOpen, onClose }: AddNewItemModalProp
                         </select>
                     </div>
                 </div>
-            </Modal.Body>
-            <Modal.Footer>
+            </ModalBody>
+            <ModalFooter>
                 <Button
                     color="purple"
                     onClick={handleSave}
@@ -115,7 +121,7 @@ export default function AddNewItemModal({ isOpen, onClose }: AddNewItemModalProp
                 <Button color="light" onClick={handleClose}>
                     Cancel
                 </Button>
-            </Modal.Footer>
+            </ModalFooter>
         </Modal>
     );
 }

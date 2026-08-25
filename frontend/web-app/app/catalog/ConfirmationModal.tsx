@@ -1,5 +1,11 @@
 import React from "react";
-import { Modal, Button } from "flowbite-react";
+import {
+    Button,
+    Modal,
+    ModalBody,
+    ModalFooter,
+    ModalHeader,
+} from "flowbite-react";
 
 interface ConfirmationModalProps {
     isOpen: boolean;
@@ -18,13 +24,13 @@ export default function ConfirmationModal({
 }: ConfirmationModalProps) {
     return (
         <Modal show={isOpen} onClose={onClose} size="md" className="rounded-lg">
-            <Modal.Header>
+            <ModalHeader>
                 <p className="text-xl font-semibold text-gray-800">{title}</p>
-            </Modal.Header>
-            <Modal.Body>
+            </ModalHeader>
+            <ModalBody>
                 <p className="text-sm text-gray-600">{message}</p>
-            </Modal.Body>
-            <Modal.Footer>
+            </ModalBody>
+            <ModalFooter>
                 <div className="flex justify-end space-x-4">
                     <Button color="light" onClick={onClose}>
                         Cancel
@@ -33,7 +39,7 @@ export default function ConfirmationModal({
                         Delete
                     </Button>
                 </div>
-            </Modal.Footer>
+            </ModalFooter>
         </Modal>
     );
 }

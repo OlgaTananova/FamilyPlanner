@@ -1,5 +1,11 @@
-import { Button, Modal, Textarea } from "flowbite-react";
-import React, { useState } from "react";
+import {
+    Button,
+    Modal,
+    ModalBody,
+    ModalFooter,
+    ModalHeader, Textarea
+} from "flowbite-react";
+import { useMemo } from "react";
 import toast from "react-hot-toast";
 import { FaCopy, FaEnvelope, FaTelegram, FaWhatsapp } from "react-icons/fa";
 import { ShoppingList } from "../redux/shoppingListSlice"; // Import your ShoppingList type
@@ -11,21 +17,24 @@ interface SendShoppingListProps {
 }
 
 export default function SendShoppingList({ isOpen, onClose, shoppingList }: SendShoppingListProps) {
-    const [message, setMessage] = useState<string>("");
 
-    // Generate Message
-    const generateMessage = () => {
+
+    const message = useMemo(() => {
         let text = `🛒 ${shoppingList.heading}\n\n`;
 
         text += shoppingList.items
             .map((item, index) => {
-                const escapedItemName = item.name.replace(/[_*[\]()~`>#+\-=|{}.!]/g, "\\$&"); // Escape special characters
+                const escapedItemName = item.name.replace(
+                    /[_*[\]()~`>#+\-=|{}.!]/g,
+                    "\\$&"
+                );
+
                 return `${index + 1} ${escapedItemName} ${item.quantity} ${item.unit}`;
             })
             .join("\n");
 
-        setMessage(text);
-    };
+        return text;
+    }, [shoppingList]);
 
     // Handle Copy to Clipboard
     const handleCopyToClipboard = () => {
@@ -53,17 +62,11 @@ export default function SendShoppingList({ isOpen, onClose, shoppingList }: Send
         window.location.href = `mailto:?subject=${subject}&body=${body}`;
     };
 
-    // Initialize message when the modal opens
-    React.useEffect(() => {
-        if (isOpen) {
-            generateMessage();
-        }
-    }, [isOpen]);
 
     return (
         <Modal show={isOpen} onClose={onClose}>
-            <Modal.Header>Send Shopping List</Modal.Header>
-            <Modal.Body>
+            <ModalHeader>Send Shopping List</ModalHeader>
+            <ModalBody>
                 <div className="space-y-4">
                     {/* Display the message */}
                     <div>
@@ -96,12 +99,12 @@ export default function SendShoppingList({ isOpen, onClose, shoppingList }: Send
                         </Button>
                     </div>
                 </div>
-            </Modal.Body>
-            <Modal.Footer>
+            </ModalBody>
+            <ModalFooter>
                 <Button color="gray" onClick={onClose}>
                     Close
                 </Button>
-            </Modal.Footer>
+            </ModalFooter>
         </Modal>
     );
 }

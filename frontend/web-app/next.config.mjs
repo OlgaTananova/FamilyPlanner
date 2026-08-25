@@ -1,5 +1,7 @@
+import withFlowbiteReact from "flowbite-react/plugin/nextjs";
+
 const nextConfig = {
     output: "standalone",
 };
 
-export default nextConfig;
+export default withFlowbiteReact(nextConfig);
