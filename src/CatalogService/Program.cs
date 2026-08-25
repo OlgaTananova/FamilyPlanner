@@ -58,7 +58,9 @@ builder.Logging.AddApplicationInsights((configureTelemetryConfiguration) =>
     options.IncludeScopes = true;
 });
 
-builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+builder.Services.AddAutoMapper(
+    cfg => { },
+    AppDomain.CurrentDomain.GetAssemblies());
 builder.Services.AddExceptionHandler<GlobalErrorHandler>();
 builder.Services.AddProblemDetails(options => options.CustomizeProblemDetails = context =>
     {

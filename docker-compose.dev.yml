@@ -11,6 +11,7 @@ services:
       - pgdata-catalog:/var/lib/postgresql/data
     env_file:
       - .env.dev
+    restart: unless-stopped
 
   postgres-shopping:
     image: postgres:16
@@ -24,6 +25,7 @@ services:
       - pgdata-shopping:/var/lib/postgresql/data
     env_file:
       - .env.dev
+    restart: unless-stopped
 
   rabbitmq:
     image: rabbitmq:3-management-alpine
@@ -35,6 +37,7 @@ services:
       - "15672:15672"
     env_file:
       - .env.dev
+    restart: unless-stopped
 
 volumes:
   pgdata-catalog:

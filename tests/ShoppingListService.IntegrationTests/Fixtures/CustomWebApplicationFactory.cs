@@ -28,7 +28,9 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
 
         builder.ConfigureTestServices(services =>
         {
-            services.AddAutoMapper(typeof(MappingProfile));
+            services.AddAutoMapper(
+                cfg => { },
+                typeof(MappingProfile));
             services.RemoveDbContext<ShoppingListContext>();
             // Disable Application Insights telemetry
             services.RemoveTelemetry();
