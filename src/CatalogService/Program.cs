@@ -51,7 +51,6 @@ builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
 builder.Logging.AddApplicationInsights((configureTelemetryConfiguration) =>
 {
-    Console.WriteLine($"App Insights Connection String: {appConfig.ApplicationInsightsConnectionString ?? "Not Found"}");
     configureTelemetryConfiguration.ConnectionString = appConfig.ApplicationInsightsConnectionString;
 }, options =>
 {

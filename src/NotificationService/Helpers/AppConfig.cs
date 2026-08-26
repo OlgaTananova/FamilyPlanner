@@ -9,7 +9,6 @@ public class AppConfig
     public string AzureAdB2CClientId { get; set; } = string.Empty;
     public string AzureAdB2CDomain { get; set; } = string.Empty;
     public string AzureAdB2CSignUpSignInPolicyId { get; set; } = string.Empty;
-    public string AzureAdB2CIssuer { get; set; } = string.Empty;
     public string AzureAdB2CTenantId { get; set; } = string.Empty;
 
     // Application Insights
@@ -37,7 +36,6 @@ public class AppConfig
             config.AzureAdB2CClientId = Environment.GetEnvironmentVariable("AZURE_AD_B2C_CLIENT_ID") ?? "";
             config.AzureAdB2CDomain = Environment.GetEnvironmentVariable("AZURE_AD_B2C_DOMAIN") ?? "";
             config.AzureAdB2CSignUpSignInPolicyId = Environment.GetEnvironmentVariable("AZURE_AD_B2C_SIGNUP_SIGNIN_POLICY") ?? "";
-            config.AzureAdB2CIssuer = Environment.GetEnvironmentVariable("AZURE_AD_B2C_ISSUER") ?? "";
             config.AzureAdB2CTenantId = Environment.GetEnvironmentVariable("AZURE_AD_B2C_TENANT_ID") ?? "";
 
             config.ApplicationInsightsConnectionString = Environment.GetEnvironmentVariable("APPLICATIONINSIGHTS_CONNECTION_STRING") ?? "";
