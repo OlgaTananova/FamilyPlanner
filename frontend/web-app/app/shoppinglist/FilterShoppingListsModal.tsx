@@ -1,4 +1,10 @@
-import { Button, Modal } from 'flowbite-react';
+import {
+    Button,
+    Modal,
+    ModalBody,
+    ModalFooter,
+    ModalHeader,
+} from "flowbite-react";
 import React from 'react';
 
 interface FilterShoppingListsModalProps {
@@ -21,8 +27,8 @@ export default function FilterShoppingListsModal({ isFilterModalOpen,
 
     return (
         <Modal show={isFilterModalOpen} onClose={() => setFilterModalOpen(false)}>
-            <Modal.Header>Filter by Date</Modal.Header>
-            <Modal.Body>
+            <ModalHeader>Filter by Date</ModalHeader>
+            <ModalBody>
                 <div className="space-y-4">
                     <div>
                         <label className="block mb-2 text-sm font-medium text-gray-700">Start Date</label>
@@ -41,15 +47,15 @@ export default function FilterShoppingListsModal({ isFilterModalOpen,
                         />
                     </div>
                 </div>
-            </Modal.Body>
-            <Modal.Footer>
+            </ModalBody>
+            <ModalFooter>
                 <Button color="purple" onClick={applyDateFilter}>
                     Apply Filter
                 </Button>
                 <Button color="light" onClick={() => setFilterModalOpen(false)}>
                     Cancel
                 </Button>
-            </Modal.Footer>
+            </ModalFooter>
         </Modal>
     )
 }

@@ -1,5 +1,5 @@
 import { Button } from 'flowbite-react';
-import { useEffect, useState } from 'react';
+import { useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useDispatch, useSelector } from 'react-redux';
 import { useShoppingListApi } from '../hooks/useShoppingListApi';
@@ -10,17 +10,16 @@ import { RootState } from '../redux/store';
 export default function AddItemsFromList() {
     const catalogItems = useSelector((state: RootState) => state.categories.itemsWOCategories);
     const shoppingListId = useSelector((state: RootState) => state.shoppinglists.currentShoppingList?.id);
-    const [availableItems, setAvailableItems] = useState<Item[]>([]);
+
     const [selectedItems, setSelectedItems] = useState<string[]>([]);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const dispatch = useDispatch();
     const { addShoppingListItems } = useShoppingListApi();
 
-
-    useEffect(() => {
-        const items = [...catalogItems]?.sort((a, b) => a.name.localeCompare(b.name));
-        setAvailableItems(items);
-    }, [catalogItems]);
+    const availableItems = useMemo(
+        () => [...catalogItems].sort((a, b) => a.name.localeCompare(b.name)),
+        [catalogItems]
+    );
 
     // Handle Dropdown Toggle
     const toggleDropdown = () => setIsDropdownOpen(!isDropdownOpen);

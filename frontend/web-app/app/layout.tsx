@@ -7,6 +7,7 @@ import MsalPageProvider from "./providers/MsalPageProvider";
 import ReduxProvider from "./providers/ReduxProvider";
 import { SignalRProvider } from "./providers/SignalRProvider";
 import ToasterProvider from "./providers/ToasterProvider";
+import { ThemeInit } from "../.flowbite-react/init";
 
 
 const hubUrl = process.env.NEXT_PUBLIC_GATEWAY_URL
@@ -29,6 +30,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
+        <ThemeInit />
         <ToasterProvider />
         <ReduxProvider>
           <MsalPageProvider>

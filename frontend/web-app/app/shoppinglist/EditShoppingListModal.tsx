@@ -1,5 +1,5 @@
-import { Button, Checkbox, Modal } from "flowbite-react";
-import { useEffect, useState } from "react";
+import { Button, Checkbox, Modal, ModalFooter, ModalBody, ModalHeader } from "flowbite-react";
+import { useState } from "react";
 import { toast } from "react-hot-toast";
 import { useDispatch } from "react-redux";
 import ConfirmationModal from "../catalog/ConfirmationModal";
@@ -18,7 +18,18 @@ interface EditShoppingListModalProps {
     };
 }
 
-export default function EditShoppingListModal({
+export default function EditShoppingListModal(
+    props: EditShoppingListModalProps
+) {
+    return (
+        <EditShoppingListModalContent
+            key={`${props.shoppingList.id}-${props.isOpen}`}
+            {...props}
+        />
+    );
+}
+
+function EditShoppingListModalContent({
     isOpen,
     onClose,
     shoppingList,
@@ -36,13 +47,6 @@ export default function EditShoppingListModal({
     const validateHeading = (name: string) => name.trim().length >= 3;
     const validateSalseTax = (tax: number) => tax >= 0;
 
-    useEffect(() => {
-        if (shoppingList) {
-            setHeading(shoppingList.heading);
-            setSalesTax(Number(shoppingList.salesTax));
-            setIsArchived(shoppingList.isArchived);
-        }
-    }, [shoppingList]);
 
     const handleSave = async () => {
         if (!validateHeading(heading) || !validateSalseTax(salesTax)) {
@@ -94,8 +98,8 @@ export default function EditShoppingListModal({
     return (
         <>
             <Modal show={isOpen} onClose={handleCancel}>
-                <Modal.Header>Edit Shopping List</Modal.Header>
-                <Modal.Body>
+                <ModalHeader>Edit Shopping List</ModalHeader>
+                <ModalBody>
                     <div className="space-y-6">
                         {/* Heading Input */}
                         <div>
@@ -148,8 +152,8 @@ export default function EditShoppingListModal({
                             </label>
                         </div>
                     </div>
-                </Modal.Body>
-                <Modal.Footer>
+                </ModalBody>
+                <ModalFooter>
                     <div className="flex justify-between w-full">
                         {/* Delete Button */}
                         <Button color="red" onClick={() => setIsConfirmModalOpen(true)} disabled={isDeleting}>
@@ -168,7 +172,7 @@ export default function EditShoppingListModal({
                             </Button>
                         </div>
                     </div>
-                </Modal.Footer>
+                </ModalFooter>
             </Modal>
             <ConfirmationModal isOpen={isConfirmModalOpen} onClose={() => setIsConfirmModalOpen(false)} onConfirm={handleDelete}
                 message="Are you sure you want to delete this shopping list? This action cannot be undone." />

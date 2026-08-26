@@ -51,14 +51,15 @@ builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
 builder.Logging.AddApplicationInsights((configureTelemetryConfiguration) =>
 {
-    Console.WriteLine($"App Insights Connection String: {appConfig.ApplicationInsightsConnectionString ?? "Not Found"}");
     configureTelemetryConfiguration.ConnectionString = appConfig.ApplicationInsightsConnectionString;
 }, options =>
 {
     options.IncludeScopes = true;
 });
 
-builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+builder.Services.AddAutoMapper(
+    cfg => { },
+    AppDomain.CurrentDomain.GetAssemblies());
 builder.Services.AddExceptionHandler<GlobalErrorHandler>();
 builder.Services.AddProblemDetails(options => options.CustomizeProblemDetails = context =>
     {

@@ -65,19 +65,19 @@ public class CatalogBusinessService : ICatalogBusinessService
 
         CategoryDto updatedCategory = _mapper.Map<CategoryDto>(category);
 
-        await _publishEndpoint.Publish(_mapper.Map<CatalogCategoryUpdated>(updatedCategory), context =>
-            {
-                context.Headers.Set("OperationId", operationId);
-                context.Headers.Set("traceId", traceId);
-                context.Headers.Set("requestId", requestId);
-            });
-
         if (!await _repo.SaveChangesAsync())
         {
             StructuredLogger.LogError(_logger, "Update Category request failed: Database save error.", _requestContextService);
 
             return ServiceResult<CategoryDto>.FailureResult("Could not save changes to the database.", 500);
         }
+
+        await _publishEndpoint.Publish(_mapper.Map<CatalogCategoryUpdated>(updatedCategory), context =>
+            {
+                context.Headers.Set("OperationId", operationId);
+                context.Headers.Set("traceId", traceId);
+                context.Headers.Set("requestId", requestId);
+            });
 
         StructuredLogger.LogInformation(_logger, "Update Category request succeeded.", _requestContextService);
 
@@ -111,23 +111,39 @@ public class CatalogBusinessService : ICatalogBusinessService
 
         var newCategory = _mapper.Map<CategoryDto>(category);
 
-        // Publish event
-        await _publishEndpoint.Publish(_mapper.Map<CatalogCategoryCreated>(newCategory), context =>
-        {
-            context.Headers.Set("OperationId", operationId);
-            context.Headers.Set("traceId", traceId);
-            context.Headers.Set("requestId", requestId);
-        });
 
-        // Save changes
         if (!await _repo.SaveChangesAsync())
         {
-            StructuredLogger.LogError(_logger, "Create Category request failed: Database save error.", _requestContextService, new Dictionary<string, object> { { "category", categoryDto.Name } });
+            StructuredLogger.LogError(
+                _logger,
+                "Create Category request failed: Database save error.",
+                _requestContextService,
+                new Dictionary<string, object>
+                {
+            { "category", categoryDto.Name }
+                });
 
-            return ServiceResult<CategoryDto>.FailureResult("Could not save changes to the database.", 500);
+            return ServiceResult<CategoryDto>.FailureResult(
+                "Could not save changes to the database.",
+                500);
         }
 
-        StructuredLogger.LogInformation(_logger, "Create Category request succeeded.", _requestContextService, new Dictionary<string, object> { { "category", category.Name } });
+        await _publishEndpoint.Publish(_mapper.Map<CatalogCategoryCreated>(newCategory),
+    context =>
+    {
+        context.Headers.Set("OperationId", operationId);
+        context.Headers.Set("traceId", traceId);
+        context.Headers.Set("requestId", requestId);
+    });
+
+        StructuredLogger.LogInformation(
+            _logger,
+            "Create Category request succeeded.",
+            _requestContextService,
+            new Dictionary<string, object>
+            {
+        { "category", category.Name }
+            });
 
         return ServiceResult<CategoryDto>.SuccessResult(newCategory);
     }
@@ -161,6 +177,13 @@ public class CatalogBusinessService : ICatalogBusinessService
 
         CategoryDto deletedCategory = _mapper.Map<CategoryDto>(category);
 
+        if (!await _repo.SaveChangesAsync())
+        {
+            StructuredLogger.LogError(_logger, "Delete Category request failed: Database save error.", _requestContextService, new Dictionary<string, object> { { "sku", sku } });
+
+            return ServiceResult<CategoryDto>.FailureResult("Could not save changes to the database.", 500);
+        }
+
         await _publishEndpoint.Publish(_mapper.Map<CatalogCategoryDeleted>(deletedCategory), context =>
         {
             context.Headers.Set("OperationId", operationId);
@@ -169,12 +192,6 @@ public class CatalogBusinessService : ICatalogBusinessService
 
         });
 
-        if (!await _repo.SaveChangesAsync())
-        {
-            StructuredLogger.LogError(_logger, "Delete Category request failed: Database save error.", _requestContextService, new Dictionary<string, object> { { "sku", sku } });
-
-            return ServiceResult<CategoryDto>.FailureResult("Could not save changes to the database.", 500);
-        }
         return ServiceResult<CategoryDto>.SuccessResult(deletedCategory);
     }
 
@@ -235,6 +252,12 @@ public class CatalogBusinessService : ICatalogBusinessService
 
         _repo.AddItem(item);
 
+        if (!await _repo.SaveChangesAsync())
+        {
+            StructuredLogger.LogError(_logger, "Create Item request failed: Database save error.", _requestContextService, new Dictionary<string, object> { { "itemName", itemDto.Name } });
+            return ServiceResult<ItemDto>.FailureResult("Could not save changes to the database.", 500);
+        }
+
         // Send a created item to the rabbitmq
         var newItem = _mapper.Map<ItemDto>(item);
 
@@ -245,13 +268,6 @@ public class CatalogBusinessService : ICatalogBusinessService
             context.Headers.Set("requestId", requestId);
         });
 
-        StructuredLogger.LogInformation(_logger, "Create Item request succeeded.", _requestContextService, new Dictionary<string, object> { { "itemName", item.Name } });
-
-        if (!await _repo.SaveChangesAsync())
-        {
-            StructuredLogger.LogError(_logger, "Create Item request failed: Database save error.", _requestContextService, new Dictionary<string, object> { { "itemName", itemDto.Name } });
-            return ServiceResult<ItemDto>.FailureResult("Could not save changes to the database.", 500);
-        }
         StructuredLogger.LogInformation(_logger, "Create Item request succeeded.", _requestContextService, new Dictionary<string, object> { { "itemName", item.Name } });
 
         return ServiceResult<ItemDto>.SuccessResult(newItem);
@@ -281,24 +297,25 @@ public class CatalogBusinessService : ICatalogBusinessService
 
         await _repo.UpdateItemAsync(item, itemDto);
 
-        CatalogItemUpdated catalogItemUpdated = new CatalogItemUpdated
-        {
-            UpdatedItem = _mapper.Map<UpdatedItem>(item),
-            PreviousCategorySKU = previousCategorySKU
-        };
-        await _publishEndpoint.Publish(catalogItemUpdated, context =>
-        {
-            context.Headers.Set("OperationId", operationId);
-            context.Headers.Set("traceId", traceId);
-            context.Headers.Set("requestId", requestId);
-        });
-
         if (!await _repo.SaveChangesAsync())
         {
             StructuredLogger.LogError(_logger, "Update Item request failed: Database save error.", _requestContextService, new Dictionary<string, object> { { "sku", sku }, { "itemName", itemDto.Name }, { "operationId", operationId }, { "family", familyName } });
 
             return ServiceResult<CatalogItemUpdated>.FailureResult("Could not save changes to the database.", 500);
         }
+
+        CatalogItemUpdated catalogItemUpdated = new CatalogItemUpdated
+        {
+            UpdatedItem = _mapper.Map<UpdatedItem>(item),
+            PreviousCategorySKU = previousCategorySKU
+        };
+
+        await _publishEndpoint.Publish(catalogItemUpdated, context =>
+        {
+            context.Headers.Set("OperationId", operationId);
+            context.Headers.Set("traceId", traceId);
+            context.Headers.Set("requestId", requestId);
+        });
 
         return ServiceResult<CatalogItemUpdated>.SuccessResult(catalogItemUpdated);
     }
@@ -324,6 +341,12 @@ public class CatalogBusinessService : ICatalogBusinessService
 
         item.IsDeleted = true;
 
+        if (!await _repo.SaveChangesAsync())
+        {
+            StructuredLogger.LogError(_logger, "Delete Item request failed: Database save error.", _requestContextService, new Dictionary<string, object> { { "sku", sku } });
+            return ServiceResult<ItemDto>.FailureResult("Could not save changes to the database.", 500);
+        }
+
         ItemDto deletedItem = _mapper.Map<ItemDto>(item);
 
         await _publishEndpoint.Publish(_mapper.Map<CatalogItemDeleted>(deletedItem), context =>
@@ -332,12 +355,6 @@ public class CatalogBusinessService : ICatalogBusinessService
             context.Headers.Set("traceId", traceId);
             context.Headers.Set("requestId", requestId);
         });
-
-        if (!await _repo.SaveChangesAsync())
-        {
-            StructuredLogger.LogError(_logger, "Delete Item request failed: Database save error.", _requestContextService, new Dictionary<string, object> { { "sku", sku } });
-            return ServiceResult<ItemDto>.FailureResult("Could not save changes to the database.", 500);
-        }
 
         StructuredLogger.LogInformation(_logger, "Delete Item request succeeded.", _requestContextService, new Dictionary<string, object> { { "sku", sku } });
         return ServiceResult<ItemDto>.SuccessResult(deletedItem);

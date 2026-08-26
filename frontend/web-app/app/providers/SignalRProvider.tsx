@@ -130,6 +130,7 @@ export const SignalRProvider: React.FC<SignalRProviderProps> = ({ hubUrl, childr
     useEffect(() => {
         if (!isAuthenticated || !user?.email) return;
 
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- SignalR is an external system synchronized with the component lifecycle.
         establishConnection();
 
         return () => {

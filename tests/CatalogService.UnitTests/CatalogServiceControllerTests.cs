@@ -33,11 +33,13 @@ public class CatalogServiceControllerTests
         _fixture = new Fixture();
         _catalogBusinessServiceMock = new Mock<ICatalogBusinessService>();
 
-        var mapperConfiguration = new MapperConfiguration(mc =>
-        {
-            mc.AddMaps(typeof(MappingProfiles).Assembly);
-        });
-        var mapper = mapperConfiguration.CreateMapper();
+        var config = new MapperConfiguration(
+         cfg =>
+            {
+                cfg.AddMaps(typeof(MappingProfiles).Assembly);
+            },
+    Microsoft.Extensions.Logging.Abstractions.NullLoggerFactory.Instance);
+        var mapper = config.CreateMapper();
 
         var mockHttpContextAccessor = new Mock<IHttpContextAccessor>();
         var mockHttpContext = new DefaultHttpContext();

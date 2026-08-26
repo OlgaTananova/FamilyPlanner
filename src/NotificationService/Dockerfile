@@ -2,14 +2,13 @@ FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /app
 EXPOSE 80
 
-# Copy all csproj files and restore as distinct layers. 
+# Copy all csproj files and restore as distinct layers.
 COPY FamilyPlanner.sln  FamilyPlanner.sln
 COPY src/CatalogService/CatalogService.csproj src/CatalogService/CatalogService.csproj
 COPY src/ShoppingListService/ShoppingListService.csproj src/ShoppingListService/ShoppingListService.csproj
 COPY src/GatewayService/GatewayService.csproj src/GatewayService/GatewayService.csproj
 COPY src/Contracts/Contracts.csproj src/Contracts/Contracts.csproj
 COPY src/NotificationService/NotificationService.csproj src/NotificationService/NotificationService.csproj
-COPY src/FrontendBlazor/FrontendBlazor.csproj src/FrontendBlazor/FrontendBlazor.csproj 
 
 
 COPY tests/CatalogService.UnitTests/CatalogService.UnitTests.csproj tests/CatalogService.UnitTests/CatalogService.UnitTests.csproj

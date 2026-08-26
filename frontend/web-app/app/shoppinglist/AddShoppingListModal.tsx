@@ -1,4 +1,10 @@
-import { Button, Modal } from "flowbite-react";
+import {
+    Button,
+    Modal,
+    ModalBody,
+    ModalFooter,
+    ModalHeader,
+} from "flowbite-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { HiChevronDown } from "react-icons/hi";
@@ -62,8 +68,8 @@ export default function AddShoppingListModal({
 
     return (
         <Modal show={isOpen} onClose={onClose}>
-            <Modal.Header>Add New Shopping List</Modal.Header>
-            <Modal.Body>
+            <ModalHeader>Add New Shopping List</ModalHeader>
+            <ModalBody>
                 <div className="space-y-6">
                     {/* Heading Input */}
                     <div>
@@ -127,8 +133,8 @@ export default function AddShoppingListModal({
                         </div>
                     )}
                 </div>
-            </Modal.Body>
-            <Modal.Footer>
+            </ModalBody>
+            <ModalFooter>
                 <div className="flex justify-between w-full">
                     <Button
                         color="purple"
@@ -141,7 +147,7 @@ export default function AddShoppingListModal({
                         Cancel
                     </Button>
                 </div>
-            </Modal.Footer>
+            </ModalFooter>
         </Modal>
     );
 }

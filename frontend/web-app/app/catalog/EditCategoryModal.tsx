@@ -1,5 +1,12 @@
-import React, { useState, useEffect } from "react";
-import { Modal, Button, Tooltip } from "flowbite-react";
+import React, { useState } from "react";
+import {
+    Button,
+    Modal,
+    Tooltip,
+    ModalBody,
+    ModalFooter,
+    ModalHeader,
+} from "flowbite-react";
 import { toast } from "react-hot-toast";
 import { useDispatch } from "react-redux";
 
@@ -20,7 +27,16 @@ interface EditCategoryModalProps {
 
 }
 
-export default function EditCategoryModal({
+export default function EditCategoryModal(props: EditCategoryModalProps) {
+    return (
+        <EditCategoryModalContent
+            key={`${props.category.sku}-${props.isOpen}`}
+            {...props}
+        />
+    );
+}
+
+function EditCategoryModalContent({
     isOpen,
     onClose,
     category,
@@ -32,11 +48,6 @@ export default function EditCategoryModal({
     const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
     const { updateCategory, deleteCategory } = useCatalogApi();
 
-    useEffect(() => {
-        if (category) {
-            setCategoryState(category);
-        }
-    }, [category]);
 
     const validateName = (name: string) => name.trim().length >= 3;
 
@@ -79,8 +90,8 @@ export default function EditCategoryModal({
     return (
         <>
             <Modal show={isOpen} onClose={onClose}>
-                <Modal.Header>Edit Category</Modal.Header>
-                <Modal.Body>
+                <ModalHeader>Edit Category</ModalHeader>
+                <ModalBody>
                     <div className="space-y-6">
                         {/* Category Name */}
                         <div>
@@ -106,9 +117,9 @@ export default function EditCategoryModal({
                             )}
                         </div>
                     </div>
-                </Modal.Body>
+                </ModalBody>
 
-                <Modal.Footer>
+                <ModalFooter>
 
                     <div className="flex justify-between w-full">
                         {/* Delete Button */}
@@ -136,7 +147,7 @@ export default function EditCategoryModal({
                             </Button>
                         </div>
                     </div>
-                </Modal.Footer>
+                </ModalFooter>
             </Modal >
 
             {/* Confirmation Modal */}

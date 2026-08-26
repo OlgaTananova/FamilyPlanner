@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 import { FaArchive } from "react-icons/fa";
 import { useSelector } from "react-redux";
 import { ShoppingListItem } from "../redux/shoppingListSlice";
@@ -13,22 +13,27 @@ import ShoppingListSearchBar from "./ShoppingListSearchBar";
 
 export default function CurrentShoppingList() {
     const shoppingList = useSelector((state: RootState) => state.shoppinglists.currentShoppingList);
-    const [groupedItems, setGroupedItems] = useState<Record<string, ShoppingListItem[]>>({});
+
     const [isEditShoppingListModalOpen, setEditShoppingListModalOpen] = useState(false);
     const [isHiddenCategories, setIsHiddenCategories] = useState(false);
     const [isSendShoppingListModalOpen, setSendShoppingListModalOpen] = useState(false);
 
-    useEffect(() => {
-        if (shoppingList?.items?.length) {
-            const grouped = shoppingList.items.reduce<Record<string, ShoppingListItem[]>>((acc, item) => {
-                acc[item.categoryName] = acc[item.categoryName] || [];
-                acc[item.categoryName].push(item);
-                return acc;
-            }, {});
-            setGroupedItems(grouped);
-        } else {
-            setGroupedItems({});
+    const groupedItems = useMemo<Record<string, ShoppingListItem[]>>(() => {
+        if (!shoppingList?.items?.length) {
+            return {};
         }
+
+        return shoppingList.items.reduce<Record<string, ShoppingListItem[]>>(
+            (groups, item) => {
+                if (!groups[item.categoryName]) {
+                    groups[item.categoryName] = [];
+                }
+
+                groups[item.categoryName].push(item);
+                return groups;
+            },
+            {}
+        );
     }, [shoppingList]);
 
     if (!shoppingList) {

@@ -1,4 +1,3 @@
-using System;
 using Contracts.Catalog;
 using MassTransit;
 using MassTransit.Testing;
@@ -8,7 +7,6 @@ using ShoppingListService.Data;
 using ShoppingListService.Entities;
 using ShoppingListService.IntegrationTests.Fixtures;
 using ShoppingListService.IntegrationTests.Utils;
-using Xunit.Sdk;
 
 namespace ShoppingListService.IntegrationTests;
 

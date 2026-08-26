@@ -9,7 +9,6 @@ const msalConfig: Configuration = {
   },
   cache: {
     cacheLocation: "localStorage", // or "localStorage" for persistent sessions
-    storeAuthStateInCookie: false,
   },
   system: {
     loggerOptions: {

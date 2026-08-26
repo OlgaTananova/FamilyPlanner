@@ -35,14 +35,20 @@ builder.Services.AddControllers();
 
 
 // Logging and Telemetry
-builder.Services.AddApplicationInsightsTelemetry();
-builder.Logging.AddApplicationInsights(
-    configureTelemetryConfiguration: (config) =>
-        { config.ConnectionString = appConfig.ApplicationInsightsConnectionString; },
-    configureApplicationInsightsLoggerOptions: (options) =>
-    {
-        options.IncludeScopes = true;
-    });
+if (!string.IsNullOrWhiteSpace(appConfig.ApplicationInsightsConnectionString))
+{
+    builder.Services.AddApplicationInsightsTelemetry();
+
+    builder.Logging.AddApplicationInsights(
+        configureTelemetryConfiguration: config =>
+        {
+            config.ConnectionString = appConfig.ApplicationInsightsConnectionString;
+        },
+        configureApplicationInsightsLoggerOptions: options =>
+        {
+            options.IncludeScopes = true;
+        });
+}
 
 builder.Services.AddMassTransit(x =>
 {

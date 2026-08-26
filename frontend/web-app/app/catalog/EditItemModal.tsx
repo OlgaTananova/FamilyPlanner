@@ -1,5 +1,11 @@
-import { Button, Modal } from "flowbite-react";
-import { useEffect, useState } from "react";
+import {
+    Button,
+    Modal,
+    ModalBody,
+    ModalFooter,
+    ModalHeader,
+} from "flowbite-react";
+import { useState } from "react";
 import { toast } from "react-hot-toast";
 import { useDispatch, useSelector } from "react-redux";
 import { useCatalogApi } from "../hooks/useCatalogApi";
@@ -19,25 +25,27 @@ interface EditItemModalProps {
     };
 }
 
-export default function EditItemModal({ isOpen, onClose, item }: EditItemModalProps) {
+export default function EditItemModal(props: EditItemModalProps) {
+    return (
+        <EditItemModalContent
+            key={`${props.item.sku}-${props.isOpen}`}
+            {...props}
+        />
+    );
+}
+
+function EditItemModalContent({ isOpen, onClose, item }: EditItemModalProps) {
     const categories = useSelector((state: RootState) => state.categories.categories || []);
     const dispatch = useDispatch();
     const [itemName, setItemName] = useState(item.name);
     const [selectedCategory, setSelectedCategory] = useState(item.categorySKU);
     const [isSaving, setIsSaving] = useState(false);
     const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
-    const [currentCategory, setCurrentCategory] = useState(item.categorySKU);
     const { updateItem, deleteItem } = useCatalogApi();
 
     const validateName = (name: string) => name.trim().length >= 3;
 
-    useEffect(() => {
-        if (item) {
-            setItemName(item.name);
-            setSelectedCategory(item.categorySKU);
-            setCurrentCategory(item.categorySKU);
-        }
-    }, [item]);
+
 
     const handleSave = async () => {
         if (!validateName(itemName) || !selectedCategory) {
@@ -78,8 +86,8 @@ export default function EditItemModal({ isOpen, onClose, item }: EditItemModalPr
     return (
         <>
             <Modal show={isOpen} onClose={onClose}>
-                <Modal.Header>Edit Item</Modal.Header>
-                <Modal.Body>
+                <ModalHeader>Edit Item</ModalHeader>
+                <ModalBody>
                     <div className="space-y-6">
                         {/* Item Name */}
                         <div>
@@ -118,8 +126,8 @@ export default function EditItemModal({ isOpen, onClose, item }: EditItemModalPr
                             </select>
                         </div>
                     </div>
-                </Modal.Body>
-                <Modal.Footer>
+                </ModalBody>
+                <ModalFooter>
                     <div className="flex justify-between w-full">
                         {/* Delete Button */}
                         <Button color="red" onClick={() => setIsConfirmModalOpen(true)}>
@@ -139,7 +147,7 @@ export default function EditItemModal({ isOpen, onClose, item }: EditItemModalPr
                             </Button>
                         </div>
                     </div>
-                </Modal.Footer>
+                </ModalFooter>
             </Modal>
             <ConfirmationModal isOpen={isConfirmModalOpen}
                 onClose={() => setIsConfirmModalOpen(false)}
