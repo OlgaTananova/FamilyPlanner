@@ -143,14 +143,22 @@ public class CatalogRepository : ICatalogRepository
         var formattedQuery = query.Replace(" ", " | "); // Convert query into tsquery format
 
         var dbQuerySearchResult = await _context.Items
-        .FromSqlInterpolated(
-        $@"SELECT * 
-        FROM ""Items""
-        WHERE ""SearchVector"" @@ plainto_tsquery('english', {formattedQuery})
-        OR ""Name""::text % {query} OR ""CategoryName""::text % {query}
-        AND ""Family"" = {family}
-        ORDER BY GREATEST(similarity(""Name"", {query}), similarity(""CategoryName"", {query})) DESC
-        LIMIT 10")
+            .FromSqlInterpolated(
+                $@"
+                SELECT *
+                FROM ""Items""
+                WHERE (
+                    ""SearchVector"" @@ plainto_tsquery('english', {formattedQuery})
+                    OR ""Name""::text % {query}
+                    OR ""CategoryName""::text % {query}
+                )
+                AND ""Family"" = {family}
+                AND NOT ""IsDeleted""
+                ORDER BY GREATEST(
+                    similarity(""Name"", {query}),
+                    similarity(""CategoryName"", {query})
+                ) DESC
+                LIMIT 10")
         .ToListAsync();
 
         return dbQuerySearchResult;

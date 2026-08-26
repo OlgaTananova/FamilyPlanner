@@ -217,4 +217,249 @@ public class CatalogControllerCategoryTests : IAsyncLifetime
 
     #endregion
 
+    #region DifferentFamilyTests
+
+    [Fact]
+    public async Task GetCategoryBySku_ShouldReturnNotFound_ForDifferentFamily()
+    {
+        // Arrange
+        var category = new Category
+        {
+            Id = Guid.NewGuid(),
+            SKU = Guid.NewGuid(),
+            Name = "Private Category",
+            OwnerId = "other-user-id",
+            Family = "other-family"
+        };
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<CatalogDbContext>();
+            db.Categories.Add(category);
+            await db.SaveChangesAsync();
+        }
+
+        _httpClient.SetFakeJwtBearerToken(
+            AuthHelper.GetBearerForUser("test-user-id", "test-family"));
+
+        // Act
+        var response = await _httpClient.GetAsync(
+            $"api/Catalog/categories/{category.SKU}");
+
+        // Assert
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task UpdateCategory_ShouldReturnNotFound_ForDifferentFamily()
+    {
+        // Arrange
+        var category = new Category
+        {
+            Id = Guid.NewGuid(),
+            SKU = Guid.NewGuid(),
+            Name = "Private Category",
+            OwnerId = "other-user-id",
+            Family = "other-family"
+        };
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<CatalogDbContext>();
+            db.Categories.Add(category);
+            await db.SaveChangesAsync();
+        }
+
+        _httpClient.SetFakeJwtBearerToken(
+            AuthHelper.GetBearerForUser("test-user-id", "test-family"));
+
+        var updateDto = new UpdateCategoryDto
+        {
+            Name = "Unauthorized Update"
+        };
+
+        // Act
+        var response = await _httpClient.PutAsJsonAsync(
+            $"api/Catalog/categories/{category.SKU}",
+            updateDto);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task DeleteCategory_ShouldReturnNotFound_ForDifferentFamily()
+    {
+        // Arrange
+        var category = new Category
+        {
+            Id = Guid.NewGuid(),
+            SKU = Guid.NewGuid(),
+            Name = "Private Category",
+            OwnerId = "other-user-id",
+            Family = "other-family"
+        };
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<CatalogDbContext>();
+            db.Categories.Add(category);
+            await db.SaveChangesAsync();
+        }
+
+        _httpClient.SetFakeJwtBearerToken(
+            AuthHelper.GetBearerForUser("test-user-id", "test-family"));
+
+        // Act
+        var response = await _httpClient.DeleteAsync(
+            $"api/Catalog/categories/{category.SKU}");
+
+        // Assert
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task GetItemBySku_ShouldReturnNotFound_ForDifferentFamily()
+    {
+        // Arrange
+        var category = new Category
+        {
+            Id = Guid.NewGuid(),
+            SKU = Guid.NewGuid(),
+            Name = "Other Family Category",
+            OwnerId = "other-user-id",
+            Family = "other-family"
+        };
+
+        var item = new Item
+        {
+            Id = Guid.NewGuid(),
+            SKU = Guid.NewGuid(),
+            Name = "Private Item",
+            OwnerId = "other-user-id",
+            Family = "other-family",
+            CategoryId = category.Id,
+            CategorySKU = category.SKU,
+            CategoryName = category.Name,
+            Category = category
+        };
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<CatalogDbContext>();
+            db.Categories.Add(category);
+            db.Items.Add(item);
+            await db.SaveChangesAsync();
+        }
+
+        _httpClient.SetFakeJwtBearerToken(
+            AuthHelper.GetBearerForUser("test-user-id", "test-family"));
+
+        // Act
+        var response = await _httpClient.GetAsync(
+            $"api/Catalog/items/{item.SKU}");
+
+        // Assert
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task UpdateItem_ShouldReturnNotFound_ForDifferentFamily()
+    {
+        // Arrange
+        var category = new Category
+        {
+            Id = Guid.NewGuid(),
+            SKU = Guid.NewGuid(),
+            Name = "Other Family Category",
+            OwnerId = "other-user-id",
+            Family = "other-family"
+        };
+
+        var item = new Item
+        {
+            Id = Guid.NewGuid(),
+            SKU = Guid.NewGuid(),
+            Name = "Private Item",
+            OwnerId = "other-user-id",
+            Family = "other-family",
+            CategoryId = category.Id,
+            CategorySKU = category.SKU,
+            CategoryName = category.Name,
+            Category = category
+        };
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<CatalogDbContext>();
+            db.Categories.Add(category);
+            db.Items.Add(item);
+            await db.SaveChangesAsync();
+        }
+
+        _httpClient.SetFakeJwtBearerToken(
+            AuthHelper.GetBearerForUser("test-user-id", "test-family"));
+
+        var updateDto = new UpdateItemDto
+        {
+            Name = "Unauthorized Update",
+            CategorySKU = category.SKU
+        };
+
+        // Act
+        var response = await _httpClient.PutAsJsonAsync(
+            $"api/Catalog/items/{item.SKU}",
+            updateDto);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task DeleteItem_ShouldReturnNotFound_ForDifferentFamily()
+    {
+        // Arrange
+        var category = new Category
+        {
+            Id = Guid.NewGuid(),
+            SKU = Guid.NewGuid(),
+            Name = "Other Family Category",
+            OwnerId = "other-user-id",
+            Family = "other-family"
+        };
+
+        var item = new Item
+        {
+            Id = Guid.NewGuid(),
+            SKU = Guid.NewGuid(),
+            Name = "Private Item",
+            OwnerId = "other-user-id",
+            Family = "other-family",
+            CategoryId = category.Id,
+            CategorySKU = category.SKU,
+            CategoryName = category.Name,
+            Category = category
+        };
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<CatalogDbContext>();
+            db.Categories.Add(category);
+            db.Items.Add(item);
+            await db.SaveChangesAsync();
+        }
+
+        _httpClient.SetFakeJwtBearerToken(
+            AuthHelper.GetBearerForUser("test-user-id", "test-family"));
+
+        // Act
+        var response = await _httpClient.DeleteAsync(
+            $"api/Catalog/items/{item.SKU}");
+
+        // Assert
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    #endregion
+
 }

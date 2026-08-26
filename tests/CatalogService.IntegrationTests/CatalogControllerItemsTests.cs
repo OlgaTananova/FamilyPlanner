@@ -256,4 +256,55 @@ public class CatalogControllerItemsTests : IAsyncLifetime
         // Assert
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
+
+    [Fact]
+    public async Task SearchItems_ShouldOnlyReturnItemsFromAuthenticatedFamily()
+    {
+        // Arrange
+        var otherFamilyCategory = new Category
+        {
+            Id = Guid.NewGuid(),
+            SKU = Guid.NewGuid(),
+            Name = "Other Family Category",
+            OwnerId = "other-user-id",
+            Family = "other-family"
+        };
+
+        var otherFamilyItem = new Item
+        {
+            Id = Guid.NewGuid(),
+            SKU = Guid.NewGuid(),
+            Name = "UniqueSecretMango",
+            OwnerId = "other-user-id",
+            Family = "other-family",
+            CategoryId = otherFamilyCategory.Id,
+            CategorySKU = otherFamilyCategory.SKU,
+            CategoryName = otherFamilyCategory.Name,
+            Category = otherFamilyCategory
+        };
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<CatalogDbContext>();
+
+            db.Categories.Add(otherFamilyCategory);
+            db.Items.Add(otherFamilyItem);
+
+            await db.SaveChangesAsync();
+        }
+
+        _httpClient.SetFakeJwtBearerToken(
+            AuthHelper.GetBearerForUser("test-user-id", "test-family"));
+
+        // Act
+        var response = await _httpClient.GetFromJsonAsync<List<ItemDto>>(
+            "api/Catalog/items/search?query=UniqueSecretMango");
+
+        // Assert
+        Assert.NotNull(response);
+
+        Assert.DoesNotContain(
+            response,
+            item => item.Name == "UniqueSecretMango");
+    }
 }
