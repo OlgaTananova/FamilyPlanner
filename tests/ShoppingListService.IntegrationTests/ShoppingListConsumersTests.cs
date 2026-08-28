@@ -475,4 +475,91 @@ public class ShoppingListConsumersTests : IAsyncLifetime
         Assert.Null(deletedItem);
     }
 
+    [Fact]
+    public async Task CatalogItemCreatedConsumer_ShouldFault_WhenValidationFails()
+    {
+        // Arrange
+        var invalidMessage = new CatalogItemCreated
+        {
+            SKU = Guid.Empty,
+            Name = "",
+            CategoryName = "",
+            OwnerId = "test-user-id",
+            Family = "test-family",
+            CategorySKU = Guid.Empty,
+            IsDeleted = false
+        };
+
+        // Act
+        await _testHarness.Bus.Publish(invalidMessage);
+
+        // Assert
+        Assert.True(
+            await _testHarness.Consumed.Any<CatalogItemCreated>());
+
+        Assert.True(
+            await _testHarness.Published.Any<Fault<CatalogItemCreated>>());
+    }
+
+    [Fact]
+    public async Task CatalogItemUpdatedConsumer_ShouldFault_WhenValidationFails()
+    {
+        var invalidMessage = new CatalogItemUpdated
+        {
+            UpdatedItem = new UpdatedItem
+            {
+                SKU = Guid.Empty,
+                Name = "",
+                Family = "test-family",
+                IsDeleted = false
+            }
+        };
+
+        await _testHarness.Bus.Publish(invalidMessage);
+
+        Assert.True(
+            await _testHarness.Consumed.Any<CatalogItemUpdated>());
+
+        Assert.True(
+            await _testHarness.Published.Any<Fault<CatalogItemUpdated>>());
+    }
+
+    [Fact]
+    public async Task CatalogCategoryUpdatedConsumer_ShouldFault_WhenValidationFails()
+    {
+        var invalidMessage = new CatalogCategoryUpdated
+        {
+            Sku = Guid.Empty,
+            Name = "",
+            Family = "test-family",
+            OwnerId = "test-user-id"
+        };
+
+        await _testHarness.Bus.Publish(invalidMessage);
+
+        Assert.True(
+            await _testHarness.Consumed.Any<CatalogCategoryUpdated>());
+
+        Assert.True(
+            await _testHarness.Published.Any<Fault<CatalogCategoryUpdated>>());
+    }
+
+    [Fact]
+    public async Task CatalogItemDeletedConsumer_ShouldFault_WhenValidationFails()
+    {
+        var invalidMessage = new CatalogItemDeleted
+        {
+            SKU = Guid.Empty,
+            Family = "test-family",
+            OwnerId = "test-user-id"
+        };
+
+        await _testHarness.Bus.Publish(invalidMessage);
+
+        Assert.True(
+            await _testHarness.Consumed.Any<CatalogItemDeleted>());
+
+        Assert.True(
+            await _testHarness.Published.Any<Fault<CatalogItemDeleted>>());
+    }
 }

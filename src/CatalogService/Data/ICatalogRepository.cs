@@ -1,4 +1,3 @@
-using System;
 using CatalogService.DTOs;
 using CatalogService.Entities;
 using Microsoft.EntityFrameworkCore.Storage;
@@ -15,7 +14,7 @@ public interface ICatalogRepository
     Task<Item> GetItemEntityBySkuAsync(Guid sku, string familyName);
     Task<Item> GetItemEntityByNameAsync(string name, string familyName);
     Task<Category> GetCategoryEntityByName(string name, string familyName);
-    Task UpdateItemAsync(Item item, UpdateItemDto itemDto);
+    Task UpdateItemAsync(Item item, Category category, UpdateItemDto itemDto);
     Task UpdateCategoryAsync(Category category, UpdateCategoryDto categoryDto);
     void AddCategory(Category category);
     void AddItem(Item item);

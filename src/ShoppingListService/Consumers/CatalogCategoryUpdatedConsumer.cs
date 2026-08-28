@@ -43,7 +43,7 @@ public class CatalogCategoryUpdatedConsumer : IConsumer<CatalogCategoryUpdated>
             // Begin a transaction
             using var transaction = await _context.Database.BeginTransactionAsync();
 
-            // Update catalog items    
+            // Update catalog items
             var catalogItems = await _context.CatalogItems
                 .Where(x => x.CategorySKU == context.Message.Sku
                 && x.Family == context.Message.Family).ToListAsync();
@@ -83,7 +83,13 @@ public class CatalogCategoryUpdatedConsumer : IConsumer<CatalogCategoryUpdated>
         }
         catch (Exception ex)
         {
-            _logger.LogError($"CatalogCategoryUpdated message: error occured while processing the message. Category SKU: {SKU}, OperationId: {operationId}, Error: {ex.Message}.");
+            _logger.LogError(
+                ex,
+                "CatalogCategoryUpdated message: error occurred while processing the message. Category SKU: {SKU}, OperationId: {OperationId}.",
+                SKU,
+                operationId);
+
+            throw;
         }
     }
 }

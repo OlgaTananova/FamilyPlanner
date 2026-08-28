@@ -1,4 +1,3 @@
-using System;
 using AutoMapper;
 using Contracts.Catalog;
 using MassTransit;
@@ -52,8 +51,14 @@ public class CatalogItemCreatedConsumer : IConsumer<CatalogItemCreated>
         }
         catch (Exception ex)
         {
-            _logger.LogError($"CatalogItemCreated message: error occured while processing the message. Item SKU: {SKU}, OperationId: {operationId}, Error: {ex.Message}.");
-        }
+            _logger.LogError(
+                ex,
+                "CatalogItemCreated message: error occurred while processing the message. Item SKU: {SKU}, OperationId: {OperationId}.",
+                SKU,
+                operationId);
 
+            throw;
+
+        }
     }
 }

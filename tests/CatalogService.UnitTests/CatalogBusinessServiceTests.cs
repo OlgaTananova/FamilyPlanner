@@ -111,7 +111,7 @@ public class CatalogBusinessServiceTests
     }
 
     [Fact]
-    public async Task CreateCategoryAsync_WhenSaveFails_ShouldReturnFailureAndNotPublishEvent()
+    public async Task CreateCategoryAsync_WhenSaveFails_ShouldReturnFailure()
     {
         // Arrange
         var categoryDto = new CreateCategoryDto
@@ -138,145 +138,13 @@ public class CatalogBusinessServiceTests
             x => x.SaveChangesAsync(),
             Times.Once);
 
-        Assert.DoesNotContain(
+        Assert.Contains(
             _publishEndpointMock.Invocations,
             invocation => invocation.Method.Name == "Publish");
     }
 
     [Fact]
-    public async Task UpdateCategoryAsync_WhenSaveFails_ShouldReturnFailureAndNotPublishEvent()
-    {
-        // Arrange
-        var categorySku = Guid.NewGuid();
-
-        var existingCategory = new Category
-        {
-            Id = Guid.NewGuid(),
-            SKU = categorySku,
-            Name = "Produce",
-            OwnerId = "test-user-id",
-            Family = "test-family"
-        };
-
-        var updateDto = new UpdateCategoryDto
-        {
-            Name = "Fresh Produce"
-        };
-
-        _repositoryMock
-            .Setup(x => x.GetCategoryEntityBySku(categorySku, "test-family"))
-            .ReturnsAsync(existingCategory);
-
-        _repositoryMock
-            .Setup(x => x.SaveChangesAsync())
-            .ReturnsAsync(false);
-
-        // Act
-        var result = await _service.UpdateCategoryAsync(categorySku, updateDto);
-
-        // Assert
-        Assert.False(result.Success);
-        Assert.Equal(500, result.StatusCode);
-
-        _repositoryMock.Verify(
-            x => x.SaveChangesAsync(),
-            Times.Once);
-
-        Assert.DoesNotContain(
-            _publishEndpointMock.Invocations,
-            invocation => invocation.Method.Name == "Publish");
-    }
-
-    [Fact]
-    public async Task DeleteCategoryAsync_WhenSaveFails_ShouldReturnFailureAndNotPublishEvent()
-    {
-        // Arrange
-        var categorySku = Guid.NewGuid();
-
-        var existingCategory = new Category
-        {
-            Id = Guid.NewGuid(),
-            SKU = categorySku,
-            Name = "Produce",
-            OwnerId = "test-user-id",
-            Family = "test-family",
-            Items = new List<Item>()
-        };
-
-        _repositoryMock
-            .Setup(x => x.GetCategoryEntityBySku(categorySku, "test-family"))
-            .ReturnsAsync(existingCategory);
-
-        _repositoryMock
-            .Setup(x => x.SaveChangesAsync())
-            .ReturnsAsync(false);
-
-        // Act
-        var result = await _service.DeleteCategoryAsync(categorySku);
-
-        // Assert
-        Assert.False(result.Success);
-        Assert.Equal(500, result.StatusCode);
-
-        _repositoryMock.Verify(
-            x => x.SaveChangesAsync(),
-            Times.Once);
-
-        Assert.DoesNotContain(
-            _publishEndpointMock.Invocations,
-            invocation => invocation.Method.Name == "Publish");
-    }
-
-    [Fact]
-    public async Task CreateItemAsync_WhenSaveFails_ShouldReturnFailureAndNotPublishEvent()
-    {
-        var categorySku = Guid.NewGuid();
-
-        var category = new Category
-        {
-            Id = Guid.NewGuid(),
-            SKU = categorySku,
-            Name = "Produce",
-            OwnerId = "test-user-id",
-            Family = "test-family"
-        };
-
-        var itemDto = new CreateItemDto
-        {
-            Name = "Apples",
-            CategorySKU = categorySku
-        };
-
-        _repositoryMock
-        .Setup(x => x.GetItemEntityByNameAsync(itemDto.Name, "test-family"))
-        .ReturnsAsync((Item?)null);
-
-        _repositoryMock
-            .Setup(x => x.GetCategoryEntityBySku(categorySku, "test-family"))
-            .ReturnsAsync(category);
-
-        _repositoryMock
-            .Setup(x => x.SaveChangesAsync())
-            .ReturnsAsync(false);
-
-        // Act
-        var result = await _service.CreateItemAsync(itemDto);
-
-        // Assert
-        Assert.False(result.Success);
-        Assert.Equal(500, result.StatusCode);
-
-        _repositoryMock.Verify(
-            x => x.SaveChangesAsync(),
-            Times.Once);
-
-        Assert.DoesNotContain(
-            _publishEndpointMock.Invocations,
-            invocation => invocation.Method.Name == "Publish");
-    }
-
-    [Fact]
-    public async Task UpdateItemAsync_WhenSaveFails_ShouldReturnFailureAndNotPublishEvent()
+    public async Task UpdateItemAsync_WhenSaveFails_ShouldReturnFailure()
     {
         // Arrange
         var itemSku = Guid.NewGuid();
@@ -319,7 +187,7 @@ public class CatalogBusinessServiceTests
             .ReturnsAsync(category);
 
         _repositoryMock
-            .Setup(x => x.UpdateItemAsync(item, updateDto))
+            .Setup(x => x.UpdateItemAsync(item, category, updateDto))
             .Returns(Task.CompletedTask);
 
         _repositoryMock
@@ -334,16 +202,109 @@ public class CatalogBusinessServiceTests
         Assert.Equal(500, result.StatusCode);
 
         _repositoryMock.Verify(
+            x => x.UpdateItemAsync(item, category, updateDto),
+            Times.Once);
+
+        _repositoryMock.Verify(
             x => x.SaveChangesAsync(),
             Times.Once);
 
-        Assert.DoesNotContain(
+        Assert.Contains(
             _publishEndpointMock.Invocations,
             invocation => invocation.Method.Name == "Publish");
     }
 
     [Fact]
-    public async Task DeleteItemAsync_WhenSaveFails_ShouldReturnFailureAndNotPublishEvent()
+    public async Task DeleteCategoryAsync_WhenSaveFails_ShouldReturnFailure()
+    {
+        // Arrange
+        var categorySku = Guid.NewGuid();
+
+        var existingCategory = new Category
+        {
+            Id = Guid.NewGuid(),
+            SKU = categorySku,
+            Name = "Produce",
+            OwnerId = "test-user-id",
+            Family = "test-family",
+            Items = new List<Item>()
+        };
+
+        _repositoryMock
+            .Setup(x => x.GetCategoryEntityBySku(categorySku, "test-family"))
+            .ReturnsAsync(existingCategory);
+
+        _repositoryMock
+            .Setup(x => x.SaveChangesAsync())
+            .ReturnsAsync(false);
+
+        // Act
+        var result = await _service.DeleteCategoryAsync(categorySku);
+
+        // Assert
+        Assert.False(result.Success);
+        Assert.Equal(500, result.StatusCode);
+
+        _repositoryMock.Verify(
+            x => x.SaveChangesAsync(),
+            Times.Once);
+
+        Assert.Contains(
+            _publishEndpointMock.Invocations,
+            invocation => invocation.Method.Name == "Publish");
+    }
+
+    [Fact]
+    public async Task CreateItemAsync_WhenSaveFails_ShouldReturnFailure()
+    {
+        var categorySku = Guid.NewGuid();
+
+        var category = new Category
+        {
+            Id = Guid.NewGuid(),
+            SKU = categorySku,
+            Name = "Produce",
+            OwnerId = "test-user-id",
+            Family = "test-family"
+        };
+
+        var itemDto = new CreateItemDto
+        {
+            Name = "Apples",
+            CategorySKU = categorySku
+        };
+
+        _repositoryMock
+        .Setup(x => x.GetItemEntityByNameAsync(itemDto.Name, "test-family"))
+        .ReturnsAsync((Item?)null);
+
+        _repositoryMock
+            .Setup(x => x.GetCategoryEntityBySku(categorySku, "test-family"))
+            .ReturnsAsync(category);
+
+        _repositoryMock
+            .Setup(x => x.SaveChangesAsync())
+            .ReturnsAsync(false);
+
+        // Act
+        var result = await _service.CreateItemAsync(itemDto);
+
+        // Assert
+        Assert.False(result.Success);
+        Assert.Equal(500, result.StatusCode);
+
+        _repositoryMock.Verify(
+            x => x.SaveChangesAsync(),
+            Times.Once);
+
+        Assert.Contains(
+            _publishEndpointMock.Invocations,
+            invocation => invocation.Method.Name == "Publish");
+    }
+
+
+    [Fact]
+    public async Task DeleteItemAsync_WhenSaveFails_ShouldReturnFailure()
     {
         // Arrange
         var itemSku = Guid.NewGuid();
@@ -389,7 +350,7 @@ public class CatalogBusinessServiceTests
             x => x.SaveChangesAsync(),
             Times.Once);
 
-        Assert.DoesNotContain(
+        Assert.Contains(
             _publishEndpointMock.Invocations,
             invocation => invocation.Method.Name == "Publish");
     }

@@ -1,4 +1,3 @@
-using System;
 using AutoMapper;
 using Contracts.Catalog;
 using MassTransit;
@@ -79,8 +78,13 @@ public class CatalogItemDeletedConsumer : IConsumer<CatalogItemDeleted>
         }
         catch (Exception ex)
         {
-            _logger.LogError($"CatalogItemDeleted message: error occured while processing the message. Shopping List Servive. Item SKU: {SKU}, OperationId: {operationId}, Error: {ex.Message}.");
+            _logger.LogError(
+                ex,
+                "CatalogItemDeleted message: error occurred while processing the message. ShoppingListService. Item SKU: {SKU}, OperationId: {OperationId}.",
+                SKU,
+                operationId);
 
+            throw;
         }
 
     }

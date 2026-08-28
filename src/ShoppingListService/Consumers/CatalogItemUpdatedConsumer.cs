@@ -1,13 +1,8 @@
-using System;
-using System.Transactions;
 using AutoMapper;
 using Contracts.Catalog;
 using MassTransit;
-using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using ShoppingListService.Data;
-using ShoppingListService.DTOs;
-using ShoppingListService.Entities;
 using ShoppingListService.Helpers;
 
 namespace ShoppingListService.Consumers;
@@ -99,8 +94,13 @@ public class CatalogItemUpdatedConsumer : IConsumer<CatalogItemUpdated>
         }
         catch (Exception ex)
         {
-            _logger.LogError($"CatalogItemUpdated message: error occured while processing the message. Shopping List Servive. Item SKU: {SKU}, OperationId: {operationId}, Error: {ex.Message}.");
+            _logger.LogError(
+                ex,
+                "CatalogItemUpdated message: error occurred while processing the message. ShoppingListService. Item SKU: {SKU}, OperationId: {OperationId}.",
+                SKU,
+                operationId);
 
+            throw;
         }
     }
 }

@@ -29,36 +29,33 @@ public class CatalogRepository : ICatalogRepository
 
     public async Task<List<CategoryDto>> GetAllCategoriesAsync(string familyName)
     {
-        return await _context.Categories.AsQueryable()
-            .Where(c => c.Family == familyName && !c.IsDeleted)
-            .Include(x => x.Items.Where(i => !i.IsDeleted))
-            .ProjectTo<CategoryDto>(_mapper.ConfigurationProvider)
-            .ToListAsync();
+        return await _context.Categories
+     .Where(c => c.Family == familyName && !c.IsDeleted)
+     .ProjectTo<CategoryDto>(_mapper.ConfigurationProvider)
+     .ToListAsync();
 
     }
 
     public async Task<List<ItemDto>> GetAllItemsAsync(string familyName)
     {
-        return await _context.Items.AsQueryable()
-            .Where(c => c.Family == familyName && !c.IsDeleted)
-           .Include(x => x.Category)
-           .ProjectTo<ItemDto>(_mapper.ConfigurationProvider)
-           .ToListAsync();
+        return await _context.Items
+     .Where(i => i.Family == familyName && !i.IsDeleted)
+     .ProjectTo<ItemDto>(_mapper.ConfigurationProvider)
+     .ToListAsync();
     }
 
     public async Task<CategoryDto> GetCategoryBySkuAsync(Guid sku, string familyName)
     {
-        return await _context.Categories.AsQueryable()
-            .Where(c => c.Family == familyName && !c.IsDeleted)
-            .Include(x => x.Items.Where(i => !i.IsDeleted))
-            .ProjectTo<CategoryDto>(_mapper.ConfigurationProvider)
-            .FirstOrDefaultAsync(x => x.SKU == sku);
+        return await _context.Categories
+    .Where(c => c.Family == familyName && !c.IsDeleted)
+    .ProjectTo<CategoryDto>(_mapper.ConfigurationProvider)
+    .FirstOrDefaultAsync(c => c.SKU == sku);
 
     }
 
     public async Task<Category> GetCategoryEntityBySku(Guid sku, string familyName)
     {
-        return await _context.Categories.AsQueryable()
+        return await _context.Categories
             .Where(c => c.Family == familyName && !c.IsDeleted)
             .Include(x => x.Items.Where(i => !i.IsDeleted))
             .FirstOrDefaultAsync(x => x.SKU == sku);
@@ -68,23 +65,22 @@ public class CatalogRepository : ICatalogRepository
     {
         string normalizedString = name.ToLower().Trim();
 
-        return await _context.Categories.AsQueryable()
+        return await _context.Categories
         .FirstOrDefaultAsync(x => x.Name.ToLower() == normalizedString
         && x.Family == familyName && !x.IsDeleted);
     }
 
     public async Task<ItemDto> GetItemBySkuAsync(Guid sku, string familyName)
     {
-        return await _context.Items.AsQueryable()
-           .Where(c => !c.IsDeleted && c.Family == familyName)
-           .Include(x => x.Category)
-           .ProjectTo<ItemDto>(_mapper.ConfigurationProvider)
-           .FirstOrDefaultAsync(x => x.SKU == sku);
+        return await _context.Items
+    .Where(i => !i.IsDeleted && i.Family == familyName)
+    .ProjectTo<ItemDto>(_mapper.ConfigurationProvider)
+    .FirstOrDefaultAsync(i => i.SKU == sku);
     }
 
     public async Task<Item> GetItemEntityBySkuAsync(Guid sku, string familyName)
     {
-        return await _context.Items.AsQueryable()
+        return await _context.Items
                 .Where(c => !c.IsDeleted && c.Family == familyName)
                 .Include(x => x.Category)
                 .FirstOrDefaultAsync(x => x.SKU == sku);
@@ -93,37 +89,28 @@ public class CatalogRepository : ICatalogRepository
     public async Task<Item> GetItemEntityByNameAsync(string name, string familyName)
     {
         string normalizedString = name.ToLower().Trim();
-        return await _context.Items.AsQueryable()
+        return await _context.Items
                 .Where(c => !c.IsDeleted && c.Family == familyName)
                 .Include(x => x.Category)
                 .FirstOrDefaultAsync(x => x.Name.ToLower().Trim() == normalizedString);
     }
 
-    public async Task UpdateItemAsync(Item item, UpdateItemDto itemDto)
+    public Task UpdateItemAsync(Item item, Category category, UpdateItemDto itemDto)
     {
-        if (item.CategorySKU != itemDto.CategorySKU)
+        if (item.CategorySKU != category.SKU)
         {
-            Category newCategory = await _context.Categories.FirstOrDefaultAsync(x => x.SKU == itemDto.CategorySKU);
-            if (newCategory != null)
-            {
-                _context.Entry(newCategory).State = EntityState.Unchanged; // Attach new category
-                item.Category = newCategory;
-                item.CategorySKU = itemDto.CategorySKU;
-                item.CategoryName = newCategory.Name;
-            }
+            item.Category = category;
+            item.CategoryId = category.Id;
+            item.CategorySKU = category.SKU;
+            item.CategoryName = category.Name;
         }
 
-        // Update other properties
-        if (!string.IsNullOrEmpty(itemDto.Name))
+        if (!string.IsNullOrWhiteSpace(itemDto.Name))
         {
             item.Name = itemDto.Name;
         }
 
-        // Explicitly mark Item as modified
-        _context.Entry(item).State = EntityState.Modified;
-
-        // Debug log for verification
-        Console.WriteLine($"Updated Item: {item.Name}, CategorySKU: {item.CategorySKU}, CategoryName: {item.CategoryName}");
+        return Task.CompletedTask;
     }
 
     public async Task UpdateCategoryAsync(Category category, UpdateCategoryDto categoryDto)

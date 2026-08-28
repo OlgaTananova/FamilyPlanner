@@ -147,7 +147,7 @@ public class ShoppingListBusinessService : IShoppingListBusinessService
         // Map the updated shopping list to the DTO
         var shoppingListDto = _mapper.Map<ShoppingListDto>(shoppingList);
 
-        // Publish the message to the message broker    
+        // Publish the message to the message broker
         await _publishEndpoint.Publish(_mapper.Map<ShoppingListItemsAdded>(shoppingListDto), context =>
         {
             context.Headers.Set("OperationId", operationId);
@@ -187,7 +187,7 @@ public class ShoppingListBusinessService : IShoppingListBusinessService
         }
         _repo.DeleteShoppingList(shoppingList);
 
-        // Send the message to the message broker    
+        // Send the message to the message broker
         await _publishEndpoint.Publish(_mapper.Map<ShoppingListDeleted>(shoppingList), context =>
         {
             context.Headers.Set("OperationId", operationId);
@@ -220,7 +220,8 @@ public class ShoppingListBusinessService : IShoppingListBusinessService
 
         ShoppingListItem shoppingListItem = await _repo.GetShoppingListItemById(itemId, id, familyName);
         ShoppingList shoppingList = await _repo.GetShoppingListById(id, familyName);
-        if (shoppingListItem == null || shoppingListItem == null)
+
+        if (shoppingListItem == null || shoppingList == null)
         {
             StructuredLogger.LogWarning(_logger, "Delete Shopping List Item request failed: Shopping List or Item not found.", _requestContextService, new Dictionary<string, object> { { "shoppingListId", id }, { "itemId", itemId }, });
 
